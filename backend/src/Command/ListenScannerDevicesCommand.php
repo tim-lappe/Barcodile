@@ -64,7 +64,7 @@ final class ListenScannerDevicesCommand extends Command
             $read = array_map(static fn (array $s) => $s['handle'], $state);
             $write = null;
             $except = null;
-            $n = @stream_select($read, $write, $except, null, 200000);
+            $n = @stream_select($read, $write, $except, 0, 200000);
             if (false === $n) {
                 break;
             }
