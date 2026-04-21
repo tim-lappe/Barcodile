@@ -1,0 +1,86 @@
+doctrine:
+    dbal:
+        url: '%env(resolve:DATABASE_URL)%'
+        types:
+            catalog_item_id:
+                class: App\Infrastructure\Catalog\Doctrine\CatalogItemIdType
+            barcode_id:
+                class: App\Infrastructure\Catalog\Doctrine\BarcodeIdType
+            catalog_item_attribute_id:
+                class: App\Infrastructure\Catalog\Doctrine\CatalogItemAttributeIdType
+            shopping_cart_id:
+                class: App\Infrastructure\Cart\Doctrine\ShoppingCartIdType
+            shopping_cart_line_id:
+                class: App\Infrastructure\Cart\Doctrine\ShoppingCartLineIdType
+            inventory_item_id:
+                class: App\Infrastructure\Inventory\Doctrine\InventoryItemIdType
+            cart_stock_automation_rule_id:
+                class: App\Infrastructure\Inventory\Doctrine\CartStockAutomationRuleIdType
+            location_id:
+                class: App\Infrastructure\Inventory\Doctrine\LocationIdType
+            picnic_integration_settings_id:
+                class: App\Infrastructure\Picnic\Doctrine\PicnicIntegrationSettingsIdType
+            scanner_device_id:
+                class: App\Infrastructure\Scanner\Doctrine\ScannerDeviceIdType
+
+        profiling_collect_backtrace: '%kernel.debug%'
+    orm:
+        validate_xml_mapping: true
+        naming_strategy: doctrine.orm.naming_strategy.underscore
+        identity_generation_preferences:
+            Doctrine\DBAL\Platforms\PostgreSQLPlatform: identity
+        auto_mapping: true
+        mappings:
+            Catalog:
+                type: attribute
+                is_bundle: false
+                dir: '%kernel.project_dir%/src/Domain/Catalog/Entity'
+                prefix: 'App\Domain\Catalog\Entity'
+                alias: Catalog
+            Inventory:
+                type: attribute
+                is_bundle: false
+                dir: '%kernel.project_dir%/src/Domain/Inventory/Entity'
+                prefix: 'App\Domain\Inventory\Entity'
+                alias: Inventory
+            Picnic:
+                type: attribute
+                is_bundle: false
+                dir: '%kernel.project_dir%/src/Domain/Picnic/Entity'
+                prefix: 'App\Domain\Picnic\Entity'
+                alias: Picnic
+            Cart:
+                type: attribute
+                is_bundle: false
+                dir: '%kernel.project_dir%/src/Domain/Cart/Entity'
+                prefix: 'App\Domain\Cart\Entity'
+                alias: Cart
+            Scanner:
+                type: attribute
+                is_bundle: false
+                dir: '%kernel.project_dir%/src/Domain/Scanner/Entity'
+                prefix: 'App\Domain\Scanner\Entity'
+                alias: Scanner
+
+when@test:
+    doctrine:
+        dbal:
+            dbname_suffix: '_test%env(default::TEST_TOKEN)%'
+
+when@prod:
+    doctrine:
+        orm:
+            query_cache_driver:
+                type: pool
+                pool: doctrine.system_cache_pool
+            result_cache_driver:
+                type: pool
+                pool: doctrine.result_cache_pool
+
+    framework:
+        cache:
+            pools:
+                doctrine.result_cache_pool:
+                    adapter: cache.app
+                doctrine.system_cache_pool:
+                    adapter: cache.system

@@ -1,0 +1,22 @@
+---
+description: TypeScript/React — strict typing, value objects, stay in sync with API
+globs: frontend/**/*.{ts,tsx}
+alwaysApply: false
+---
+
+# Frontend (TypeScript / React)
+
+## Value objects and domain modeling
+
+- Prefer **named types** for domain values instead of bare primitives: branded types, readonly wrapper types, or small classes for IDs, amounts, and codes so accidental string/int mixing fails at compile time.
+- Mirror backend boundaries: if the API exposes a UUID or structured field, represent it with a type that encodes intent, not `string` everywhere.
+
+## Strict typing
+
+- Rely on **TypeScript strict mode**; do not use `any`. Use `unknown` and narrow, or explicit generics.
+- Type **component props**, **hooks**, **API responses**, and **event handlers** explicitly. Infer locally only when it stays obvious and stable.
+
+## API changes
+
+- When the backend **OpenAPI schema**, **API Platform resources**, or **JSON contracts** change, update the **frontend in the same change**: generated or hand-written API types, fetch/query layers, components, and tests must compile and behave against the new contract before the task is done.
+- Prefer a single source of truth for API types (e.g. generated from OpenAPI) and regenerate or adjust when the backend changes.

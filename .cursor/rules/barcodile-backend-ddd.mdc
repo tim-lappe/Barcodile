@@ -1,0 +1,34 @@
+---
+alwaysApply: true
+---
+# Backend (Domain-Driven Symfony)
+
+## Layers
+
+- **Application** (`Application/`): Routes, controllers, validation, session, Symfony-specific wiring (e.g. argument resolvers). Symfony dependencies are allowed here.
+- **Domain** (`Domain/`): Core business logic, as free of framework code as practical. The typical dependency is ORM/Doctrine; avoid pulling in additional framework libraries.
+- **Infrastructure** (`Infrastructure/`): Implementations of domain interfaces and technical details (persistence adapters, HTTP clients, external APIs).
+
+## Dependency direction
+
+- Only **Application → Domain ← Infrastructure**. Do not make Domain or Infrastructure depend on Application details; no reversed edges between layers.
+
+## Bounded contexts / domains
+
+- Each domain owns **its own entities**.
+- **No cross-context database joins** and **no Doctrine collections** across domain boundaries. Reference other contexts only via **IDs** (value objects / typed IDs), not as linked entity graphs.
+- Cross-domain collaboration happens **only through ports and adapters** (`Port/`, `Adapter/` within the relevant domains). **No other direct dependencies** between domains.
+
+## Identifiers
+
+- **No auto-increment integer IDs** as the primary-key model. Use **dedicated UUID value types** with matching **Doctrine custom types**.
+- Shared ID / base types live under **Domain Shared** and may be used by every domain.
+
+## API and frontend
+
+- **Never** serialize domain objects or pass them straight to the frontend.
+- The Application **always** maps to and from **its own request/response DTOs**. **No `mixed`**, **no loose associative arrays** as the public API shape; everything is explicitly typed.
+
+## Modeling
+
+- Prefer **value objects** wherever it makes sense; use **primitives** only in well-justified exceptions (document the domain reason).

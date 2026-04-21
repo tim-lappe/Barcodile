@@ -1,0 +1,81 @@
+parameters:
+    env(PICNIC_COUNTRY): NL
+    env(PICNIC_API_VERSION): '15'
+    env(PICNIC_URL): ''
+    env(PICNIC_AUTH_KEY): ''
+
+services:
+    _defaults:
+        autowire: true
+        autoconfigure: true
+
+    App\:
+        resource: '../src/'
+        exclude:
+            - '../src/Kernel.php'
+            - '../src/**/Dto/'
+            - '../src/Application/'
+
+    App\Application\:
+        resource: '../src/Application/'
+        exclude:
+            - '../src/Application/**/Dto/'
+        tags: ['controller.service_arguments']
+
+    AsyncAws\S3\S3Client:
+        factory: [ '@App\Infrastructure\Shared\ObjectStorage\SeaweedFsS3ClientFactory', 'create' ]
+
+    App\Infrastructure\Shared\ObjectStorage\SeaweedFsS3ClientFactory:
+        arguments:
+            $endpoint: '%env(S3_ENDPOINT)%'
+            $region: '%env(S3_REGION)%'
+            $accessKeyId: '%env(S3_ACCESS_KEY_ID)%'
+            $secretAccessKey: '%env(S3_ACCESS_KEY_SECRET)%'
+
+    App\Infrastructure\Shared\ObjectStorage\ObjectStorageClientInterface:
+        alias: App\Infrastructure\Shared\ObjectStorage\AsyncAwsS3ObjectStorageClient
+
+    app.storage.catalog_item_images_bucket:
+        class: App\Infrastructure\Shared\ObjectStorage\StorageBucket
+        arguments:
+            $name: '%env(S3_BUCKET)%'
+
+    App\Infrastructure\Catalog\Storage\CatalogItemImageStorage:
+        arguments:
+            $bucket: '@app.storage.catalog_item_images_bucket'
+
+    App\Infrastructure\Shared\Security\AppSecretStringCipher:
+        arguments:
+            $appSecret: '%kernel.secret%'
+
+    App\Domain\Cart\Port\CartProviderRegistry:
+        arguments:
+            $providers:
+                barcodile: '@App\Infrastructure\Cart\Integration\InternalCartProvider'
+                picnic: '@App\Domain\Picnic\Cart\PicnicCartProvider'
+
+    App\Infrastructure\Picnic\PicnicApiConfigFactory:
+        arguments:
+            $defaultCountry: '%env(string:PICNIC_COUNTRY)%'
+            $defaultApiVersion: '%env(string:PICNIC_API_VERSION)%'
+            $defaultAuthKey: '%env(string:PICNIC_AUTH_KEY)%'
+            $defaultUrl: '%env(string:PICNIC_URL)%'
+
+    App\Infrastructure\Picnic\PicnicApiConfig:
+        factory: [ '@App\Infrastructure\Picnic\PicnicApiConfigFactory', 'create' ]
+        shared: false
+
+    App\Infrastructure\Picnic\PicnicAuthState:
+        shared: false
+
+    App\Infrastructure\Picnic\PicnicClient:
+        shared: false
+
+    App\Domain\Picnic\Port\PicnicCartSessionPort:
+        alias: App\Infrastructure\Picnic\PicnicCartSessionAdapter
+
+    App\Domain\Picnic\Port\PicnicCatalogProductLookupPort:
+        alias: App\Infrastructure\Picnic\PicnicCatalogProductLookupAdapter
+
+    App\Domain\Scanner\Port\InputDeviceListingPort:
+        alias: App\Infrastructure\Scanner\LinuxInputDeviceByIdListingAdapter
