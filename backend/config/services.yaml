@@ -9,6 +9,10 @@ services:
         autowire: true
         autoconfigure: true
 
+    _instanceof:
+        Symfony\Bundle\FrameworkBundle\Controller\AbstractController:
+            tags: ['controller.service_arguments']
+
     App\:
         resource: '../src/'
         exclude:
@@ -20,7 +24,6 @@ services:
         resource: '../src/Application/'
         exclude:
             - '../src/Application/**/Dto/'
-        tags: ['controller.service_arguments']
 
     AsyncAws\S3\S3Client:
         factory: [ '@App\Infrastructure\Shared\ObjectStorage\SeaweedFsS3ClientFactory', 'create' ]

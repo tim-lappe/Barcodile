@@ -17,7 +17,11 @@ final class DeleteScannerDeviceController extends AbstractController
     ) {
     }
 
-    #[Route(path: '/api/scanner_devices/{scannerDeviceId}', methods: ['DELETE'])]
+    #[Route(
+        path: '/api/scanner_devices/{scannerDeviceId}',
+        methods: ['DELETE'],
+        requirements: ['scannerDeviceId' => '[0-9A-Fa-f]{8}-[0-9A-Fa-f]{4}-[0-9A-Fa-f]{4}-[0-9A-Fa-f]{4}-[0-9A-Fa-f]{12}'],
+    )]
     public function __invoke(string $scannerDeviceId): Response
     {
         $this->scannerDeviceApp->deleteScannerDevice(ScannerDeviceId::fromString($scannerDeviceId));
