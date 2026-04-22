@@ -1,6 +1,7 @@
 import LoginIcon from "@mui/icons-material/Login";
 import LogoutIcon from "@mui/icons-material/Logout";
 import PersonOutlinedIcon from "@mui/icons-material/PersonOutlined";
+import HistoryOutlinedIcon from "@mui/icons-material/HistoryOutlined";
 import SettingsOutlinedIcon from "@mui/icons-material/SettingsOutlined";
 import {
 	AppBar,
@@ -63,6 +64,7 @@ export function AdminLayout({ children }: AdminLayoutProps) {
 	const navigate = useNavigate();
 	const { pathname } = useLocation();
 	const activeNav = navKeyFromPath(pathname);
+	const activityLinkActive = pathname === "/activity" || pathname.startsWith("/activity/");
 
 	function goNav(key: AdminNavKey) {
 		if (key === "dashboard") {
@@ -190,6 +192,28 @@ export function AdminLayout({ children }: AdminLayoutProps) {
 					<Box sx={{ flexGrow: 1 }} />
 
 					<Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
+						<IconButton
+							color="inherit"
+							size="medium"
+							component={RouterLink}
+							to="/activity"
+							sx={{
+								color: activityLinkActive
+									? "common.white"
+									: "rgba(255,255,255,0.85)",
+								bgcolor: activityLinkActive
+									? "rgba(255,255,255,0.12)"
+									: "transparent",
+								"&:hover": {
+									bgcolor: activityLinkActive
+										? "rgba(255,255,255,0.16)"
+										: "rgba(255,255,255,0.08)",
+								},
+							}}
+							aria-label="Activity"
+						>
+							<HistoryOutlinedIcon />
+						</IconButton>
 						<IconButton
 							color="inherit"
 							size="medium"

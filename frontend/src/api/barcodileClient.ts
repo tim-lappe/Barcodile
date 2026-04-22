@@ -24,6 +24,7 @@ import type {
 	ShoppingCartLineId,
 	VolumeDto,
 	WeightDto,
+	ActivityListDto,
 } from "../domain/barcodile";
 import { readJsonArray } from "./collection";
 
@@ -843,4 +844,12 @@ export async function picnicRequestTwoFactorCode(body: {
 		);
 	}
 	return data;
+}
+
+export async function fetchActivity(): Promise<ActivityListDto> {
+	const res = await fetch("/api/activity", { headers: { Accept: "application/json" } });
+	if (!res.ok) {
+		throw new Error(await readErrorMessage(res));
+	}
+	return (await res.json()) as ActivityListDto;
 }
