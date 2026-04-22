@@ -4,7 +4,7 @@
 
 # Barcodile
 
-**Catalog, inventory, carts, and scanner devices** — Symfony API plus a React admin UI, with optional Picnic integration and S3-backed image storage.
+**Catalog, inventory, carts, and scanner devices** — Symfony API plus a React admin UI, with optional Picnic integration and local filesystem storage for catalog images.
 
 </div>
 
@@ -17,13 +17,13 @@
 | [PHP](https://www.php.net/) | **8.4+** | Extensions: `bcmath`, `ctype`, `iconv` |
 | [Composer](https://getcomposer.org/) | 2.x | Backend dependencies |
 | [Node.js](https://nodejs.org/) | **22** (recommended) | Frontend; LTS 20+ usually works |
-| [Docker](https://docs.docker.com/get-docker/) | recent | Optional; full stack with S3 (SeaweedFS) |
+| [Docker](https://docs.docker.com/get-docker/) | recent | Optional; full stack |
 
 ---
 
 ## Option A — Docker Compose (recommended)
 
-Runs backend, frontend dev server, SeaweedFS (S3-compatible), and bucket initialization.
+Runs backend and frontend dev server. Catalog images are stored under `backend/var/storage` (bind-mounted with the backend).
 
 ### 1. Backend environment
 
@@ -36,7 +36,7 @@ DATABASE_URL="sqlite:///%kernel.project_dir%/var/dev.db"
 CORS_ALLOW_ORIGIN=^https?://localhost(:[0-9]+)?$
 ```
 
-`docker-compose.yml` already injects `S3_*` variables into the backend container so object storage points at the bundled SeaweedFS service.
+`docker-compose.yml` sets `FILE_STORAGE_ROOT` and `FILE_STORAGE_BUCKET` for the backend container.
 
 ### 2. Start services
 
@@ -60,7 +60,6 @@ docker compose exec backend php bin/console doctrine:migrations:migrate --no-int
 |---------|-----|
 | Frontend (Vite) | [http://localhost:5173](http://localhost:5173) |
 | Backend (PHP built-in server) | [http://localhost:8000](http://localhost:8000) |
-| SeaweedFS S3 API | [http://localhost:8333](http://localhost:8333) |
 
 The frontend proxies `/api`, `/bundles`, and Symfony profiler paths to the backend (see `frontend/vite.config.ts`).
 
@@ -74,7 +73,7 @@ The frontend proxies `/api`, `/bundles`, and Symfony profiler paths to the backe
 
 ## Option B — Local PHP + Node (no Docker)
 
-Use this when you prefer native tooling. You still need an S3-compatible endpoint for image features (run only SeaweedFS via Compose, or point `S3_*` at another MinIO-compatible service).
+Use this when you prefer native tooling. Image storage uses `var/storage` under the backend project by default (see `config/services.yaml`).
 
 ### Backend
 
@@ -83,14 +82,11 @@ cd backend
 composer install
 ```
 
-Create `backend/.env.local` as in Option A. If you use Docker only for SeaweedFS, set:
+Create `backend/.env.local` as in Option A. Override paths only if needed:
 
 ```bash
-S3_ENDPOINT=http://127.0.0.1:8333
-S3_REGION=us-east-1
-S3_ACCESS_KEY_ID=dev
-S3_ACCESS_KEY_SECRET=devsecret
-S3_BUCKET=barcodile
+FILE_STORAGE_ROOT=/absolute/path/to/storage
+FILE_STORAGE_BUCKET=barcodile
 ```
 
 Apply schema:
@@ -112,7 +108,7 @@ Vite defaults to proxying the API to `http://127.0.0.1:8000`. Override with `DEV
 
 ### Convenience script
 
-From the repo root, `bin/dev.sh` starts the PHP server on port 8000 and then `npm run dev` in `frontend` (S3 and DB must already be configured).
+From the repo root, `bin/dev.sh` starts the PHP server on port 8000 and then `npm run dev` in `frontend` (database must already be configured).
 
 ---
 
@@ -125,8 +121,11 @@ Variables with defaults in `backend/config/services.yaml` can be omitted unless 
 | `APP_SECRET` | Symfony secret (encryption, CSRF); required |
 | `DATABASE_URL` | Doctrine connection (e.g. SQLite or PostgreSQL) |
 | `CORS_ALLOW_ORIGIN` | Regex allowed origins for the browser UI |
-| `S3_ENDPOINT`, `S3_REGION`, `S3_ACCESS_KEY_ID`, `S3_ACCESS_KEY_SECRET`, `S3_BUCKET` | Object storage for catalog images |
+| `FILE_STORAGE_ROOT` | Base directory for catalog images (default: `var/storage` under the backend project) |
+| `FILE_STORAGE_BUCKET` | Subdirectory name under `FILE_STORAGE_ROOT` (default: `barcodile`) |
 | `PICNIC_COUNTRY`, `PICNIC_API_VERSION`, `PICNIC_URL`, `PICNIC_AUTH_KEY` | Picnic grocery integration (optional) |
+
+Existing image blobs are not migrated automatically if you change storage backends; copy files manually or re-upload.
 
 ---
 
@@ -141,7 +140,7 @@ composer qa
 
 ## Production-shaped stack
 
-See `docker-compose.prod.yaml` and `Dockerfile.prod` for a consolidated production image and environment variables such as `DEFAULT_URI` and `DATABASE_URL`.
+See `docker-compose.prod.yaml` and `Dockerfile.prod` for a consolidated production image and environment variables such as `DEFAULT_URI` and `DATABASE_URL`. Production persists uploads on the `barcodile_var` volume under `/var/www/html/var` by default (`FILE_STORAGE_ROOT`).
 
 ---
 
