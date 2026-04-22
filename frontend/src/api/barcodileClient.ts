@@ -187,6 +187,37 @@ export async function fetchScannerDevices(): Promise<ScannerDeviceDto[]> {
 	return readJsonArray<ScannerDeviceDto>(data);
 }
 
+export async function fetchScannerDevice(
+	id: ScannerDeviceId,
+): Promise<ScannerDeviceDto> {
+	const res = await fetch(scannerDeviceIri(id), {
+		headers: { Accept: "application/json" },
+	});
+	if (!res.ok) {
+		throw new Error(await readErrorMessage(res));
+	}
+	return (await res.json()) as ScannerDeviceDto;
+}
+
+export async function patchScannerDeviceAutomations(
+	id: ScannerDeviceId,
+	body: {
+		automationAddInventoryOnEanScan: boolean;
+		automationCreateCatalogItemIfMissingForEan: boolean;
+		automationRemoveInventoryOnPublicCodeScan: boolean;
+	},
+): Promise<ScannerDeviceDto> {
+	const res = await fetch(scannerDeviceIri(id), {
+		method: "PATCH",
+		headers: JSON_HEADERS,
+		body: JSON.stringify(body),
+	});
+	if (!res.ok) {
+		throw new Error(await readErrorMessage(res));
+	}
+	return (await res.json()) as ScannerDeviceDto;
+}
+
 export async function fetchScannerDeviceInputOptions(): Promise<
 	InputDeviceOptionDto[]
 > {
@@ -527,7 +558,6 @@ export async function fetchInventoryItem(
 export async function createInventoryItem(input: {
 	catalogItemId: CatalogItemId;
 	locationId: LocationId | null;
-	quantity: string;
 	expirationDate: string | null;
 }): Promise<void> {
 	const res = await fetch("/api/inventory_items", {
@@ -536,7 +566,6 @@ export async function createInventoryItem(input: {
 		body: JSON.stringify({
 			catalogItem: catalogItemIri(input.catalogItemId),
 			...(input.locationId ? { location: locationIri(input.locationId) } : {}),
-			quantity: input.quantity,
 			...(input.expirationDate
 				? { expirationDate: input.expirationDate }
 				: { expirationDate: null }),
@@ -552,13 +581,11 @@ export async function updateInventoryItem(
 	input: {
 		catalogItemId: CatalogItemId;
 		locationId: LocationId | null;
-		quantity: string;
 		expirationDate: string | null;
 	},
 ): Promise<void> {
 	const body: Record<string, unknown> = {
 		catalogItem: catalogItemIri(input.catalogItemId),
-		quantity: input.quantity,
 	};
 	if (input.locationId === null) {
 		body.location = null;

@@ -52,16 +52,16 @@ const sectionPaperSx = {
 type FormState = {
 	catalogItemId: CatalogItemId;
 	locationId: LocationId | "";
-	quantity: string;
 	expirationDate: string;
+	publicCode: string | null;
 };
 
 function emptyForm(defaultTypeId: CatalogItemId): FormState {
 	return {
 		catalogItemId: defaultTypeId,
 		locationId: "",
-		quantity: "",
 		expirationDate: "",
+		publicCode: null,
 	};
 }
 
@@ -73,8 +73,8 @@ function dtoToForm(row: InventoryItemDto): FormState {
 	return {
 		catalogItemId: row.catalogItem.id,
 		locationId: row.location?.id ?? "",
-		quantity: row.quantity,
 		expirationDate: exp,
+		publicCode: row.publicCode,
 	};
 }
 
@@ -138,18 +138,8 @@ export function StockItemFormPage() {
 	async function submitForm() {
 		setFormError(null);
 		const catalogItemId = form.catalogItemId;
-		const quantity = form.quantity.trim();
 		if (!catalogItemId) {
 			setFormError("Select a catalog item.");
-			return;
-		}
-		if (!quantity) {
-			setFormError("Quantity is required.");
-			return;
-		}
-		const n = Number(quantity);
-		if (Number.isNaN(n) || n < 0) {
-			setFormError("Quantity must be a number zero or greater.");
 			return;
 		}
 		const locationId = form.locationId === "" ? null : form.locationId;
@@ -161,7 +151,6 @@ export function StockItemFormPage() {
 			const payload = {
 				catalogItemId,
 				locationId,
-				quantity,
 				expirationDate,
 			};
 			if (isEdit && idParam) {
@@ -272,11 +261,12 @@ export function StockItemFormPage() {
 				</IconButton>
 				<Box sx={{ minWidth: 0 }}>
 					<Typography variant="h5" sx={{ fontWeight: 700 }}>
-						{isEdit ? "Edit inventory line" : "New inventory line"}
+						{isEdit ? "Edit inventory unit" : "New inventory unit"}
 					</Typography>
 					<Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
-						Tie stock to a catalog item, optional storage location, and
-						structured attributes when you need more than quantity alone.
+						One form submission adds a single physical item. The server assigns
+						a numeric label code for barcodes or QR. Catalog item and location
+						describe what and where this unit is.
 					</Typography>
 				</Box>
 			</Box>
@@ -292,6 +282,26 @@ export function StockItemFormPage() {
 			)}
 
 			<Box sx={{ display: "flex", flexDirection: "column", gap: 2.5, mb: 10 }}>
+				{isEdit && form.publicCode != null ? (
+					<Paper elevation={0} sx={sectionPaperSx}>
+						<Typography variant="subtitle1" sx={{ fontWeight: 700, mb: 0.5 }}>
+							Label code
+						</Typography>
+						<Typography
+							variant="body2"
+							color="text.secondary"
+							sx={{ mb: 1.5 }}
+						>
+							Fixed when this unit was created; use for printing.
+						</Typography>
+						<Typography
+							variant="h6"
+							sx={{ fontFamily: "ui-monospace, monospace", fontWeight: 600 }}
+						>
+							{form.publicCode}
+						</Typography>
+					</Paper>
+				) : null}
 				<Paper elevation={0} sx={sectionPaperSx}>
 					<Typography variant="subtitle1" sx={{ fontWeight: 700, mb: 2 }}>
 						Catalog item
@@ -306,10 +316,10 @@ export function StockItemFormPage() {
 
 				<Paper elevation={0} sx={sectionPaperSx}>
 					<Typography variant="subtitle1" sx={{ fontWeight: 700, mb: 0.5 }}>
-						Location and quantity
+						Location
 					</Typography>
 					<Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-						Where the stock lives and how much is on hand for this row.
+						Where this physical unit is stored.
 					</Typography>
 					<Box
 						sx={{
@@ -348,16 +358,6 @@ export function StockItemFormPage() {
 							New location
 						</Button>
 					</Box>
-					<TextField
-						label="Quantity"
-						value={form.quantity}
-						onChange={(e) =>
-							setForm((f) => ({ ...f, quantity: e.target.value }))
-						}
-						required
-						fullWidth
-						slotProps={{ htmlInput: { inputMode: "decimal" } }}
-					/>
 				</Paper>
 
 				<Paper elevation={0} sx={sectionPaperSx}>
@@ -413,7 +413,7 @@ export function StockItemFormPage() {
 						onClick={() => void submitForm()}
 						disabled={saving}
 					>
-						{saving ? "Saving…" : isEdit ? "Save changes" : "Create item"}
+						{saving ? "Saving…" : isEdit ? "Save changes" : "Create unit"}
 					</Button>
 				</Box>
 			</Paper>
