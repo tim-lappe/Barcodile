@@ -8,6 +8,7 @@ import { SettingsLayout } from "./layout/SettingsLayout";
 import { CatalogItemFormPage } from "./pages/CatalogItemFormPage";
 import { CatalogItemsPage } from "./pages/CatalogItemsPage";
 import { DashboardPage } from "./pages/DashboardPage";
+import { ActivityPage } from "./pages/ActivityPage";
 import { DevicesPage } from "./pages/DevicesPage";
 import { LocationFormPage } from "./pages/LocationFormPage";
 import { LocationsPage } from "./pages/LocationsPage";
@@ -103,6 +104,7 @@ export default function App() {
 					<Route path="/carts/new" element={<ShoppingCartNewPage />} />
 					<Route path="/carts/:id" element={<ShoppingCartDetailPage />} />
 					<Route path="/devices" element={<DevicesPage />} />
+					<Route path="/activity" element={<ActivityPage />} />
 				</Routes>
 			</AdminLayout>
 		</PicnicConnectionProvider>

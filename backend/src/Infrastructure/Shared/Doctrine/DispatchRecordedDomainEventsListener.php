@@ -4,7 +4,11 @@ declare(strict_types=1);
 
 namespace App\Infrastructure\Shared\Doctrine;
 
+use App\Domain\Shared\Entity\PersistedDomainEvent;
+use App\Domain\Shared\Entity\PersistedDomainEventId;
 use App\Domain\Shared\RecordsDomainEvents;
+use App\Infrastructure\Shared\DomainEvent\DomainEventPersistedPayloadBuilder;
+use DateTimeImmutable;
 use Doctrine\Bundle\DoctrineBundle\Attribute\AsDoctrineListener;
 use Doctrine\ORM\Event\OnFlushEventArgs;
 use Doctrine\ORM\Event\PostFlushEventArgs;
@@ -20,6 +24,7 @@ final class DispatchRecordedDomainEventsListener
 
     public function __construct(
         private EventDispatcherInterface $eventDispatcher,
+        private DomainEventPersistedPayloadBuilder $domainEventPayloadBuilder,
     ) {
     }
 
@@ -41,16 +46,28 @@ final class DispatchRecordedDomainEventsListener
 
     public function postFlush(PostFlushEventArgs $args): void
     {
-        $args->getObjectManager();
         if ([] === $this->pendingEntities) {
             return;
         }
         $batch = $this->pendingEntities;
         $this->pendingEntities = [];
+        $objectManager = $args->getObjectManager();
+        $wrote = false;
         foreach ($batch as $entity) {
             foreach ($entity->pullRecordedDomainEvents() as $domainEvent) {
                 $this->eventDispatcher->dispatch($domainEvent);
+                $objectManager->persist(
+                    new PersistedDomainEvent(
+                        new PersistedDomainEventId(),
+                        $this->domainEventPayloadBuilder->build($domainEvent),
+                        new DateTimeImmutable(),
+                    ),
+                );
+                $wrote = true;
             }
+        }
+        if ($wrote) {
+            $objectManager->flush();
         }
     }
 }

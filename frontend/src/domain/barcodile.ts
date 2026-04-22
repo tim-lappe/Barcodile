@@ -67,6 +67,7 @@ export type ScannerDeviceDto = {
 	id: ScannerDeviceId;
 	deviceIdentifier: string;
 	name: string;
+	lastScannedCodes: string[];
 };
 
 export type InputDeviceOptionDto = {
@@ -265,3 +266,14 @@ export type PicnicLoginResponse =
 			ok: false;
 			message: string;
 	  };
+
+export type PersistedDomainEventItemDto = {
+	id: string;
+	eventClass: string;
+	data: unknown;
+	createdAt: string;
+};
+
+export type ActivityListDto = {
+	items: PersistedDomainEventItemDto[];
+};
