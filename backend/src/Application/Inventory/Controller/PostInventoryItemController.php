@@ -26,7 +26,6 @@ final class PostInventoryItemController extends AbstractController
     public function __invoke(#[MapRequestPayload] PostInventoryItemRequest $request): Response
     {
         $catalogId = CatalogItemId::fromString(ApiIri::tailAfterPrefix(ApiIri::PREFIX_CATALOG_ITEM, $request->catalogItem));
-        $quantity = $request->quantity;
         $locationId = null;
         if (null !== $request->location) {
             $locationId = LocationId::fromString(ApiIri::tailAfterPrefix(ApiIri::PREFIX_LOCATION, $request->location));
@@ -35,7 +34,7 @@ final class PostInventoryItemController extends AbstractController
         if (null !== $request->expirationDate) {
             $expiration = new DateTimeImmutable($request->expirationDate);
         }
-        $this->inventoryItemSvc->createInventoryItem($catalogId, $locationId, $quantity, $expiration);
+        $this->inventoryItemSvc->createInventoryItem($catalogId, $locationId, $expiration);
 
         return new Response('', Response::HTTP_NO_CONTENT);
     }

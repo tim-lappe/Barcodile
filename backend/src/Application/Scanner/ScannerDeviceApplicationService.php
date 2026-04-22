@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Application\Scanner;
 
 use App\Application\Scanner\Dto\InputDeviceOptionResponse;
+use App\Application\Scanner\Dto\PatchScannerDeviceAutomationsRequest;
 use App\Application\Scanner\Dto\ScannerDeviceResponse;
 use App\Domain\Scanner\Entity\ScannerDevice;
 use App\Domain\Scanner\Entity\ScannerDeviceId;
@@ -65,6 +66,34 @@ final readonly class ScannerDeviceApplicationService
         $this->scannerDeviceRepository->remove($device);
     }
 
+    public function getScannerDevice(ScannerDeviceId $scannerDeviceId): ScannerDeviceResponse
+    {
+        $device = $this->scannerDeviceRepository->find($scannerDeviceId);
+        if (!$device instanceof ScannerDevice) {
+            throw new NotFoundHttpException('Scanner device not found.');
+        }
+
+        return $this->map($device);
+    }
+
+    public function patchScannerDeviceAutomations(
+        ScannerDeviceId $scannerDeviceId,
+        PatchScannerDeviceAutomationsRequest $request,
+    ): ScannerDeviceResponse {
+        $device = $this->scannerDeviceRepository->find($scannerDeviceId);
+        if (!$device instanceof ScannerDevice) {
+            throw new NotFoundHttpException('Scanner device not found.');
+        }
+        $device->changeAutomationAddInventoryOnEanScan($request->automationAddInventoryOnEanScan);
+        if ($device->isAutomationAddInventoryOnEanScan()) {
+            $device->changeAutomationCreateCatalogItemIfMissingForEan($request->automationCreateCatalogItemIfMissingForEan);
+        }
+        $device->changeAutomationRemoveInventoryOnPublicCodeScan($request->automationRemoveInventoryOnPublicCodeScan);
+        $this->scannerDeviceRepository->save($device);
+
+        return $this->map($device);
+    }
+
     private function map(ScannerDevice $device): ScannerDeviceResponse
     {
         return new ScannerDeviceResponse(
@@ -72,6 +101,9 @@ final readonly class ScannerDeviceApplicationService
             $device->getDeviceIdentifier(),
             $device->getName(),
             $device->getLastScannedCodes(),
+            $device->isAutomationAddInventoryOnEanScan(),
+            $device->isAutomationCreateCatalogItemIfMissingForEan(),
+            $device->isAutomationRemoveInventoryOnPublicCodeScan(),
         );
     }
 }

@@ -44,6 +44,18 @@ class ScannerDevice implements RecordsDomainEvents
     #[ORM\Column(type: 'json', nullable: true)]
     private ?array $lastScannedCodes = null;
 
+    #[Groups(['scanner_device:read', 'scanner_device:write'])]
+    #[ORM\Column(options: ['default' => false])]
+    private bool $automationAddInventoryOnEanScan = false;
+
+    #[Groups(['scanner_device:read', 'scanner_device:write'])]
+    #[ORM\Column(options: ['default' => false])]
+    private bool $automationCreateCatalogItemIfMissingForEan = false;
+
+    #[Groups(['scanner_device:read', 'scanner_device:write'])]
+    #[ORM\Column(options: ['default' => false])]
+    private bool $automationRemoveInventoryOnPublicCodeScan = false;
+
     public function __construct()
     {
         $this->scannerDeviceId = new ScannerDeviceId();
@@ -95,5 +107,44 @@ class ScannerDevice implements RecordsDomainEvents
         }
         $this->lastScannedCodes = $codes;
         $this->recordDomainEvent(new CodeScanned($this->scannerDeviceId, $text));
+    }
+
+    public function isAutomationAddInventoryOnEanScan(): bool
+    {
+        return $this->automationAddInventoryOnEanScan;
+    }
+
+    public function changeAutomationAddInventoryOnEanScan(bool $enabled): static
+    {
+        $this->automationAddInventoryOnEanScan = $enabled;
+        if (!$enabled) {
+            $this->automationCreateCatalogItemIfMissingForEan = false;
+        }
+
+        return $this;
+    }
+
+    public function isAutomationCreateCatalogItemIfMissingForEan(): bool
+    {
+        return $this->automationCreateCatalogItemIfMissingForEan;
+    }
+
+    public function changeAutomationCreateCatalogItemIfMissingForEan(bool $enabled): static
+    {
+        $this->automationCreateCatalogItemIfMissingForEan = $enabled;
+
+        return $this;
+    }
+
+    public function isAutomationRemoveInventoryOnPublicCodeScan(): bool
+    {
+        return $this->automationRemoveInventoryOnPublicCodeScan;
+    }
+
+    public function changeAutomationRemoveInventoryOnPublicCodeScan(bool $enabled): static
+    {
+        $this->automationRemoveInventoryOnPublicCodeScan = $enabled;
+
+        return $this;
     }
 }

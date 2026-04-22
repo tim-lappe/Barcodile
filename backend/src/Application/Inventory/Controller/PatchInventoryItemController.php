@@ -27,7 +27,6 @@ final class PatchInventoryItemController extends AbstractController
     public function __invoke(string $inventoryItemId, #[MapRequestPayload] PatchInventoryItemRequest $request): Response
     {
         $catalogId = CatalogItemId::fromString(ApiIri::tailAfterPrefix(ApiIri::PREFIX_CATALOG_ITEM, $request->catalogItem));
-        $quantity = $request->quantity;
         $locationId = null;
         if (null !== $request->location) {
             $locationId = LocationId::fromString(ApiIri::tailAfterPrefix(ApiIri::PREFIX_LOCATION, $request->location));
@@ -40,7 +39,6 @@ final class PatchInventoryItemController extends AbstractController
             InventoryItemId::fromString($inventoryItemId),
             $catalogId,
             $locationId,
-            $quantity,
             $expiration,
         );
 

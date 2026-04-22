@@ -9,6 +9,7 @@ use App\Domain\Inventory\Entity\InventoryItem;
 use App\Infrastructure\Catalog\Doctrine\CatalogItemIdType;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\Persistence\ManagerRegistry;
+use LogicException;
 
 /**
  * @extends ServiceEntityRepository<InventoryItem>
@@ -51,17 +52,43 @@ final class InventoryItemRepository extends ServiceEntityRepository
         $this->getEntityManager()->flush();
     }
 
-    public function sumQuantityForCatalogItem(CatalogItemId $catalogItemId): string
+    public function findOneByPublicCode(string $publicCode): ?InventoryItem
+    {
+        return $this->findOneBy(['publicCode' => $publicCode]);
+    }
+
+    public function countForCatalogItem(CatalogItemId $catalogItemId): int
     {
         $queryBuilder = $this->createQueryBuilder('i')
-            ->select('SUM(i.quantity)')
+            ->select('COUNT(i.inventoryItemId)')
             ->andWhere('i.catalogItem = :cid')
             ->setParameter('cid', $catalogItemId, CatalogItemIdType::NAME);
         $raw = $queryBuilder->getQuery()->getSingleScalarResult();
-        if (null === $raw) {
-            return '0';
+
+        return is_numeric($raw) ? (int) $raw : 0;
+    }
+
+    public function allocateNextPublicCode(): string
+    {
+        for ($attempt = 0; $attempt < 64; ++$attempt) {
+            $code = (string) random_int(10_000, 99_999);
+            if (!$this->publicCodeIsTaken($code)) {
+                return $code;
+            }
         }
 
-        return is_numeric($raw) ? (string) $raw : '0';
+        throw new LogicException('Could not allocate a unique public code.');
+    }
+
+    private function publicCodeIsTaken(string $code): bool
+    {
+        $raw = $this->createQueryBuilder('i')
+            ->select('COUNT(i.inventoryItemId)')
+            ->andWhere('i.publicCode = :code')
+            ->setParameter('code', $code)
+            ->getQuery()
+            ->getSingleScalarResult();
+
+        return ((int) $raw) > 0;
     }
 }

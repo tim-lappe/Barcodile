@@ -64,18 +64,18 @@ final readonly class InventoryItemApplicationService
     public function createInventoryItem(
         CatalogItemId $catalogItemId,
         ?LocationId $locationId,
-        string $quantity,
         ?DateTimeInterface $expirationDate,
     ): void {
+        $publicCode = $this->inventoryItemRepo->allocateNextPublicCode();
         $catalog = $this->catalogItemRepositoryFind($catalogItemId);
         $loc = null;
         if (null !== $locationId) {
             $loc = $this->locationRepositoryFind($locationId);
         }
         $item = new InventoryItem();
+        $item->assignPublicCode($publicCode);
         $item->changeCatalogItem($catalog);
         $item->changeLocation($loc);
-        $item->changeQuantity($quantity);
         $item->changeExpirationDate($expirationDate);
         $this->inventoryItemRepo->save($item);
     }
@@ -84,7 +84,6 @@ final readonly class InventoryItemApplicationService
         InventoryItemId $inventoryItemId,
         CatalogItemId $catalogItemId,
         ?LocationId $locationId,
-        string $quantity,
         ?DateTimeInterface $expirationDate,
     ): void {
         $item = $this->inventoryItemRepo->find($inventoryItemId);
@@ -98,7 +97,6 @@ final readonly class InventoryItemApplicationService
         }
         $item->changeCatalogItem($catalog);
         $item->changeLocation($loc);
-        $item->changeQuantity($quantity);
         $item->changeExpirationDate($expirationDate);
         $this->inventoryItemRepo->save($item);
     }
@@ -125,9 +123,9 @@ final readonly class InventoryItemApplicationService
 
         return new InventoryItemResponse(
             (string) $item->getId(),
+            $item->getPublicCode(),
             $catDto,
             $locDto,
-            $item->getQuantity(),
             null === $exp ? null : $exp->format(DateTimeInterface::ATOM),
             $item->getCreatedAt()->format(DateTimeInterface::ATOM),
         );
