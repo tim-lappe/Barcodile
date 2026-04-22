@@ -5,8 +5,9 @@ declare(strict_types=1);
 namespace App\Application\Scanner\Command;
 
 use App\Domain\Scanner\Entity\ScannerDevice;
+use App\Domain\Scanner\Input\ScannerInputReceiver;
 use App\Domain\Scanner\Repository\ScannerDeviceRepository;
-use App\Infrastructure\Scanner\EvdevConsoleLineFormatter;
+use App\Infrastructure\Scanner\EvdevKeyScanLineAccumulator;
 use Symfony\Component\Console\Attribute\AsCommand;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputInterface;
@@ -15,12 +16,13 @@ use Symfony\Component\Console\Style\SymfonyStyle;
 
 #[AsCommand(
     name: 'scanner:listen',
-    description: 'Open all configured scanner devices and print evdev events to stdout (Linux).',
+    description: 'Read keyboard-wedge scanner input from configured evdev devices, print each scan, and record it like scanner:simulate (Linux).',
 )]
 final class ListenScannerDevicesCommand extends Command
 {
     public function __construct(
         private readonly ScannerDeviceRepository $scannerDeviceRepository,
+        private readonly ScannerInputReceiver $scannerInputReceiver,
     ) {
         parent::__construct();
     }
@@ -49,6 +51,7 @@ final class ListenScannerDevicesCommand extends Command
                 'handle' => $handle,
                 'device' => $device,
                 'buffer' => '',
+                'keys' => new EvdevKeyScanLineAccumulator(),
             ];
         }
 
@@ -84,7 +87,7 @@ final class ListenScannerDevicesCommand extends Command
                 while (\strlen($state[$i]['buffer']) >= 24) {
                     $event = substr($state[$i]['buffer'], 0, 24);
                     $state[$i]['buffer'] = substr($state[$i]['buffer'], 24);
-                    $this->printEvent($io, $s['device'], $event);
+                    $this->processEvent($io, $s['device'], $s['keys'], $event);
                 }
             }
         }
@@ -98,18 +101,26 @@ final class ListenScannerDevicesCommand extends Command
         return Command::SUCCESS;
     }
 
-    private function printEvent(SymfonyStyle $io, ScannerDevice $device, string $event): void
-    {
+    private function processEvent(
+        SymfonyStyle $io,
+        ScannerDevice $device,
+        EvdevKeyScanLineAccumulator $keys,
+        string $event,
+    ): void {
         $parts = unpack('qsec/qusec/vtype/vcode/lvalue', $event);
         if (!\is_array($parts) || !isset($parts['type'], $parts['code'], $parts['value'])) {
             return;
         }
-        $io->writeln(EvdevConsoleLineFormatter::formatLine(
-            $device,
+        $done = $keys->process(
             $this->intFromUnpack($parts['type']),
             $this->intFromUnpack($parts['code']),
             $this->intFromUnpack($parts['value']),
-        ));
+        );
+        if (null === $done || '' === $done) {
+            return;
+        }
+        $io->writeln($done);
+        $this->scannerInputReceiver->receiveInput($device->getId(), $done);
     }
 
     private function intFromUnpack(mixed $v): int
