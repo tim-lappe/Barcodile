@@ -1,4 +1,6 @@
 parameters:
+    env(FILE_STORAGE_ROOT): '%kernel.project_dir%/var/storage'
+    env(FILE_STORAGE_BUCKET): barcodile
     env(PICNIC_COUNTRY): NL
     env(PICNIC_API_VERSION): '15'
     env(PICNIC_URL): ''
@@ -25,23 +27,17 @@ services:
         exclude:
             - '../src/Application/**/Dto/'
 
-    AsyncAws\S3\S3Client:
-        factory: [ '@App\Infrastructure\Shared\ObjectStorage\SeaweedFsS3ClientFactory', 'create' ]
-
-    App\Infrastructure\Shared\ObjectStorage\SeaweedFsS3ClientFactory:
+    App\Infrastructure\Shared\ObjectStorage\LocalFilesystemObjectStorageClient:
         arguments:
-            $endpoint: '%env(S3_ENDPOINT)%'
-            $region: '%env(S3_REGION)%'
-            $accessKeyId: '%env(S3_ACCESS_KEY_ID)%'
-            $secretAccessKey: '%env(S3_ACCESS_KEY_SECRET)%'
+            $rootDirectory: '%env(FILE_STORAGE_ROOT)%'
 
     App\Infrastructure\Shared\ObjectStorage\ObjectStorageClientInterface:
-        alias: App\Infrastructure\Shared\ObjectStorage\AsyncAwsS3ObjectStorageClient
+        alias: App\Infrastructure\Shared\ObjectStorage\LocalFilesystemObjectStorageClient
 
     app.storage.catalog_item_images_bucket:
         class: App\Infrastructure\Shared\ObjectStorage\StorageBucket
         arguments:
-            $name: '%env(S3_BUCKET)%'
+            $name: '%env(FILE_STORAGE_BUCKET)%'
 
     App\Infrastructure\Catalog\Storage\CatalogItemImageStorage:
         arguments:
