@@ -1,8 +1,8 @@
 services:
   backend:
     build:
-      context: ./backend
-      dockerfile: Dockerfile
+      context: .
+      dockerfile: backend/Dockerfile
     working_dir: /var/www/html
     volumes:
       - ./backend:/var/www/html
@@ -11,9 +11,6 @@ services:
     environment:
       FILE_STORAGE_ROOT: /var/www/html/var/storage
       FILE_STORAGE_BUCKET: barcodile
-    devices:
-      - /dev/input:/dev/input
-    command: ["php", "-S", "0.0.0.0:8000", "-t", "public"]
 
   frontend:
     image: node:22-bookworm-slim

@@ -47,11 +47,15 @@ COPY docker/prod/nginx-site.conf /etc/nginx/sites-available/barcodile
 RUN rm -f /etc/nginx/sites-enabled/default \
     && ln -sf /etc/nginx/sites-available/barcodile /etc/nginx/sites-enabled/barcodile
 
-RUN mkdir -p /var/log/supervisor \
+RUN mkdir -p /var/log/supervisor /etc/supervisor/conf.d \
     && mkdir -p var/cache var/log var/share \
     && chown -R www-data:www-data var
 
-COPY docker/prod/supervisord.conf /etc/supervisord.conf
+COPY docker/supervisor/supervisord.conf /etc/supervisord.conf
+COPY docker/supervisor/conf.d/php-fpm.conf \
+     docker/supervisor/conf.d/nginx.conf \
+     docker/supervisor/conf.d/scanner-listen.conf \
+     /etc/supervisor/conf.d/
 COPY docker/prod/entrypoint.sh /usr/local/bin/entrypoint.sh
 RUN chmod +x /usr/local/bin/entrypoint.sh
 
