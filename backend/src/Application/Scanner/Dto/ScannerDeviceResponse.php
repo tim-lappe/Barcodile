@@ -17,6 +17,9 @@ final readonly class ScannerDeviceResponse
         public string $deviceIdentifier,
         public string $name,
         public array $lastScannedCodes,
+        public bool $automationAddInventoryOnEanScan,
+        public bool $automationCreateCatalogItemIfMissingForEan,
+        public bool $automationRemoveInventoryOnPublicCodeScan,
     ) {
     }
 }

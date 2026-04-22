@@ -13,9 +13,9 @@ final readonly class InventoryItemResponse
     public function __construct(
         #[SerializedName('id')]
         public string $resourceId,
+        public string $publicCode,
         public CatalogItemResponse $catalogItem,
         public ?LocationResponse $location,
-        public string $quantity,
         public ?string $expirationDate,
         public string $createdAt,
     ) {

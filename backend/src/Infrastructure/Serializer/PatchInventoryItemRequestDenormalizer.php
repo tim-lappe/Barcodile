@@ -44,7 +44,6 @@ final class PatchInventoryItemRequestDenormalizer implements DenormalizerInterfa
     {
         return new PatchInventoryItemRequest(
             $this->requireStringField($data, 'catalogItem', 'Field catalogItem must be a string.'),
-            $this->requireStringField($data, 'quantity', 'Field quantity must be a string.'),
             $this->readOptionalLocationIri($data),
             $this->readOptionalExpirationDate($data),
         );

@@ -25,6 +25,7 @@ import {
 	Typography,
 } from "@mui/material";
 import { useCallback, useEffect, useState } from "react";
+import { Link as RouterLink } from "react-router-dom";
 import {
 	deleteScannerDevice,
 	fetchScannerDeviceInputOptions,
@@ -201,7 +202,18 @@ export function DevicesPage() {
 						<TableBody>
 							{rows.map((row) => (
 								<TableRow key={row.id} hover>
-									<TableCell>{row.name}</TableCell>
+									<TableCell>
+										<RouterLink
+											to={`/devices/${row.id}`}
+											style={{
+												color: "inherit",
+												fontWeight: 600,
+												textDecoration: "none",
+											}}
+										>
+											{row.name}
+										</RouterLink>
+									</TableCell>
 									<TableCell
 										sx={{
 											color: "text.secondary",

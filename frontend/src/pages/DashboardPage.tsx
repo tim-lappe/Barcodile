@@ -11,11 +11,6 @@ const shellSx = {
 	mx: "auto",
 } as const;
 
-function parseAmount(raw: string): number {
-	const n = Number.parseFloat(raw);
-	return Number.isFinite(n) ? n : 0;
-}
-
 function formatQty(n: number): string {
 	if (Number.isInteger(n)) {
 		return String(n);
@@ -106,10 +101,7 @@ export function DashboardPage({
 		(t) => !typeIdsWithStock.has(t.id),
 	);
 
-	const totalQuantity = inventoryItems.reduce(
-		(sum, row) => sum + parseAmount(row.quantity),
-		0,
-	);
+	const physicalUnits = inventoryItems.length;
 
 	return (
 		<Box sx={shellSx}>
@@ -170,9 +162,9 @@ export function DashboardPage({
 						}
 					/>
 					<StatCard
-						label="Total quantity"
-						value={formatQty(totalQuantity)}
-						hint="Sum across inventory rows"
+						label="Physical units"
+						value={formatQty(physicalUnits)}
+						hint="One row per physical item in stock"
 						icon={<CalculateOutlinedIcon />}
 						iconBg="info.main"
 					/>

@@ -68,6 +68,9 @@ export type ScannerDeviceDto = {
 	deviceIdentifier: string;
 	name: string;
 	lastScannedCodes: string[];
+	automationAddInventoryOnEanScan: boolean;
+	automationCreateCatalogItemIfMissingForEan: boolean;
+	automationRemoveInventoryOnPublicCodeScan: boolean;
 };
 
 export type InputDeviceOptionDto = {
@@ -162,9 +165,9 @@ export type CatalogItemDto = {
 
 export type InventoryItemDto = {
 	id: InventoryItemId;
+	publicCode: string;
 	catalogItem: CatalogItemDto;
 	location: LocationDto | null;
-	quantity: string;
 	expirationDate?: string | null;
 	createdAt: string;
 };

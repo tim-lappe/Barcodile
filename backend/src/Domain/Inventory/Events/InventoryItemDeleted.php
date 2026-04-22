@@ -12,7 +12,6 @@ final readonly class InventoryItemDeleted
     public function __construct(
         public InventoryItemId $inventoryItemId,
         public CatalogItemId $catalogItemId,
-        public string $lastQuantity,
     ) {
     }
 }

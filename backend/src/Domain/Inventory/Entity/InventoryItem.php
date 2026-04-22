@@ -10,13 +10,13 @@ use App\Domain\Inventory\Events\InventoryItemCreated;
 use App\Domain\Inventory\Events\InventoryItemDeleted;
 use App\Domain\Inventory\Events\InventoryItemExpirationDateChanged;
 use App\Domain\Inventory\Events\InventoryItemLocationChanged;
-use App\Domain\Inventory\Events\InventoryItemQuantityChanged;
 use App\Domain\Inventory\Repository\InventoryItemRepository;
 use App\Domain\Shared\DomainEventRecorder;
 use App\Domain\Shared\RecordsDomainEvents;
 use DateTimeImmutable;
 use DateTimeInterface;
 use Doctrine\ORM\Mapping as ORM;
+use LogicException;
 use Symfony\Component\Serializer\Attribute\Groups;
 use Symfony\Component\Validator\Constraints as Assert;
 
@@ -32,6 +32,12 @@ class InventoryItem implements RecordsDomainEvents
     #[ORM\Column(type: 'inventory_item_id', unique: true)]
     private InventoryItemId $inventoryItemId;
 
+    #[Groups(['inventory_item:read'])]
+    #[ORM\Column(length: 32, unique: true)]
+    #[Assert\NotBlank]
+    #[Assert\Regex(pattern: '/^\d+$/')]
+    private string $publicCode = '';
+
     #[Groups(['inventory_item:read', 'inventory_item:write'])]
     #[ORM\ManyToOne]
     #[ORM\JoinColumn(name: 'item_type_id', referencedColumnName: 'catalog_item_id', nullable: false, onDelete: 'CASCADE')]
@@ -42,12 +48,6 @@ class InventoryItem implements RecordsDomainEvents
     #[ORM\ManyToOne]
     #[ORM\JoinColumn(referencedColumnName: 'location_id', onDelete: 'SET NULL')]
     private ?Location $location = null;
-
-    #[Groups(['inventory_item:read', 'inventory_item:write'])]
-    #[ORM\Column(type: 'decimal', precision: 12, scale: 4)]
-    #[Assert\NotBlank]
-    #[Assert\PositiveOrZero]
-    private string $quantity = '1';
 
     #[Groups(['inventory_item:read', 'inventory_item:write'])]
     #[ORM\Column(type: 'datetime', nullable: true)]
@@ -64,9 +64,25 @@ class InventoryItem implements RecordsDomainEvents
         $this->recordDomainEvent(new InventoryItemCreated($this));
     }
 
+    public function assignPublicCode(string $publicCode): void
+    {
+        if ('' !== $this->publicCode) {
+            throw new LogicException('Public code already assigned.');
+        }
+        if (!preg_match('/^\d+$/', $publicCode)) {
+            throw new LogicException('Public code must contain digits only.');
+        }
+        $this->publicCode = $publicCode;
+    }
+
     public function getId(): InventoryItemId
     {
         return $this->inventoryItemId;
+    }
+
+    public function getPublicCode(): string
+    {
+        return $this->publicCode;
     }
 
     public function getCatalogItem(): ?CatalogItem
@@ -103,23 +119,6 @@ class InventoryItem implements RecordsDomainEvents
         return $this;
     }
 
-    public function getQuantity(): string
-    {
-        return $this->quantity;
-    }
-
-    public function changeQuantity(string $quantity): static
-    {
-        if ($this->quantity === $quantity) {
-            return $this;
-        }
-        $previous = $this->quantity;
-        $this->quantity = $quantity;
-        $this->recordDomainEvent(new InventoryItemQuantityChanged($this, $previous, $quantity));
-
-        return $this;
-    }
-
     public function getExpirationDate(): ?DateTimeInterface
     {
         return $this->expirationDate;
@@ -147,7 +146,7 @@ class InventoryItem implements RecordsDomainEvents
     {
         $catalogId = $this->catalogItem?->getId();
         if (null !== $catalogId) {
-            $this->recordDomainEvent(new InventoryItemDeleted($this->inventoryItemId, $catalogId, $this->quantity));
+            $this->recordDomainEvent(new InventoryItemDeleted($this->inventoryItemId, $catalogId));
         }
     }
 

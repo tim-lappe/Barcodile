@@ -119,8 +119,8 @@ export function StockPage() {
 				</Button>
 			</Box>
 			<Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-				Physical stock lines: quantity, where they live, and optional
-				best-before dates. Use the editor for detailed entry.
+				Each row is one physical unit: label code, catalog type, location, and
+				optional best-before. Use the editor to add or adjust units.
 			</Typography>
 			{!canCreate && !loading && (
 				<Alert severity="info" sx={{ mb: 2 }}>
@@ -152,9 +152,7 @@ export function StockPage() {
 								<TableCell sx={{ fontWeight: 700 }}>Type</TableCell>
 								<TableCell sx={{ fontWeight: 700 }}>Barcode</TableCell>
 								<TableCell sx={{ fontWeight: 700 }}>Location</TableCell>
-								<TableCell sx={{ fontWeight: 700 }} align="right">
-									Quantity
-								</TableCell>
+								<TableCell sx={{ fontWeight: 700 }}>Label code</TableCell>
 								<TableCell align="right" sx={{ fontWeight: 700, width: 120 }}>
 									Actions
 								</TableCell>
@@ -173,7 +171,13 @@ export function StockPage() {
 										{barcodeLabel(row.catalogItem.id) || "—"}
 									</TableCell>
 									<TableCell>{row.location?.name ?? "—"}</TableCell>
-									<TableCell align="right">{row.quantity}</TableCell>
+									<TableCell
+										sx={{
+											fontFamily: "ui-monospace, monospace",
+										}}
+									>
+										{row.publicCode}
+									</TableCell>
 									<TableCell align="right">
 										<IconButton
 											aria-label={`Edit ${row.catalogItem.name}`}
@@ -196,7 +200,7 @@ export function StockPage() {
 							))}
 							{rows.length === 0 && (
 								<TableRow>
-									<TableCell colSpan={6}>
+									<TableCell colSpan={5}>
 										<Typography variant="body2" color="text.secondary">
 											No inventory rows yet.
 										</Typography>
@@ -218,9 +222,9 @@ export function StockPage() {
 				<DialogTitle>Delete inventory item</DialogTitle>
 				<DialogContent>
 					<Typography variant="body2">
-						Remove this row for{" "}
-						<strong>{deleteTarget?.catalogItem.name}</strong> (quantity{" "}
-						{deleteTarget?.quantity})?
+						Remove this unit for{" "}
+						<strong>{deleteTarget?.catalogItem.name}</strong> (label code{" "}
+						{deleteTarget?.publicCode})?
 					</Typography>
 				</DialogContent>
 				<DialogActions sx={{ px: 3, pb: 2 }}>
