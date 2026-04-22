@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace App\Command;
+namespace App\Application\Scanner\Command;
 
 use App\Domain\Scanner\Entity\ScannerDevice;
 use App\Domain\Scanner\Repository\ScannerDeviceRepository;
@@ -14,7 +14,7 @@ use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Console\Style\SymfonyStyle;
 
 #[AsCommand(
-    name: 'scanner-devices:listen',
+    name: 'scanner:listen',
     description: 'Open all configured scanner devices and print evdev events to stdout (Linux).',
 )]
 final class ListenScannerDevicesCommand extends Command

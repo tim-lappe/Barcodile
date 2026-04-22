@@ -71,6 +71,7 @@ final readonly class ScannerDeviceApplicationService
             (string) $device->getId(),
             $device->getDeviceIdentifier(),
             $device->getName(),
+            $device->getLastScannedCodes(),
         );
     }
 }

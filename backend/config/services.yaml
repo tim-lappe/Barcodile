@@ -80,5 +80,9 @@ services:
     App\Domain\Picnic\Port\PicnicCatalogProductLookupPort:
         alias: App\Infrastructure\Picnic\PicnicCatalogProductLookupAdapter
 
+    App\Infrastructure\Scanner\LinuxInputDeviceByIdListingAdapter:
+        arguments:
+            $environment: '%kernel.environment%'
+
     App\Domain\Scanner\Port\InputDeviceListingPort:
         alias: App\Infrastructure\Scanner\LinuxInputDeviceByIdListingAdapter

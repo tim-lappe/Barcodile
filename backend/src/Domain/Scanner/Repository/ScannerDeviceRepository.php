@@ -29,6 +29,23 @@ final class ScannerDeviceRepository extends ServiceEntityRepository
             ->getResult();
     }
 
+    public function findByDeviceIdentifier(string $deviceIdentifier): ?ScannerDevice
+    {
+        $result = $this->createQueryBuilder('s')
+            ->where('s.deviceIdentifier = :deviceIdentifier')
+            ->setParameter('deviceIdentifier', $deviceIdentifier)
+            ->getQuery()
+            ->getOneOrNullResult();
+        if (null === $result) {
+            return null;
+        }
+        if (!$result instanceof ScannerDevice) {
+            throw new \LogicException('Expected ScannerDevice from device identifier query.');
+        }
+
+        return $result;
+    }
+
     public function save(ScannerDevice $scannerDevice): void
     {
         $entityManager = $this->getEntityManager();

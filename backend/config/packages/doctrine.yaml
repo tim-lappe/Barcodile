@@ -22,6 +22,8 @@ doctrine:
                 class: App\Infrastructure\Picnic\Doctrine\PicnicIntegrationSettingsIdType
             scanner_device_id:
                 class: App\Infrastructure\Scanner\Doctrine\ScannerDeviceIdType
+            persisted_domain_event_id:
+                class: App\Infrastructure\Shared\Doctrine\PersistedDomainEventIdType
 
         profiling_collect_backtrace: '%kernel.debug%'
     orm:
@@ -61,6 +63,12 @@ doctrine:
                 dir: '%kernel.project_dir%/src/Domain/Scanner/Entity'
                 prefix: 'App\Domain\Scanner\Entity'
                 alias: Scanner
+            Shared:
+                type: attribute
+                is_bundle: false
+                dir: '%kernel.project_dir%/src/Domain/Shared/Entity'
+                prefix: 'App\Domain\Shared\Entity'
+                alias: Shared
 
 when@test:
     doctrine:
