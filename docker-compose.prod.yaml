@@ -15,10 +15,9 @@ services:
       FILE_STORAGE_ROOT: ${FILE_STORAGE_ROOT:-/var/www/html/var/storage}
       FILE_STORAGE_BUCKET: ${FILE_STORAGE_BUCKET:-barcodile}
     privileged: true
-    devices:
-      - /dev/input:/dev/input
     volumes:
       - barcodile_var:/var/www/html/var
+      - /dev/input:/dev/input
 
 volumes:
   barcodile_var:
