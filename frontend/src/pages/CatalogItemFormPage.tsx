@@ -186,6 +186,7 @@ function dtoToForm(row: CatalogItemDto): FormState {
 	const links = row.catalogItemAttributes ?? [];
 	const v = row.volume;
 	const w = row.weight;
+	const b = row.barcode;
 	return {
 		name: row.name,
 		attributeRows: links.map((l) => ({
@@ -194,8 +195,8 @@ function dtoToForm(row: CatalogItemDto): FormState {
 			attribute: l.attribute as CatalogItemAttributeKey,
 			valueText: valueTextFromDto(l.value),
 		})),
-		barcodeCode: "",
-		barcodeType: "EAN",
+		barcodeCode: b?.code ?? "",
+		barcodeType: b?.type ?? "EAN",
 		volumeAmount: v ? v.amount : "",
 		volumeUnit: v ? v.unit : "",
 		weightAmount: w ? w.amount : "",
@@ -611,9 +612,9 @@ export function CatalogItemFormPage() {
 					name,
 					volume,
 					weight,
-					...(barcodeCode
-						? { barcode: { code: barcodeCode, type: barcodeType } }
-						: {}),
+					barcode: barcodeCode
+						? { code: barcodeCode, type: barcodeType }
+						: null,
 					catalogItemAttributes: catalogItemAttributesPayload,
 					linkedPicnicProductId: picnicLinkedProductId,
 				});
@@ -726,7 +727,7 @@ export function CatalogItemFormPage() {
 					</Typography>
 					<Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
 						{isEdit
-							? "Update the template, default sizing, catalog item attributes, or attach another barcode."
+							? "Update the template, default sizing, catalog item attributes, or barcode."
 							: creationSourceDef.formSubtitle}
 					</Typography>
 				</Box>
@@ -1061,8 +1062,8 @@ export function CatalogItemFormPage() {
 					</Typography>
 					<Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
 						{isEdit
-							? "Optionally register another symbology or code that identifies this catalog item."
-							: "Optionally create the first barcode together with this catalog item."}
+							? "Optionally set or change the code that identifies this catalog item."
+							: "Optionally set a barcode together with this catalog item."}
 					</Typography>
 					<TextField
 						label="Code"

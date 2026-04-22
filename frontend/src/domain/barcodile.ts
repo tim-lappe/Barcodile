@@ -131,7 +131,6 @@ export function forbiddenParentIdsForEdit(
 }
 
 export type BarcodeDto = {
-	id: string;
 	code: string;
 	type: string;
 };
@@ -158,7 +157,7 @@ export type CatalogItemDto = {
 	imageFileName?: string | null;
 	volume?: VolumeDto | null;
 	weight?: WeightDto | null;
-	barcodes?: BarcodeDto[];
+	barcode?: BarcodeDto | null;
 	catalogItemAttributes?: CatalogItemAttributeDto[];
 	linkedPicnicProductId?: string | null;
 };
@@ -172,9 +171,10 @@ export type InventoryItemDto = {
 	createdAt: string;
 };
 
-export function firstBarcodeCode(type: { barcodes?: BarcodeDto[] }): string {
-	const first = type.barcodes?.[0];
-	return first ? first.code : "";
+export function firstBarcodeCode(type: {
+	barcode?: BarcodeDto | null;
+}): string {
+	return type.barcode?.code ?? "";
 }
 
 export function catalogItemPickerLabel(type: CatalogItemDto): string {

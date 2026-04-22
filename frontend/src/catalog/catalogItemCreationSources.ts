@@ -23,7 +23,7 @@ export const CATALOG_ITEM_CREATION_SOURCES: readonly CatalogItemCreationSourceDe
 		{
 			id: "manual",
 			tileTitle: "Create manually",
-			tileDescription: "Enter name, sizing, attributes, and barcodes yourself.",
+			tileDescription: "Enter name, sizing, attributes, and an optional barcode yourself.",
 			formTitle: "New catalog item",
 			formSubtitle:
 				"Define how items of this product are described before you add inventory rows.",

@@ -137,7 +137,7 @@ export function CatalogItemsPage() {
 			</Box>
 			<Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
 				Product templates: default volume and weight, structured facts such as
-				alcohol by volume, and barcodes that identify the catalog item. Open a
+				alcohol by volume, and an optional barcode that identifies the catalog item. Open a
 				row for the full editor.
 			</Typography>
 			{listError && (
@@ -168,7 +168,7 @@ export function CatalogItemsPage() {
 								/>
 								<TableCell sx={{ fontWeight: 700 }}>Name</TableCell>
 								<TableCell sx={{ fontWeight: 700 }}>Volume / weight</TableCell>
-								<TableCell sx={{ fontWeight: 700 }}>Barcodes</TableCell>
+								<TableCell sx={{ fontWeight: 700 }}>Barcode</TableCell>
 								<TableCell sx={{ fontWeight: 700 }}>Attributes</TableCell>
 								<TableCell align="right" sx={{ fontWeight: 700, width: 120 }}>
 									Actions
@@ -214,7 +214,7 @@ export function CatalogItemsPage() {
 									<TableCell
 										sx={{ fontFamily: "ui-monospace, monospace", fontSize: 13 }}
 									>
-										{(row.barcodes ?? []).map((b) => b.code).join(", ") || "—"}
+										{row.barcode?.code ?? "—"}
 									</TableCell>
 									<TableCell sx={{ maxWidth: 280, color: "text.secondary" }}>
 										{formatAttributesPreview(row)}
@@ -281,7 +281,7 @@ export function CatalogItemsPage() {
 				<DialogContent>
 					<Typography variant="body2">
 						Delete <strong>{deleteTarget?.name}</strong>? All inventory items
-						and barcodes for this catalog item are removed as well.
+						and its barcode are removed as well.
 					</Typography>
 				</DialogContent>
 				<DialogActions sx={{ px: 3, pb: 2 }}>

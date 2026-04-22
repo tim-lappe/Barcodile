@@ -48,8 +48,8 @@ function pickerAttributesLine(row: CatalogItemDto): string {
 	return s.length > 72 ? `${s.slice(0, 72)}…` : s;
 }
 
-function pickerBarcodesLine(row: CatalogItemDto): string {
-	return (row.barcodes ?? []).map((b) => b.code).join(", ");
+function pickerBarcodeLine(row: CatalogItemDto): string {
+	return row.barcode?.code ?? "";
 }
 
 export type CatalogItemSearchInputProps = {
@@ -231,7 +231,7 @@ export function CatalogItemSearchInput({
 				},
 			}}
 			renderOption={(props, option, state) => {
-				const codes = pickerBarcodesLine(option);
+				const codes = pickerBarcodeLine(option);
 				const size = pickerSizeLine(option);
 				const attrs = pickerAttributesLine(option);
 				const metaParts = [codes, size].filter(Boolean);

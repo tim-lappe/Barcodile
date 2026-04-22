@@ -396,7 +396,7 @@ export async function updateCatalogItem(
 		name: string;
 		volume: VolumeDto | null;
 		weight: WeightDto | null;
-		barcode?: { code: string; type: string };
+		barcode?: { code: string; type: string } | null;
 		catalogItemAttributes?: CatalogItemAttributeWriteRow[];
 		linkedPicnicProductId?: string | null;
 	},
@@ -406,7 +406,7 @@ export async function updateCatalogItem(
 		volume: input.volume,
 		weight: input.weight,
 	};
-	if (input.barcode) {
+	if (input.barcode !== undefined) {
 		body.barcode = input.barcode;
 	}
 	if (input.catalogItemAttributes !== undefined) {
