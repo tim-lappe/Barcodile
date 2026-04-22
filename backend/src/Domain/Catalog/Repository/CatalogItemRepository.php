@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace App\Domain\Catalog\Repository;
 
-use App\Domain\Catalog\Entity\Barcode;
 use App\Domain\Catalog\Entity\CatalogItem;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\Persistence\ManagerRegistry;
@@ -61,9 +60,8 @@ final class CatalogItemRepository extends ServiceEntityRepository
     public function findOneByBarcodeCodeAndTypeCaseInsensitive(string $code, string $type): ?CatalogItem
     {
         $result = $this->createQueryBuilder('c')
-            ->innerJoin(Barcode::class, 'bc', 'WITH', 'bc.catalogItem = c')
-            ->andWhere('bc.barcode.code = :code')
-            ->andWhere('LOWER(bc.barcode.type) = LOWER(:type)')
+            ->andWhere('c.barcode.code = :code')
+            ->andWhere('LOWER(c.barcode.type) = LOWER(:type)')
             ->setParameter('code', $code)
             ->setParameter('type', $type)
             ->setMaxResults(1)

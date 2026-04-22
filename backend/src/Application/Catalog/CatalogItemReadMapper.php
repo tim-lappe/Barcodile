@@ -21,7 +21,7 @@ final readonly class CatalogItemReadMapper
             $item->getImageFileName(),
             $this->volumeResponse($item),
             $this->weightResponse($item),
-            $this->barcodeResponses($item),
+            $this->barcodeResponse($item),
             $this->attributeResponses($item),
             $picnicProductId,
         );
@@ -41,18 +41,14 @@ final readonly class CatalogItemReadMapper
         return null === $weight ? null : new WeightResponse($weight->getAmount(), $weight->getUnit()->value);
     }
 
-    /**
-     * @return list<BarcodeResponse>
-     */
-    private function barcodeResponses(CatalogItem $item): array
+    private function barcodeResponse(CatalogItem $item): ?BarcodeResponse
     {
-        $barcodes = [];
-        foreach ($item->getBarcodes() as $barcodeEntity) {
-            $barcodeValue = $barcodeEntity->getBarcode();
-            $barcodes[] = new BarcodeResponse((string) $barcodeEntity->getId(), $barcodeValue->getCode(), $barcodeValue->getType());
+        $value = $item->getBarcode();
+        if (null === $value) {
+            return null;
         }
 
-        return $barcodes;
+        return new BarcodeResponse($value->getCode(), $value->getType());
     }
 
     /**

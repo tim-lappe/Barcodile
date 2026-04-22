@@ -11,20 +11,20 @@ final class Version20260422120000 extends AbstractMigration
 {
     public function getDescription(): string
     {
-        return 'Rename code_scanner to scanner_device; rename columns to scanner_device_id and device_identifier.';
+        return 'Store catalog item barcode as 1:1 columns on item_type; drop barcode table.';
     }
 
     public function up(Schema $schema): void
     {
-        $this->addSql('ALTER TABLE code_scanner RENAME TO scanner_device');
-        $this->addSql('ALTER TABLE scanner_device RENAME COLUMN scanner_id TO scanner_device_id');
-        $this->addSql('ALTER TABLE scanner_device RENAME COLUMN device TO device_identifier');
+        $this->addSql('ALTER TABLE item_type ADD COLUMN barcode_code VARCHAR(100) DEFAULT NULL');
+        $this->addSql('ALTER TABLE item_type ADD COLUMN barcode_type VARCHAR(50) DEFAULT NULL');
+        $this->addSql('UPDATE item_type SET barcode_code = (SELECT b.code FROM barcode b WHERE b.rowid = (SELECT MIN(b2.rowid) FROM barcode b2 WHERE b2.item_type_id = item_type.catalog_item_id)), barcode_type = (SELECT b.type FROM barcode b WHERE b.rowid = (SELECT MIN(b2.rowid) FROM barcode b2 WHERE b2.item_type_id = item_type.catalog_item_id))');
+        $this->addSql('DROP TABLE barcode');
+        $this->addSql('CREATE UNIQUE INDEX UNIQ_44EE13D27BAD6652 ON item_type (barcode_code)');
     }
 
     public function down(Schema $schema): void
     {
-        $this->addSql('ALTER TABLE scanner_device RENAME COLUMN device_identifier TO device');
-        $this->addSql('ALTER TABLE scanner_device RENAME COLUMN scanner_device_id TO scanner_id');
-        $this->addSql('ALTER TABLE scanner_device RENAME TO code_scanner');
+        $this->throwIrreversibleMigrationException();
     }
 }

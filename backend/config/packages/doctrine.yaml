@@ -4,8 +4,6 @@ doctrine:
         types:
             catalog_item_id:
                 class: App\Infrastructure\Catalog\Doctrine\CatalogItemIdType
-            barcode_id:
-                class: App\Infrastructure\Catalog\Doctrine\BarcodeIdType
             catalog_item_attribute_id:
                 class: App\Infrastructure\Catalog\Doctrine\CatalogItemAttributeIdType
             shopping_cart_id:

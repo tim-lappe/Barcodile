@@ -9,10 +9,10 @@ use App\Application\Catalog\Dto\CatalogBarcodeInput;
 use App\Application\Catalog\Dto\CatalogItemResponse;
 use App\Application\Catalog\Dto\CatalogVolumeInput;
 use App\Application\Catalog\Dto\CatalogWeightInput;
+use App\Application\Catalog\Dto\CatalogItemImageGetResult;
 use App\Application\Catalog\Dto\PatchCatalogItemRequest;
 use App\Application\Catalog\Dto\PicnicCatalogProductHintResponse;
 use App\Application\Catalog\Dto\PostCatalogItemRequest;
-use App\Domain\Catalog\Entity\Barcode;
 use App\Domain\Catalog\Entity\CatalogItem;
 use App\Domain\Catalog\Entity\CatalogItemId;
 use App\Domain\Catalog\Repository\CatalogItemRepository;
@@ -25,7 +25,7 @@ use App\Domain\Shared\Weight;
 use App\Domain\Shared\WeightUnit;
 use App\Infrastructure\Catalog\Storage\CatalogItemImageStorage;
 use App\Infrastructure\Catalog\Storage\ImageContentType;
-use Doctrine\ORM\EntityManagerInterface;
+use App\Infrastructure\Shared\ObjectStorage\ObjectStorageException;
 use InvalidArgumentException;
 use Symfony\Component\HttpFoundation\File\UploadedFile;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
@@ -37,7 +37,6 @@ final readonly class CatalogItemApplicationService
         private CatalogItemRepository $catalogItemRepo,
         private PicnicCatalogItemProductLinkRepository $picnicLinkRepo,
         private CatalogItemImageStorage $catalogImageStorage,
-        private EntityManagerInterface $entityManager,
         private CreateCatalogItemStrategyRegistry $itemStrategyReg,
         private PicnicCatalogProductLookupPort $picnicProductLookup,
         private CatalogItemReadMapper $readMapper,
@@ -156,6 +155,29 @@ final readonly class CatalogItemApplicationService
         return $this->readMapper->map($item, $link?->getProductId());
     }
 
+    public function getCatalogItemImage(CatalogItemId $catalogItemId): CatalogItemImageGetResult
+    {
+        $item = $this->mustFind($catalogItemId);
+        $imageFileName = $item->getImageFileName();
+        if (null === $imageFileName || '' === $imageFileName) {
+            throw new NotFoundHttpException('Catalog item has no image.');
+        }
+        try {
+            $got = $this->catalogImageStorage->get($catalogItemId, $imageFileName);
+        } catch (ObjectStorageException $e) {
+            if (str_contains($e->getMessage(), 'Object not found')) {
+                throw new NotFoundHttpException('Image not found in storage.');
+            }
+            throw $e;
+        }
+        $contentType = $got->contentType;
+        if (null === $contentType || '' === $contentType) {
+            $contentType = 'application/octet-stream';
+        }
+
+        return new CatalogItemImageGetResult($got->body, $contentType, $got->eTag);
+    }
+
     private function mustFind(CatalogItemId $catalogItemId): CatalogItem
     {
         $item = $this->catalogItemRepo->find($catalogItemId);
@@ -215,20 +237,18 @@ final readonly class CatalogItemApplicationService
 
     private function applyBarcodeFromInput(CatalogItem $item, ?CatalogBarcodeInput $barcode): void
     {
-        foreach ($item->getBarcodes()->toArray() as $existing) {
-            $item->removeBarcode($existing);
-            $this->entityManager->remove($existing);
-        }
         if (null === $barcode) {
+            $item->changeBarcode(null);
+
             return;
         }
         $code = trim($barcode->code);
         if ('' === $code) {
+            $item->changeBarcode(null);
+
             return;
         }
-        $newBarcode = new Barcode();
-        $newBarcode->changeBarcode(new BarcodeValue($code, $barcode->type));
-        $item->addBarcode($newBarcode);
+        $item->changeBarcode(new BarcodeValue($code, $barcode->type));
     }
 
     private function applyBarcodeFromPatchInput(CatalogItem $item, PatchCatalogItemRequest $request): void
@@ -254,7 +274,7 @@ final readonly class CatalogItemApplicationService
 
     public function minimalCatalogItemResponse(string $catalogItemId, string $name, ?string $picnicProductId): CatalogItemResponse
     {
-        return new CatalogItemResponse($catalogItemId, $name, null, null, null, [], [], $picnicProductId);
+        return new CatalogItemResponse($catalogItemId, $name, null, null, null, null, [], $picnicProductId);
     }
 
     private function ignoreRemoteImageStorageFailure(): void

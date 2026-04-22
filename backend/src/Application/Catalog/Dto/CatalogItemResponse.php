@@ -9,7 +9,6 @@ use Symfony\Component\Serializer\Attribute\SerializedName;
 final readonly class CatalogItemResponse
 {
     /**
-     * @param list<BarcodeResponse>              $barcodes
      * @param list<CatalogItemAttributeResponse> $itemAttributes
      */
     public function __construct(
@@ -19,7 +18,7 @@ final readonly class CatalogItemResponse
         public ?string $imageFileName,
         public ?VolumeResponse $volume,
         public ?WeightResponse $weight,
-        public array $barcodes,
+        public ?BarcodeResponse $barcode,
         #[SerializedName('catalogItemAttributes')]
         public array $itemAttributes,
         #[SerializedName('linkedPicnicProductId')]

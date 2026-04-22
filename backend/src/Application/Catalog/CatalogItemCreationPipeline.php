@@ -9,7 +9,6 @@ use App\Application\Catalog\Dto\CatalogItemResponse;
 use App\Application\Catalog\Dto\CatalogVolumeInput;
 use App\Application\Catalog\Dto\CatalogWeightInput;
 use App\Application\Catalog\Dto\PostCatalogItemRequest;
-use App\Domain\Catalog\Entity\Barcode;
 use App\Domain\Catalog\Entity\CatalogItem;
 use App\Domain\Catalog\Repository\CatalogItemRepository;
 use App\Domain\Picnic\Entity\PicnicCatalogItemProductLink;
@@ -68,20 +67,18 @@ final readonly class CatalogItemCreationPipeline
 
     private function applyBarcodeFromInput(CatalogItem $item, ?CatalogBarcodeInput $barcode): void
     {
-        foreach ($item->getBarcodes()->toArray() as $existing) {
-            $item->removeBarcode($existing);
-            $this->entityManager->remove($existing);
-        }
         if (null === $barcode) {
+            $item->changeBarcode(null);
+
             return;
         }
         $code = trim($barcode->code);
         if ('' === $code) {
+            $item->changeBarcode(null);
+
             return;
         }
-        $newBarcode = new Barcode();
-        $newBarcode->changeBarcode(new BarcodeValue($code, $barcode->type));
-        $item->addBarcode($newBarcode);
+        $item->changeBarcode(new BarcodeValue($code, $barcode->type));
     }
 
     private function applyPicnicLinkForCreate(CatalogItem $item, ?string $picnicProductId): void

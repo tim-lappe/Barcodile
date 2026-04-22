@@ -4,9 +4,11 @@ declare(strict_types=1);
 
 namespace App\Domain\Catalog\Entity;
 
+use App\Domain\Catalog\Entity\Embeddable\BarcodeEmbeddable;
 use App\Domain\Catalog\Entity\Embeddable\VolumeEmbeddable;
 use App\Domain\Catalog\Entity\Embeddable\WeightEmbeddable;
 use App\Domain\Catalog\Repository\CatalogItemRepository;
+use App\Domain\Shared\Barcode as BarcodeValue;
 use App\Domain\Shared\Volume;
 use App\Domain\Shared\Weight;
 use Doctrine\Common\Collections\ArrayCollection;
@@ -41,12 +43,8 @@ class CatalogItem
     #[ORM\Embedded(class: WeightEmbeddable::class, columnPrefix: 'weight_')]
     private WeightEmbeddable $weightEmbeddable;
 
-    /**
-     * @var Collection<int, Barcode>
-     */
-    #[Groups(['catalog_item:read'])]
-    #[ORM\OneToMany(targetEntity: Barcode::class, mappedBy: 'catalogItem', cascade: ['persist', 'remove'], orphanRemoval: true)]
-    private Collection $barcodes;
+    #[ORM\Embedded(class: BarcodeEmbeddable::class, columnPrefix: 'barcode_')]
+    private ?BarcodeEmbeddable $barcode = null;
 
     /**
      * @var Collection<int, CatalogItemAttribute>
@@ -61,7 +59,6 @@ class CatalogItem
         $this->catalogItemId = new CatalogItemId();
         $this->volumeEmbeddable = new VolumeEmbeddable();
         $this->weightEmbeddable = new WeightEmbeddable();
-        $this->barcodes = new ArrayCollection();
         $this->itemAttributes = new ArrayCollection();
     }
 
@@ -120,27 +117,30 @@ class CatalogItem
         return $this;
     }
 
-    /**
-     * @return Collection<int, Barcode>
-     */
-    public function getBarcodes(): Collection
+    #[Groups(['catalog_item:read', 'inventory_item:read', 'shopping_cart_line:read'])]
+    public function getBarcode(): ?BarcodeValue
     {
-        return $this->barcodes;
+        return $this->barcode?->toValue();
     }
 
-    public function addBarcode(Barcode $barcode): static
+    public function changeBarcode(?BarcodeValue $barcode): static
     {
-        if (!$this->barcodes->contains($barcode)) {
-            $this->barcodes->add($barcode);
-            $barcode->changeCatalogItem($this);
+        if (null === $barcode) {
+            $this->barcode = null;
+
+            return $this;
         }
+        $code = trim($barcode->getCode());
+        if ('' === $code) {
+            $this->barcode = null;
 
-        return $this;
-    }
-
-    public function removeBarcode(Barcode $barcode): static
-    {
-        $this->barcodes->removeElement($barcode);
+            return $this;
+        }
+        $normalized = new BarcodeValue($code, $barcode->getType());
+        if (null === $this->barcode) {
+            $this->barcode = new BarcodeEmbeddable();
+        }
+        $this->barcode->apply($normalized);
 
         return $this;
     }
