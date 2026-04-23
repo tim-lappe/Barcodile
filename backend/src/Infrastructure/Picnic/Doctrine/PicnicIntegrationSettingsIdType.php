@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace App\Infrastructure\Picnic\Doctrine;
 
-use App\Domain\Picnic\Entity\PicnicIntegrationSettingsId;
+use App\Domain\Shared\Id\PicnicIntegrationSettingsId;
 use App\Infrastructure\Shared\Doctrine\Type\AbstractUuidIdDoctrineType;
 
 final class PicnicIntegrationSettingsIdType extends AbstractUuidIdDoctrineType

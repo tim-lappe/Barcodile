@@ -4,17 +4,21 @@ declare(strict_types=1);
 
 namespace App\Application\Scanner\Dto;
 
+use Symfony\Component\Serializer\Attribute\SerializedName;
 use Symfony\Component\Validator\Constraints as Assert;
 
 final readonly class PatchScannerDeviceAutomationsRequest
 {
     public function __construct(
         #[Assert\NotNull]
-        public bool $automationAddInventoryOnEanScan,
+        #[SerializedName('automationAddInventoryOnEanScan')]
+        public bool $addOnEan,
         #[Assert\NotNull]
-        public bool $automationCreateCatalogItemIfMissingForEan,
+        #[SerializedName('automationCreateCatalogItemIfMissingForEan')]
+        public bool $createIfMissingEan,
         #[Assert\NotNull]
-        public bool $automationRemoveInventoryOnPublicCodeScan,
+        #[SerializedName('automationRemoveInventoryOnPublicCodeScan')]
+        public bool $remOnPublic,
     ) {
     }
 }

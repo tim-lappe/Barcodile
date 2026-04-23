@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace App\Application\Scanner\Controller;
 
 use App\Application\Scanner\ScannerDeviceApplicationService;
-use App\Domain\Scanner\Entity\ScannerDeviceId;
+use App\Domain\Shared\Id\ScannerDeviceId;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\Routing\Attribute\Route;

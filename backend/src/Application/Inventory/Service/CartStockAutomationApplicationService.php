@@ -5,9 +5,9 @@ declare(strict_types=1);
 namespace App\Application\Inventory\Service;
 
 use App\Domain\Cart\Repository\ShoppingCartRepository;
-use App\Domain\Catalog\Entity\CatalogItemId;
 use App\Domain\Inventory\Entity\CartStockAutomationRule;
 use App\Domain\Inventory\Repository\CartStockAutomationRuleRepository;
+use App\Domain\Shared\Id\CatalogItemId;
 use App\Domain\Shared\Math\BcQuantity;
 
 final readonly class CartStockAutomationApplicationService

@@ -14,29 +14,29 @@ final readonly class ActivityApplicationService
     private const int DEFAULT_LIMIT = 200;
 
     public function __construct(
-        private PersistedDomainEventRepository $persistedDomainEventRepository,
+        private PersistedDomainEventRepository $eventsRepository,
     ) {
     }
 
     public function listRecentPersistedDomainEvents(?int $limit = null): ActivityListResponse
     {
-        $n = $limit ?? self::DEFAULT_LIMIT;
-        if ($n < 1) {
-            $n = self::DEFAULT_LIMIT;
+        $rowLimit = $limit ?? self::DEFAULT_LIMIT;
+        if ($rowLimit < 1) {
+            $rowLimit = self::DEFAULT_LIMIT;
         }
-        if ($n > 200) {
-            $n = 200;
+        if ($rowLimit > 200) {
+            $rowLimit = 200;
         }
-        $rows = $this->persistedDomainEventRepository->findLastByCreatedAtDesc($n);
+        $rows = $this->eventsRepository->findLastByCreatedAtDesc($rowLimit);
         $items = array_map(
-            function (PersistedDomainEvent $row): PersistedDomainEventItemResponse {
+            static function (PersistedDomainEvent $row): PersistedDomainEventItemResponse {
                 $payload = $row->getEventDto();
 
                 return new PersistedDomainEventItemResponse(
-                    (string) $row->getId()->toUuid(),
-                    $payload['eventClass'],
-                    $payload['data'],
-                    $row->getCreatedAt()->format(DATE_ATOM),
+                    eventId: (string) $row->getId()->toUuid(),
+                    eventClass: $payload['eventClass'],
+                    data: $payload['data'],
+                    createdAt: $row->getCreatedAt()->format(\DATE_ATOM),
                 );
             },
             $rows,

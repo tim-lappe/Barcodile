@@ -6,8 +6,8 @@ namespace App\Application\Inventory\Controller;
 
 use App\Application\Inventory\CartStockRuleApplicationService;
 use App\Application\Inventory\Dto\PatchCartStockAutomationRuleRequest;
-use App\Domain\Catalog\Entity\CatalogItemId;
-use App\Domain\Inventory\Entity\CartStockAutomationRuleId;
+use App\Domain\Shared\Id\CartStockAutomationRuleId;
+use App\Domain\Shared\Id\CatalogItemId;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpKernel\Attribute\MapRequestPayload;

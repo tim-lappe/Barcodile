@@ -2,13 +2,14 @@
 
 declare(strict_types=1);
 
-namespace App\Domain\Cart\Entity;
+namespace App\Domain\Shared\Id;
 
-use App\Domain\Shared\Id\AbstractUuidId;
 use Symfony\Component\Uid\Uuid;
 
-final readonly class ShoppingCartLineId extends AbstractUuidId
+final readonly class CartStockAutomationRuleId extends AbstractUuidId
 {
+    public const string DOCTRINE_TYPE_NAME = 'cart_stock_automation_rule_id';
+
     public function __construct(?Uuid $uuid = null)
     {
         parent::__construct($uuid ?? Uuid::v7());

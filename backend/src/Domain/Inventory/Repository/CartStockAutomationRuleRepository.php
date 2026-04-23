@@ -4,13 +4,10 @@ declare(strict_types=1);
 
 namespace App\Domain\Inventory\Repository;
 
-use App\Domain\Cart\Entity\ShoppingCartId;
-use App\Domain\Catalog\Entity\CatalogItemId;
 use App\Domain\Inventory\Entity\CartStockAutomationRule;
-use App\Domain\Inventory\Entity\CartStockAutomationRuleId;
-use App\Infrastructure\Cart\Doctrine\ShoppingCartIdType;
-use App\Infrastructure\Catalog\Doctrine\CatalogItemIdType;
-use App\Infrastructure\Inventory\Doctrine\CartStockAutomationRuleIdType;
+use App\Domain\Shared\Id\CartStockAutomationRuleId;
+use App\Domain\Shared\Id\CatalogItemId;
+use App\Domain\Shared\Id\ShoppingCartId;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\Persistence\ManagerRegistry;
 
@@ -33,7 +30,7 @@ final class CartStockAutomationRuleRepository extends ServiceEntityRepository
         return $this->createQueryBuilder('r')
             ->andWhere('r.catalogItem = :cid')
             ->andWhere('r.enabled = true')
-            ->setParameter('cid', $catalogItemId, CatalogItemIdType::NAME)
+            ->setParameter('cid', $catalogItemId, CatalogItemId::DOCTRINE_TYPE_NAME)
             ->orderBy('r.createdAt', 'ASC')
             ->getQuery()
             ->getResult();
@@ -47,7 +44,7 @@ final class CartStockAutomationRuleRepository extends ServiceEntityRepository
         /** @var list<CartStockAutomationRule> */
         return $this->createQueryBuilder('r')
             ->andWhere('r.catalogItem = :cid')
-            ->setParameter('cid', $catalogItemId, CatalogItemIdType::NAME)
+            ->setParameter('cid', $catalogItemId, CatalogItemId::DOCTRINE_TYPE_NAME)
             ->orderBy('r.createdAt', 'ASC')
             ->getQuery()
             ->getResult();
@@ -58,8 +55,8 @@ final class CartStockAutomationRuleRepository extends ServiceEntityRepository
         $result = $this->createQueryBuilder('r')
             ->andWhere('r.id = :rid')
             ->andWhere('r.catalogItem = :cid')
-            ->setParameter('rid', $ruleId, CartStockAutomationRuleIdType::NAME)
-            ->setParameter('cid', $catalogItemId, CatalogItemIdType::NAME)
+            ->setParameter('rid', $ruleId, CartStockAutomationRuleId::DOCTRINE_TYPE_NAME)
+            ->setParameter('cid', $catalogItemId, CatalogItemId::DOCTRINE_TYPE_NAME)
             ->getQuery()
             ->getOneOrNullResult();
 
@@ -71,8 +68,8 @@ final class CartStockAutomationRuleRepository extends ServiceEntityRepository
         $result = $this->createQueryBuilder('r')
             ->andWhere('r.catalogItem = :cid')
             ->andWhere('r.shoppingCart = :sid')
-            ->setParameter('cid', $catalogItemId, CatalogItemIdType::NAME)
-            ->setParameter('sid', $shoppingCartId, ShoppingCartIdType::NAME)
+            ->setParameter('cid', $catalogItemId, CatalogItemId::DOCTRINE_TYPE_NAME)
+            ->setParameter('sid', $shoppingCartId, ShoppingCartId::DOCTRINE_TYPE_NAME)
             ->setMaxResults(1)
             ->getQuery()
             ->getOneOrNullResult();

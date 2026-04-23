@@ -7,8 +7,8 @@ namespace App\Application\Picnic;
 use App\Application\Picnic\Dto\PatchPicnicSettingsRequest;
 use App\Application\Picnic\Dto\PicnicIntegrationSettingsResponse;
 use App\Domain\Picnic\Entity\PicnicIntegrationSettings;
+use App\Domain\Picnic\Port\PicnicCredentialCipherPort;
 use App\Domain\Picnic\Repository\PicnicIntegrationSettingsRepository;
-use App\Infrastructure\Shared\Security\AppSecretStringCipher;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Component\HttpKernel\Exception\BadRequestHttpException;
 use Symfony\Component\Validator\Validator\ValidatorInterface;
@@ -17,7 +17,7 @@ final readonly class PicnicSettingsOperations
 {
     public function __construct(
         private PicnicIntegrationSettingsRepository $settingsRepo,
-        private AppSecretStringCipher $secretCipher,
+        private PicnicCredentialCipherPort $credentialCipher,
         private EntityManagerInterface $entityManager,
         private ValidatorInterface $validator,
     ) {
@@ -71,7 +71,7 @@ final readonly class PicnicSettingsOperations
             return;
         }
         $settings->changePasswordCipher(
-            $this->secretCipher->encrypt($patch->password, AppSecretStringCipher::HKDF_INFO_PASSWORD),
+            $this->credentialCipher->encryptPasswordForStorage($patch->password),
         );
     }
 

@@ -6,6 +6,8 @@ namespace App\Domain\Cart\Entity;
 
 use App\Domain\Cart\Repository\ShoppingCartRepository;
 use App\Domain\Catalog\Entity\CatalogItem;
+use App\Domain\Shared\Id\ShoppingCartId;
+use App\Domain\Shared\Id\ShoppingCartLineId;
 use DateTimeImmutable;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;

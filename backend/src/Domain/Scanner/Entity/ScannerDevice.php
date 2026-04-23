@@ -7,6 +7,7 @@ namespace App\Domain\Scanner\Entity;
 use App\Domain\Scanner\Events\CodeScanned;
 use App\Domain\Scanner\Repository\ScannerDeviceRepository;
 use App\Domain\Shared\DomainEventRecorder;
+use App\Domain\Shared\Id\ScannerDeviceId;
 use App\Domain\Shared\RecordsDomainEvents;
 use Doctrine\ORM\Mapping as ORM;
 use Symfony\Component\Serializer\Attribute\Groups;
@@ -45,16 +46,16 @@ class ScannerDevice implements RecordsDomainEvents
     private ?array $lastScannedCodes = null;
 
     #[Groups(['scanner_device:read', 'scanner_device:write'])]
-    #[ORM\Column(options: ['default' => false])]
-    private bool $automationAddInventoryOnEanScan = false;
+    #[ORM\Column(name: 'automation_add_inventory_on_ean_scan', options: ['default' => false])]
+    private bool $addInvOnEan = false;
 
     #[Groups(['scanner_device:read', 'scanner_device:write'])]
-    #[ORM\Column(options: ['default' => false])]
-    private bool $automationCreateCatalogItemIfMissingForEan = false;
+    #[ORM\Column(name: 'automation_create_catalog_item_if_missing_for_ean', options: ['default' => false])]
+    private bool $createItemIfEan = false;
 
     #[Groups(['scanner_device:read', 'scanner_device:write'])]
-    #[ORM\Column(options: ['default' => false])]
-    private bool $automationRemoveInventoryOnPublicCodeScan = false;
+    #[ORM\Column(name: 'automation_remove_inventory_on_public_code_scan', options: ['default' => false])]
+    private bool $remInvOnPublic = false;
 
     public function __construct()
     {
@@ -111,14 +112,14 @@ class ScannerDevice implements RecordsDomainEvents
 
     public function isAutomationAddInventoryOnEanScan(): bool
     {
-        return $this->automationAddInventoryOnEanScan;
+        return $this->addInvOnEan;
     }
 
     public function changeAutomationAddInventoryOnEanScan(bool $enabled): static
     {
-        $this->automationAddInventoryOnEanScan = $enabled;
+        $this->addInvOnEan = $enabled;
         if (!$enabled) {
-            $this->automationCreateCatalogItemIfMissingForEan = false;
+            $this->createItemIfEan = false;
         }
 
         return $this;
@@ -126,24 +127,24 @@ class ScannerDevice implements RecordsDomainEvents
 
     public function isAutomationCreateCatalogItemIfMissingForEan(): bool
     {
-        return $this->automationCreateCatalogItemIfMissingForEan;
+        return $this->createItemIfEan;
     }
 
     public function changeAutomationCreateCatalogItemIfMissingForEan(bool $enabled): static
     {
-        $this->automationCreateCatalogItemIfMissingForEan = $enabled;
+        $this->createItemIfEan = $enabled;
 
         return $this;
     }
 
     public function isAutomationRemoveInventoryOnPublicCodeScan(): bool
     {
-        return $this->automationRemoveInventoryOnPublicCodeScan;
+        return $this->remInvOnPublic;
     }
 
     public function changeAutomationRemoveInventoryOnPublicCodeScan(bool $enabled): static
     {
-        $this->automationRemoveInventoryOnPublicCodeScan = $enabled;
+        $this->remInvOnPublic = $enabled;
 
         return $this;
     }

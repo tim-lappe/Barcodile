@@ -5,15 +5,19 @@ declare(strict_types=1);
 namespace App\Application\Scanner\Command;
 
 use App\Domain\Scanner\Entity\ScannerDevice;
+use App\Domain\Scanner\Input\ScanLineKeyAccumulator;
+use App\Domain\Scanner\Input\ScanLineKeyAccumulatorFactory;
 use App\Domain\Scanner\Input\ScannerInputReceiver;
 use App\Domain\Scanner\Repository\ScannerDeviceRepository;
-use App\Infrastructure\Scanner\EvdevKeyScanLineAccumulator;
 use Symfony\Component\Console\Attribute\AsCommand;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Console\Style\SymfonyStyle;
 
+/**
+ * @phpstan-type ListenEntry array{handle: resource, device: ScannerDevice, buffer: string, keys: ScanLineKeyAccumulator}
+ */
 #[AsCommand(
     name: 'scanner:listen',
     description: 'Read keyboard-wedge scanner input from configured evdev devices, print each scan, and record it like scanner:simulate (Linux).',
@@ -21,28 +25,48 @@ use Symfony\Component\Console\Style\SymfonyStyle;
 final class ListenScannerDevicesCommand extends Command
 {
     public function __construct(
-        private readonly ScannerDeviceRepository $scannerDeviceRepository,
+        private readonly ScannerDeviceRepository $deviceRepository,
         private readonly ScannerInputReceiver $scannerInputReceiver,
+        private readonly ScanLineKeyAccumulatorFactory $accumulatorFactory,
     ) {
         parent::__construct();
     }
 
     protected function execute(InputInterface $input, OutputInterface $output): int
     {
-        $io = new SymfonyStyle($input, $output);
-        $devices = $this->scannerDeviceRepository->findAllOrderedByName();
-        if ($devices === []) {
-            $io->warning('No scanner devices configured.');
+        $style = new SymfonyStyle($input, $output);
+        $devices = $this->deviceRepository->findAllOrderedByName();
+        if ([] === $devices) {
+            $style->warning('No scanner devices configured.');
 
             return Command::SUCCESS;
         }
 
+        $state = $this->openEvdevStreams($style, $devices);
+        if (null === $state) {
+            return Command::FAILURE;
+        }
+
+        $style->writeln(\sprintf('Listening on %d device(s). Press Ctrl+C to stop.', \count($state)));
+        $this->loopEvdev($style, $state);
+        $this->closeEvdevStreams($state);
+
+        return Command::SUCCESS;
+    }
+
+    /**
+     * @param list<ScannerDevice> $devices
+     *
+     * @return (list<ListenEntry>)|null
+     */
+    private function openEvdevStreams(SymfonyStyle $style, array $devices): ?array
+    {
         $state = [];
         foreach ($devices as $device) {
             $path = $device->getDeviceIdentifier();
-            $handle = @fopen($path, 'rb');
-            if (!\is_resource($handle)) {
-                $io->error(sprintf('Cannot open %s (%s).', $path, $device->getName()));
+            $handle = fopen($path, 'r');
+            if (false === $handle) {
+                $style->error(\sprintf('Cannot open %s (%s).', $path, $device->getName()));
 
                 continue;
             }
@@ -51,64 +75,106 @@ final class ListenScannerDevicesCommand extends Command
                 'handle' => $handle,
                 'device' => $device,
                 'buffer' => '',
-                'keys' => new EvdevKeyScanLineAccumulator(),
+                'keys' => $this->accumulatorFactory->create(),
             ];
         }
+        if ([] === $state) {
+            $style->error('No device streams could be opened.');
 
-        if ($state === []) {
-            $io->error('No device streams could be opened.');
-
-            return Command::FAILURE;
+            return null;
         }
 
-        $io->writeln(sprintf('Listening on %d device(s). Press Ctrl+C to stop.', \count($state)));
-
-        while (true) {
-            $read = array_map(static fn (array $s) => $s['handle'], $state);
-            $write = null;
-            $except = null;
-            $n = @stream_select($read, $write, $except, 0, 200000);
-            if (false === $n) {
-                break;
-            }
-            if (0 === $n) {
-                continue;
-            }
-
-            foreach ($state as $i => $s) {
-                if (!\in_array($s['handle'], $read, true)) {
-                    continue;
-                }
-                $chunk = fread($s['handle'], 4096);
-                if (!\is_string($chunk) || '' === $chunk) {
-                    continue;
-                }
-                $state[$i]['buffer'] .= $chunk;
-                while (\strlen($state[$i]['buffer']) >= 24) {
-                    $event = substr($state[$i]['buffer'], 0, 24);
-                    $state[$i]['buffer'] = substr($state[$i]['buffer'], 24);
-                    $this->processEvent($io, $s['device'], $s['keys'], $event);
-                }
-            }
-        }
-
-        foreach ($state as $s) {
-            if (\is_resource($s['handle'])) {
-                fclose($s['handle']);
-            }
-        }
-
-        return Command::SUCCESS;
+        return $state;
     }
 
-    private function processEvent(
-        SymfonyStyle $io,
+    /**
+     * @phpstan-param list<ListenEntry> $state
+     *
+     * @SuppressWarnings("PHPMD.CyclomaticComplexity")
+     */
+    private function loopEvdev(SymfonyStyle $style, array &$state): void
+    {
+        while (true) {
+            $read = [];
+            foreach ($state as $row) {
+                $read[] = $row['handle'];
+            }
+            $readyCount = $this->selectFirstReadableSet($read);
+            if (false === $readyCount) {
+                break;
+            }
+            if (0 === $readyCount) {
+                continue;
+            }
+            $this->drainReadyStreams($style, $state, $read);
+        }
+    }
+
+    /**
+     * @param list<resource> $readyOnly
+     *
+     * @phpstan-param list<ListenEntry> $state
+     *
+     * @SuppressWarnings("PHPMD.CyclomaticComplexity")
+     */
+    private function drainReadyStreams(SymfonyStyle $style, array &$state, array $readyOnly): void
+    {
+        foreach ($state as $index => $row) {
+            if (!\in_array($row['handle'], $readyOnly, true)) {
+                continue;
+            }
+            $entry = $state[$index];
+            $chunk = fread($entry['handle'], 4096);
+            if (!\is_string($chunk) || '' === $chunk) {
+                continue;
+            }
+            $entry['buffer'] .= $chunk;
+            while (\strlen($entry['buffer']) >= 24) {
+                $eventChunk = substr($entry['buffer'], 0, 24);
+                $entry['buffer'] = substr($entry['buffer'], 24);
+                $this->processKeyEvent($style, $entry['device'], $entry['keys'], $eventChunk);
+            }
+            $state[$index] = $entry;
+        }
+    }
+
+    /**
+     * @param list<resource> $read
+     */
+    private function selectFirstReadableSet(array &$read): int|false
+    {
+        $write = null;
+        $except = null;
+        set_error_handler(static function (): true {
+            return true;
+        });
+        try {
+            return stream_select($read, $write, $except, 0, 200000);
+        } finally {
+            restore_error_handler();
+        }
+    }
+
+    /**
+     * @phpstan-param list<ListenEntry> $state
+     */
+    private function closeEvdevStreams(array $state): void
+    {
+        foreach ($state as $row) {
+            if (\is_resource($row['handle'])) {
+                fclose($row['handle']);
+            }
+        }
+    }
+
+    private function processKeyEvent(
+        SymfonyStyle $style,
         ScannerDevice $device,
-        EvdevKeyScanLineAccumulator $keys,
+        ScanLineKeyAccumulator $keys,
         string $event,
     ): void {
-        $parts = unpack('qsec/qusec/vtype/vcode/lvalue', $event);
-        if (!\is_array($parts) || !isset($parts['type'], $parts['code'], $parts['value'])) {
+        $parts = $this->unpackEvdevEvent($event);
+        if (null === $parts) {
             return;
         }
         $done = $keys->process(
@@ -119,22 +185,34 @@ final class ListenScannerDevicesCommand extends Command
         if (null === $done || '' === $done) {
             return;
         }
-        $io->writeln($done);
+        $style->writeln($done);
         $this->scannerInputReceiver->receiveInput($device->getId(), $done);
     }
 
-    private function intFromUnpack(mixed $v): int
+    /**
+     * @return array<string, mixed>|null
+     */
+    private function unpackEvdevEvent(string $event): ?array
     {
-        if (\is_int($v)) {
-            return $v;
-        }
-        if (\is_float($v)) {
-            return (int) $v;
-        }
-        if (\is_string($v) && is_numeric($v)) {
-            return (int) $v;
+        $raw = unpack('qsec/qusec/vtype/vcode/lvalue', $event);
+        if (!\is_array($raw) || !isset($raw['type'], $raw['code'], $raw['value'])) {
+            return null;
         }
 
-        return 0;
+        return [
+            'type' => $raw['type'],
+            'code' => $raw['code'],
+            'value' => $raw['value'],
+        ];
+    }
+
+    private function intFromUnpack(mixed $packedValue): int
+    {
+        return match (true) {
+            \is_int($packedValue) => $packedValue,
+            \is_float($packedValue) => (int) $packedValue,
+            \is_string($packedValue) && is_numeric($packedValue) => (int) $packedValue,
+            default => 0,
+        };
     }
 }

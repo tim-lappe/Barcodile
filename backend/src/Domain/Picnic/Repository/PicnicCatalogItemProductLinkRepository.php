@@ -4,9 +4,8 @@ declare(strict_types=1);
 
 namespace App\Domain\Picnic\Repository;
 
-use App\Domain\Catalog\Entity\CatalogItemId;
 use App\Domain\Picnic\Entity\PicnicCatalogItemProductLink;
-use App\Infrastructure\Catalog\Doctrine\CatalogItemIdType;
+use App\Domain\Shared\Id\CatalogItemId;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\Persistence\ManagerRegistry;
 
@@ -24,7 +23,7 @@ final class PicnicCatalogItemProductLinkRepository extends ServiceEntityReposito
     {
         $result = $this->createQueryBuilder('l')
             ->andWhere('l.catalogItem = :id')
-            ->setParameter('id', $catalogItemId, CatalogItemIdType::NAME)
+            ->setParameter('id', $catalogItemId, CatalogItemId::DOCTRINE_TYPE_NAME)
             ->getQuery()
             ->getOneOrNullResult();
 

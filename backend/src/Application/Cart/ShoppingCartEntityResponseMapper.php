@@ -10,8 +10,8 @@ use App\Application\Catalog\CatalogItemApplicationService;
 use App\Domain\Cart\Entity\ShoppingCart;
 use App\Domain\Cart\Entity\ShoppingCartLine;
 use App\Domain\Catalog\Entity\CatalogItem;
-use App\Domain\Catalog\Entity\CatalogItemId;
 use App\Domain\Picnic\Repository\PicnicCatalogItemProductLinkRepository;
+use App\Domain\Shared\Id\CatalogItemId;
 use DateTimeInterface;
 
 final readonly class ShoppingCartEntityResponseMapper

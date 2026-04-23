@@ -5,12 +5,10 @@ declare(strict_types=1);
 namespace App\Domain\Cart\Repository;
 
 use App\Domain\Cart\Entity\ShoppingCart;
-use App\Domain\Cart\Entity\ShoppingCartId;
 use App\Domain\Cart\Entity\ShoppingCartLine;
-use App\Domain\Cart\Entity\ShoppingCartLineId;
-use App\Domain\Catalog\Entity\CatalogItemId;
-use App\Infrastructure\Cart\Doctrine\ShoppingCartIdType;
-use App\Infrastructure\Catalog\Doctrine\CatalogItemIdType;
+use App\Domain\Shared\Id\CatalogItemId;
+use App\Domain\Shared\Id\ShoppingCartId;
+use App\Domain\Shared\Id\ShoppingCartLineId;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\Persistence\ManagerRegistry;
 
@@ -72,8 +70,8 @@ final class ShoppingCartRepository extends ServiceEntityRepository
             ->join('l.shoppingCart', 'c')
             ->andWhere('c.id = :cid')
             ->andWhere('l.catalogItem = :item')
-            ->setParameter('cid', $shoppingCartId, ShoppingCartIdType::NAME)
-            ->setParameter('item', $catalogItemId, CatalogItemIdType::NAME)
+            ->setParameter('cid', $shoppingCartId, ShoppingCartId::DOCTRINE_TYPE_NAME)
+            ->setParameter('item', $catalogItemId, CatalogItemId::DOCTRINE_TYPE_NAME)
             ->setMaxResults(1)
             ->getQuery()
             ->getOneOrNullResult();
@@ -92,7 +90,7 @@ final class ShoppingCartRepository extends ServiceEntityRepository
             ->orderBy('l.createdAt', 'ASC');
         if (null !== $shoppingCartId) {
             $queryBuilder->andWhere('l.shoppingCart = :cid')
-                ->setParameter('cid', $shoppingCartId, ShoppingCartIdType::NAME);
+                ->setParameter('cid', $shoppingCartId, ShoppingCartId::DOCTRINE_TYPE_NAME);
         }
 
         /** @var list<ShoppingCartLine> */

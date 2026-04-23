@@ -7,7 +7,7 @@ namespace App\Application\Cart\Controller;
 use App\Application\Cart\Dto\PostShoppingCartLineRequest;
 use App\Application\Cart\ShoppingCartApplicationService;
 use App\Application\Shared\ApiIri;
-use App\Domain\Catalog\Entity\CatalogItemId;
+use App\Domain\Shared\Id\CatalogItemId;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpKernel\Attribute\MapRequestPayload;

@@ -4,9 +4,9 @@ declare(strict_types=1);
 
 namespace App\Application\Cart;
 
-use App\Domain\Cart\Entity\ShoppingCartLineId;
 use App\Domain\Cart\Port\CartProviderAccessException;
 use App\Domain\Cart\Port\CartProviderRegistry;
+use App\Domain\Shared\Id\ShoppingCartLineId;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 
 final readonly class ShoppingCartExternalCartOperations

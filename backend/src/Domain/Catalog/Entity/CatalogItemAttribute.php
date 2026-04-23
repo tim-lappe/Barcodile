@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Domain\Catalog\Entity;
 
 use App\Domain\Shared\CatalogItemAttributeKey;
+use App\Domain\Shared\Id\CatalogItemAttributeId;
 use Doctrine\ORM\Mapping as ORM;
 use Symfony\Component\Serializer\Attribute\Groups;
 use Symfony\Component\Validator\Constraints as Assert;

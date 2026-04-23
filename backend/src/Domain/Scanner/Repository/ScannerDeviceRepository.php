@@ -7,6 +7,7 @@ namespace App\Domain\Scanner\Repository;
 use App\Domain\Scanner\Entity\ScannerDevice;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\Persistence\ManagerRegistry;
+use LogicException;
 
 /**
  * @extends ServiceEntityRepository<ScannerDevice>
@@ -40,7 +41,7 @@ final class ScannerDeviceRepository extends ServiceEntityRepository
             return null;
         }
         if (!$result instanceof ScannerDevice) {
-            throw new \LogicException('Expected ScannerDevice from device identifier query.');
+            throw new LogicException('Expected ScannerDevice from device identifier query.');
         }
 
         return $result;

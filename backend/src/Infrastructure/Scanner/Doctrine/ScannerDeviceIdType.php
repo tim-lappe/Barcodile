@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace App\Infrastructure\Scanner\Doctrine;
 
-use App\Domain\Scanner\Entity\ScannerDeviceId;
+use App\Domain\Shared\Id\ScannerDeviceId;
 use App\Infrastructure\Shared\Doctrine\Type\AbstractUuidIdDoctrineType;
 
 final class ScannerDeviceIdType extends AbstractUuidIdDoctrineType

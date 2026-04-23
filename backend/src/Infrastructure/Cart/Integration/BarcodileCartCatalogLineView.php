@@ -4,9 +4,9 @@ declare(strict_types=1);
 
 namespace App\Infrastructure\Cart\Integration;
 
-use App\Domain\Cart\Entity\ShoppingCartLineId;
 use App\Domain\Cart\Port\CartItemInterface;
 use App\Domain\Cart\Port\CartLineInterface;
+use App\Domain\Shared\Id\ShoppingCartLineId;
 use DateTimeImmutable;
 
 final readonly class BarcodileCartCatalogLineView implements CartLineInterface

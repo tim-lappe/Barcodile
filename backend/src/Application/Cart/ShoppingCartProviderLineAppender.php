@@ -11,8 +11,8 @@ use App\Domain\Cart\Port\CartProviderAccessException;
 use App\Domain\Cart\Port\CartProviderInterface;
 use App\Domain\Cart\Port\CartProviderRegistry;
 use App\Domain\Catalog\Entity\CatalogItem;
-use App\Domain\Catalog\Entity\CatalogItemId;
 use App\Domain\Picnic\Repository\PicnicCatalogItemProductLinkRepository;
+use App\Domain\Shared\Id\CatalogItemId;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 

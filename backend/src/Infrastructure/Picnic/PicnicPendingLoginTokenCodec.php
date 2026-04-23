@@ -4,11 +4,13 @@ declare(strict_types=1);
 
 namespace App\Infrastructure\Picnic;
 
+use App\Domain\Picnic\Port\PicnicPendingLoginTokenPort;
+use App\Domain\Picnic\ValueObject\PicnicPendingLoginCredentials;
 use App\Infrastructure\Shared\Security\AppSecretStringCipher;
 use InvalidArgumentException;
 use JsonException;
 
-final readonly class PicnicPendingLoginTokenCodec
+final readonly class PicnicPendingLoginTokenCodec implements PicnicPendingLoginTokenPort
 {
     public function __construct(private AppSecretStringCipher $cipher)
     {
@@ -32,17 +34,20 @@ final readonly class PicnicPendingLoginTokenCodec
         return $this->cipher->encrypt($payload, AppSecretStringCipher::HKDF_INFO_PENDING_LOGIN);
     }
 
-    /**
-     * @return array{username: string, countryCode: string, password: string, pendingAuthKey: string}
-     */
-    public function decode(string $token): array
+    public function decode(string $token): PicnicPendingLoginCredentials
     {
         $json = $this->cipher->decrypt($token, AppSecretStringCipher::HKDF_INFO_PENDING_LOGIN);
         $data = $this->decodedPayloadArray($json);
         $this->assertSupportedVersion($data);
         $this->assertNotExpired($data);
+        $row = $this->credentialsFromPayload($data);
 
-        return $this->credentialsFromPayload($data);
+        return new PicnicPendingLoginCredentials(
+            $row['username'],
+            $row['countryCode'],
+            $row['password'],
+            $row['pendingAuthKey'],
+        );
     }
 
     /**

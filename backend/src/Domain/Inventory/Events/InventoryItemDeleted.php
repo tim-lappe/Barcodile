@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace App\Domain\Inventory\Events;
 
-use App\Domain\Catalog\Entity\CatalogItemId;
-use App\Domain\Inventory\Entity\InventoryItemId;
+use App\Domain\Shared\Id\CatalogItemId;
+use App\Domain\Shared\Id\InventoryItemId;
 
 final readonly class InventoryItemDeleted
 {

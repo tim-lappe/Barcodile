@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace App\Application\Inventory\Controller;
 
 use App\Application\Inventory\InventoryItemApplicationService;
-use App\Domain\Inventory\Entity\InventoryItemId;
+use App\Domain\Shared\Id\InventoryItemId;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;

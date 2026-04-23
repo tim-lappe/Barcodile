@@ -5,10 +5,10 @@ declare(strict_types=1);
 namespace App\Infrastructure\Cart\Integration;
 
 use App\Domain\Cart\Entity\ShoppingCart;
-use App\Domain\Cart\Entity\ShoppingCartLineId;
 use App\Domain\Cart\Port\CartInterface;
 use App\Domain\Cart\Repository\ShoppingCartRepository;
 use App\Domain\Catalog\Entity\CatalogItem;
+use App\Domain\Shared\Id\ShoppingCartLineId;
 use DateTimeImmutable;
 use Generator;
 use InvalidArgumentException;

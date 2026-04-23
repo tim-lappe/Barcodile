@@ -4,16 +4,16 @@ declare(strict_types=1);
 
 namespace App\Infrastructure\Catalog\Doctrine;
 
-use App\Domain\Catalog\Entity\CatalogItemId;
+use App\Domain\Shared\Id\CatalogItemId;
 use App\Infrastructure\Shared\Doctrine\Type\AbstractUuidIdDoctrineType;
 
 final class CatalogItemIdType extends AbstractUuidIdDoctrineType
 {
-    public const NAME = 'catalog_item_id';
+    public const NAME = CatalogItemId::DOCTRINE_TYPE_NAME;
 
     public function getName(): string
     {
-        return self::NAME;
+        return CatalogItemId::DOCTRINE_TYPE_NAME;
     }
 
     protected function getIdClass(): string

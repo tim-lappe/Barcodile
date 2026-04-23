@@ -12,6 +12,7 @@ use App\Domain\Inventory\Events\InventoryItemExpirationDateChanged;
 use App\Domain\Inventory\Events\InventoryItemLocationChanged;
 use App\Domain\Inventory\Repository\InventoryItemRepository;
 use App\Domain\Shared\DomainEventRecorder;
+use App\Domain\Shared\Id\InventoryItemId;
 use App\Domain\Shared\RecordsDomainEvents;
 use DateTimeImmutable;
 use DateTimeInterface;

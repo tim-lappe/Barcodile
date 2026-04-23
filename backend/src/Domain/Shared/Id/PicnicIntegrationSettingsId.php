@@ -2,12 +2,11 @@
 
 declare(strict_types=1);
 
-namespace App\Domain\Inventory\Entity;
+namespace App\Domain\Shared\Id;
 
-use App\Domain\Shared\Id\AbstractUuidId;
 use Symfony\Component\Uid\Uuid;
 
-final readonly class CartStockAutomationRuleId extends AbstractUuidId
+final readonly class PicnicIntegrationSettingsId extends AbstractUuidId
 {
     public function __construct(?Uuid $uuid = null)
     {

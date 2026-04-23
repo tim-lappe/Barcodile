@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace App\Infrastructure\Scanner\Doctrine;
 
-use App\Domain\Scanner\Entity\CodeScannerId;
+use App\Domain\Shared\Id\CodeScannerId;
 use App\Infrastructure\Shared\Doctrine\Type\AbstractUuidIdDoctrineType;
 
 final class CodeScannerIdType extends AbstractUuidIdDoctrineType

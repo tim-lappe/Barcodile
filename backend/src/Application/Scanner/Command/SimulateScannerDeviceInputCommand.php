@@ -4,13 +4,13 @@ declare(strict_types=1);
 
 namespace App\Application\Scanner\Command;
 
-use App\Domain\Scanner\Repository\ScannerDeviceRepository;
 use App\Domain\Scanner\Input\ScannerInputReceiver;
+use App\Domain\Scanner\Repository\ScannerDeviceRepository;
 use Symfony\Component\Console\Attribute\AsCommand;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputArgument;
-use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Input\InputInterface;
+use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Console\Style\SymfonyStyle;
 
@@ -21,8 +21,8 @@ use Symfony\Component\Console\Style\SymfonyStyle;
 final class SimulateScannerDeviceInputCommand extends Command
 {
     public function __construct(
-        private readonly ScannerDeviceRepository $scannerDeviceRepository,
-        private readonly ScannerInputReceiver $scannerInputReceiver,
+        private readonly ScannerDeviceRepository $deviceRepository,
+        private readonly ScannerInputReceiver $inputReceiver,
     ) {
         parent::__construct();
     }
@@ -36,30 +36,28 @@ final class SimulateScannerDeviceInputCommand extends Command
 
     protected function execute(InputInterface $input, OutputInterface $output): int
     {
-        $io = new SymfonyStyle($input, $output);
+        $style = new SymfonyStyle($input, $output);
         $rawId = $input->getOption('deviceIdentifier');
         if (!\is_string($rawId)) {
-            $io->error('Invalid scanner device id.');
+            $style->error('Invalid scanner device id.');
 
             return Command::FAILURE;
         }
         $rawInput = $input->getArgument('text');
         if (!\is_string($rawInput)) {
-            $io->error('Invalid input.');
+            $style->error('Invalid input.');
 
             return Command::FAILURE;
         }
 
-        $device = $this->scannerDeviceRepository->findByDeviceIdentifier($rawId);
+        $device = $this->deviceRepository->findByDeviceIdentifier($rawId);
         if (null === $device) {
-            $io->error('Scanner device not found.');
+            $style->error('Scanner device not found.');
 
             return Command::FAILURE;
         }
 
-        $text = $rawInput;
-
-        $this->scannerInputReceiver->receiveInput($device->getId(), $text);
+        $this->inputReceiver->receiveInput($device->getId(), $rawInput);
 
         return Command::SUCCESS;
     }

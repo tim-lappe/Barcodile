@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace App\Infrastructure\Cart\Doctrine;
 
-use App\Domain\Cart\Entity\ShoppingCartLineId;
+use App\Domain\Shared\Id\ShoppingCartLineId;
 use App\Infrastructure\Shared\Doctrine\Type\AbstractUuidIdDoctrineType;
 
 final class ShoppingCartLineIdType extends AbstractUuidIdDoctrineType

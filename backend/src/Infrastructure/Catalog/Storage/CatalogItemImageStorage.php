@@ -4,17 +4,20 @@ declare(strict_types=1);
 
 namespace App\Infrastructure\Catalog\Storage;
 
-use App\Domain\Catalog\Entity\CatalogItemId;
+use App\Domain\Catalog\CatalogImageContentType;
+use App\Domain\Catalog\CatalogItemImageBlob;
+use App\Domain\Catalog\Exception\CatalogItemImageNotFoundInStorage;
+use App\Domain\Catalog\Port\CatalogItemImageStoragePort;
+use App\Domain\Shared\Id\CatalogItemId;
 use App\Infrastructure\Shared\ObjectStorage\DeleteObjectRequest;
 use App\Infrastructure\Shared\ObjectStorage\GetObjectRequest;
-use App\Infrastructure\Shared\ObjectStorage\GetObjectResult;
 use App\Infrastructure\Shared\ObjectStorage\ObjectKey;
 use App\Infrastructure\Shared\ObjectStorage\ObjectStorageClientInterface;
+use App\Infrastructure\Shared\ObjectStorage\ObjectStorageException;
 use App\Infrastructure\Shared\ObjectStorage\PutObjectRequest;
-use App\Infrastructure\Shared\ObjectStorage\PutObjectResult;
 use App\Infrastructure\Shared\ObjectStorage\StorageBucket;
 
-final readonly class CatalogItemImageStorage
+final readonly class CatalogItemImageStorage implements CatalogItemImageStoragePort
 {
     private const KEY_PREFIX = 'item-types';
 
@@ -36,11 +39,10 @@ final readonly class CatalogItemImageStorage
         return new ObjectKey(self::KEY_PREFIX.'/'.$catalogItemId->toUuid()->toRfc4122().'/images/'.$safe);
     }
 
-    public function put(CatalogItemId $catalogItemId, string $fileName, string $binary, ImageContentType $contentType): PutObjectResult
+    public function put(CatalogItemId $catalogItemId, string $fileName, string $binary, CatalogImageContentType $contentType): void
     {
         $key = $this->objectKeyFor($catalogItemId, $fileName);
-
-        return $this->objectStorage->putObject(new PutObjectRequest(
+        $this->objectStorage->putObject(new PutObjectRequest(
             $this->bucket,
             $key,
             $binary,
@@ -48,11 +50,19 @@ final readonly class CatalogItemImageStorage
         ));
     }
 
-    public function get(CatalogItemId $catalogItemId, string $fileName): GetObjectResult
+    public function get(CatalogItemId $catalogItemId, string $fileName): CatalogItemImageBlob
     {
         $key = $this->objectKeyFor($catalogItemId, $fileName);
+        try {
+            $got = $this->objectStorage->getObject(new GetObjectRequest($this->bucket, $key));
+        } catch (ObjectStorageException $e) {
+            if (str_contains($e->getMessage(), 'Object not found')) {
+                throw new CatalogItemImageNotFoundInStorage('Image not found in storage.', 0, $e);
+            }
+            throw $e;
+        }
 
-        return $this->objectStorage->getObject(new GetObjectRequest($this->bucket, $key));
+        return new CatalogItemImageBlob($got->body, $got->contentType, $got->eTag);
     }
 
     public function delete(CatalogItemId $catalogItemId, string $fileName): void

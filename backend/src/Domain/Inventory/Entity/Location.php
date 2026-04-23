@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Domain\Inventory\Entity;
 
 use App\Domain\Inventory\Repository\LocationRepository;
+use App\Domain\Shared\Id\LocationId;
 use Doctrine\ORM\Mapping as ORM;
 use Symfony\Component\Serializer\Attribute\Groups;
 use Symfony\Component\Validator\Constraints as Assert;

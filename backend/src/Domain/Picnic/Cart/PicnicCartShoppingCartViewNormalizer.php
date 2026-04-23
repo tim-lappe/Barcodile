@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace App\Domain\Picnic\Cart;
 
-use App\Domain\Cart\Entity\ShoppingCartLineId;
+use App\Domain\Shared\Id\ShoppingCartLineId;
 use DateTimeImmutable;
 use Symfony\Component\Uid\Uuid;
 

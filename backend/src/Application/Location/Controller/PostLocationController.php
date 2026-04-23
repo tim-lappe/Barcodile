@@ -7,7 +7,7 @@ namespace App\Application\Location\Controller;
 use App\Application\Location\Dto\PostLocationRequest;
 use App\Application\Location\LocationApplicationService;
 use App\Application\Shared\ApiIri;
-use App\Domain\Inventory\Entity\LocationId;
+use App\Domain\Shared\Id\LocationId;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpKernel\Attribute\MapRequestPayload;

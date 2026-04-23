@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace App\Application\Catalog\Controller;
 
 use App\Application\Catalog\CatalogItemApplicationService;
-use App\Domain\Catalog\Entity\CatalogItemId;
+use App\Domain\Shared\Id\CatalogItemId;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\File\UploadedFile;
 use Symfony\Component\HttpFoundation\JsonResponse;

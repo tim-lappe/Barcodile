@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace App\Infrastructure\Shared\Doctrine;
 
 use App\Domain\Shared\Entity\PersistedDomainEvent;
-use App\Domain\Shared\Entity\PersistedDomainEventId;
+use App\Domain\Shared\Id\PersistedDomainEventId;
 use App\Domain\Shared\RecordsDomainEvents;
 use App\Infrastructure\Shared\DomainEvent\DomainEventPersistedPayloadBuilder;
 use DateTimeImmutable;
@@ -24,7 +24,7 @@ final class DispatchRecordedDomainEventsListener
 
     public function __construct(
         private EventDispatcherInterface $eventDispatcher,
-        private DomainEventPersistedPayloadBuilder $domainEventPayloadBuilder,
+        private DomainEventPersistedPayloadBuilder $payloadBuilder,
     ) {
     }
 
@@ -49,6 +49,11 @@ final class DispatchRecordedDomainEventsListener
         if ([] === $this->pendingEntities) {
             return;
         }
+        $this->persistDispatchedEvents($args);
+    }
+
+    private function persistDispatchedEvents(PostFlushEventArgs $args): void
+    {
         $batch = $this->pendingEntities;
         $this->pendingEntities = [];
         $objectManager = $args->getObjectManager();
@@ -59,7 +64,7 @@ final class DispatchRecordedDomainEventsListener
                 $objectManager->persist(
                     new PersistedDomainEvent(
                         new PersistedDomainEventId(),
-                        $this->domainEventPayloadBuilder->build($domainEvent),
+                        $this->payloadBuilder->build($domainEvent),
                         new DateTimeImmutable(),
                     ),
                 );

@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace App\Infrastructure\Catalog\Doctrine;
 
-use App\Domain\Catalog\Entity\CatalogItemAttributeId;
+use App\Domain\Shared\Id\CatalogItemAttributeId;
 use App\Infrastructure\Shared\Doctrine\Type\AbstractUuidIdDoctrineType;
 
 final class CatalogItemAttributeIdType extends AbstractUuidIdDoctrineType

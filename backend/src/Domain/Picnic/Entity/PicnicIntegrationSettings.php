@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Domain\Picnic\Entity;
 
 use App\Domain\Picnic\Repository\PicnicIntegrationSettingsRepository;
+use App\Domain\Shared\Id\PicnicIntegrationSettingsId;
 use Doctrine\ORM\Mapping as ORM;
 use Symfony\Component\Serializer\Attribute\Groups;
 use Symfony\Component\Serializer\Attribute\SerializedName;

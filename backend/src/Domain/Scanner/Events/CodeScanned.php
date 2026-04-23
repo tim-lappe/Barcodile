@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace App\Domain\Scanner\Events;
 
-use App\Domain\Scanner\Entity\ScannerDeviceId;
+use App\Domain\Shared\Id\ScannerDeviceId;
 
 final readonly class CodeScanned
 {

@@ -7,8 +7,8 @@ namespace App\Application\Location;
 use App\Application\Location\Dto\LocationResponse;
 use App\Application\Shared\ApiIri;
 use App\Domain\Inventory\Entity\Location;
-use App\Domain\Inventory\Entity\LocationId;
 use App\Domain\Inventory\Repository\LocationRepository;
+use App\Domain\Shared\Id\LocationId;
 use InvalidArgumentException;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 

@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Domain\Cart\Entity;
 
 use App\Domain\Catalog\Entity\CatalogItem;
+use App\Domain\Shared\Id\ShoppingCartLineId;
 use DateTimeImmutable;
 use Doctrine\ORM\Mapping as ORM;
 use Symfony\Component\Serializer\Attribute\Groups;

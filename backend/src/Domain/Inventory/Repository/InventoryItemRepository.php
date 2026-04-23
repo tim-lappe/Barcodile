@@ -4,9 +4,8 @@ declare(strict_types=1);
 
 namespace App\Domain\Inventory\Repository;
 
-use App\Domain\Catalog\Entity\CatalogItemId;
 use App\Domain\Inventory\Entity\InventoryItem;
-use App\Infrastructure\Catalog\Doctrine\CatalogItemIdType;
+use App\Domain\Shared\Id\CatalogItemId;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\Persistence\ManagerRegistry;
 use LogicException;
@@ -62,7 +61,7 @@ final class InventoryItemRepository extends ServiceEntityRepository
         $queryBuilder = $this->createQueryBuilder('i')
             ->select('COUNT(i.inventoryItemId)')
             ->andWhere('i.catalogItem = :cid')
-            ->setParameter('cid', $catalogItemId, CatalogItemIdType::NAME);
+            ->setParameter('cid', $catalogItemId, CatalogItemId::DOCTRINE_TYPE_NAME);
         $raw = $queryBuilder->getQuery()->getSingleScalarResult();
 
         return is_numeric($raw) ? (int) $raw : 0;

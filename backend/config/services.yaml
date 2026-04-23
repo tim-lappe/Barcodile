@@ -43,6 +43,28 @@ services:
         arguments:
             $bucket: '@app.storage.catalog_item_images_bucket'
 
+    App\Domain\Catalog\Port\CatalogItemImageStoragePort:
+        alias: App\Infrastructure\Catalog\Storage\CatalogItemImageStorage
+
+    App\Domain\Picnic\Port\PicnicCredentialCipherPort:
+        alias: App\Infrastructure\Picnic\PicnicCredentialCipherAdapter
+
+    App\Domain\Picnic\Port\PicnicPendingLoginTokenPort:
+        alias: App\Infrastructure\Picnic\PicnicPendingLoginTokenCodec
+
+    App\Domain\Picnic\Port\PicnicAnonymousAuthenticationPort:
+        alias: App\Infrastructure\Picnic\PicnicAnonymousAuthenticationAdapter
+
+    App\Domain\Picnic\Port\PicnicCatalogSearchPort:
+        alias: App\Infrastructure\Picnic\PicnicCatalogSearchAdapter
+
+    App\Domain\Scanner\Input\ScanLineKeyAccumulatorFactory:
+        alias: App\Infrastructure\Scanner\EvdevScanLineKeyAccumulatorFactory
+
+    App\Infrastructure\Picnic\PicnicAnonymousAuthenticationAdapter:
+        arguments:
+            $picnicApiVersion: '%env(string:PICNIC_API_VERSION)%'
+
     App\Infrastructure\Shared\Security\AppSecretStringCipher:
         arguments:
             $appSecret: '%kernel.secret%'

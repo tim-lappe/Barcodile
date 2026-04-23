@@ -2,12 +2,11 @@
 
 declare(strict_types=1);
 
-namespace App\Domain\Cart\Entity;
+namespace App\Domain\Shared\Id;
 
-use App\Domain\Shared\Id\AbstractUuidId;
 use Symfony\Component\Uid\Uuid;
 
-final readonly class ShoppingCartId extends AbstractUuidId
+final readonly class ScannerDeviceId extends AbstractUuidId
 {
     public function __construct(?Uuid $uuid = null)
     {

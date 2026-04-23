@@ -2,13 +2,14 @@
 
 declare(strict_types=1);
 
-namespace App\Domain\Picnic\Entity;
+namespace App\Domain\Shared\Id;
 
-use App\Domain\Shared\Id\AbstractUuidId;
 use Symfony\Component\Uid\Uuid;
 
-final readonly class PicnicIntegrationSettingsId extends AbstractUuidId
+final readonly class ShoppingCartId extends AbstractUuidId
 {
+    public const string DOCTRINE_TYPE_NAME = 'shopping_cart_id';
+
     public function __construct(?Uuid $uuid = null)
     {
         parent::__construct($uuid ?? Uuid::v7());

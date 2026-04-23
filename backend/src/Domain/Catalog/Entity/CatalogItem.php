@@ -9,6 +9,7 @@ use App\Domain\Catalog\Entity\Embeddable\VolumeEmbeddable;
 use App\Domain\Catalog\Entity\Embeddable\WeightEmbeddable;
 use App\Domain\Catalog\Repository\CatalogItemRepository;
 use App\Domain\Shared\Barcode as BarcodeValue;
+use App\Domain\Shared\Id\CatalogItemId;
 use App\Domain\Shared\Volume;
 use App\Domain\Shared\Weight;
 use Doctrine\Common\Collections\ArrayCollection;

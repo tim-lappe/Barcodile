@@ -6,7 +6,7 @@ namespace App\Application\Cart\Controller;
 
 use App\Application\Cart\Dto\PatchShoppingCartLineRequest;
 use App\Application\Cart\ShoppingCartApplicationService;
-use App\Domain\Cart\Entity\ShoppingCartLineId;
+use App\Domain\Shared\Id\ShoppingCartLineId;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpKernel\Attribute\MapRequestPayload;

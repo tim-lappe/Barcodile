@@ -7,6 +7,7 @@ namespace App\Domain\Inventory\Entity;
 use App\Domain\Cart\Entity\ShoppingCart;
 use App\Domain\Catalog\Entity\CatalogItem;
 use App\Domain\Inventory\Repository\CartStockAutomationRuleRepository;
+use App\Domain\Shared\Id\CartStockAutomationRuleId;
 use DateTimeImmutable;
 use Doctrine\ORM\Mapping as ORM;
 use Symfony\Component\Validator\Constraints as Assert;

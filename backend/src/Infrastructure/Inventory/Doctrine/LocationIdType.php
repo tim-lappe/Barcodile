@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace App\Infrastructure\Inventory\Doctrine;
 
-use App\Domain\Inventory\Entity\LocationId;
+use App\Domain\Shared\Id\LocationId;
 use App\Infrastructure\Shared\Doctrine\Type\AbstractUuidIdDoctrineType;
 
 final class LocationIdType extends AbstractUuidIdDoctrineType

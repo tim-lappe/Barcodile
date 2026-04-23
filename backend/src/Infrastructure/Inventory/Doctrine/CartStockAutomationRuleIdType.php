@@ -4,16 +4,16 @@ declare(strict_types=1);
 
 namespace App\Infrastructure\Inventory\Doctrine;
 
-use App\Domain\Inventory\Entity\CartStockAutomationRuleId;
+use App\Domain\Shared\Id\CartStockAutomationRuleId;
 use App\Infrastructure\Shared\Doctrine\Type\AbstractUuidIdDoctrineType;
 
 final class CartStockAutomationRuleIdType extends AbstractUuidIdDoctrineType
 {
-    public const NAME = 'cart_stock_automation_rule_id';
+    public const NAME = CartStockAutomationRuleId::DOCTRINE_TYPE_NAME;
 
     public function getName(): string
     {
-        return self::NAME;
+        return CartStockAutomationRuleId::DOCTRINE_TYPE_NAME;
     }
 
     protected function getIdClass(): string

@@ -2,9 +2,9 @@
 
 declare(strict_types=1);
 
-namespace App\Infrastructure\Catalog\Storage;
+namespace App\Domain\Catalog;
 
-enum ImageContentType: string
+enum CatalogImageContentType: string
 {
     case Jpeg = 'image/jpeg';
     case Png = 'image/png';

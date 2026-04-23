@@ -4,13 +4,13 @@ declare(strict_types=1);
 
 namespace App\Domain\Picnic\Cart;
 
-use App\Domain\Cart\Entity\ShoppingCartLineId;
 use App\Domain\Cart\Port\CartInterface;
 use App\Domain\Cart\Port\CartProviderAccessException;
 use App\Domain\Catalog\Entity\CatalogItem;
 use App\Domain\Picnic\Port\PicnicCartSessionPort;
 use App\Domain\Picnic\Repository\PicnicCatalogItemProductLinkRepository;
 use App\Domain\Picnic\Repository\PicnicIntegrationSettingsRepository;
+use App\Domain\Shared\Id\ShoppingCartLineId;
 use DateTimeImmutable;
 use Generator;
 

@@ -2,13 +2,14 @@
 
 declare(strict_types=1);
 
-namespace App\Domain\Catalog\Entity;
+namespace App\Domain\Shared\Id;
 
-use App\Domain\Shared\Id\AbstractUuidId;
 use Symfony\Component\Uid\Uuid;
 
 final readonly class CatalogItemId extends AbstractUuidId
 {
+    public const string DOCTRINE_TYPE_NAME = 'catalog_item_id';
+
     public function __construct(?Uuid $uuid = null)
     {
         parent::__construct($uuid ?? Uuid::v7());

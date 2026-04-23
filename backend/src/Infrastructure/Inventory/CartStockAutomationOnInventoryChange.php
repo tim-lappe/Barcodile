@@ -5,11 +5,11 @@ declare(strict_types=1);
 namespace App\Infrastructure\Inventory;
 
 use App\Application\Inventory\Service\CartStockAutomationApplicationService;
-use App\Domain\Catalog\Entity\CatalogItemId;
 use App\Domain\Inventory\Events\InventoryItemCatalogItemChanged;
 use App\Domain\Inventory\Events\InventoryItemCreated;
 use App\Domain\Inventory\Events\InventoryItemDeleted;
 use App\Domain\Inventory\Repository\InventoryItemRepository;
+use App\Domain\Shared\Id\CatalogItemId;
 use App\Domain\Shared\Math\BcQuantity;
 use Symfony\Component\EventDispatcher\Attribute\AsEventListener;
 

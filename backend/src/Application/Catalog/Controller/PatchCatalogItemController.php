@@ -6,7 +6,7 @@ namespace App\Application\Catalog\Controller;
 
 use App\Application\Catalog\CatalogItemApplicationService;
 use App\Application\Catalog\Dto\PatchCatalogItemRequest;
-use App\Domain\Catalog\Entity\CatalogItemId;
+use App\Domain\Shared\Id\CatalogItemId;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpKernel\Attribute\MapRequestPayload;

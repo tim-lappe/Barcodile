@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace App\Domain\Cart\Port;
 
-use App\Domain\Cart\Entity\ShoppingCartLineId;
 use App\Domain\Catalog\Entity\CatalogItem;
+use App\Domain\Shared\Id\ShoppingCartLineId;
 use DateTimeImmutable;
 use Generator;
 

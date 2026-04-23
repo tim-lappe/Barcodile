@@ -6,37 +6,40 @@ namespace App\Application\Catalog;
 
 use App\Application\Catalog\CreateCatalogItem\CreateCatalogItemStrategyRegistry;
 use App\Application\Catalog\Dto\CatalogBarcodeInput;
+use App\Application\Catalog\Dto\CatalogItemImageGetResult;
 use App\Application\Catalog\Dto\CatalogItemResponse;
 use App\Application\Catalog\Dto\CatalogVolumeInput;
 use App\Application\Catalog\Dto\CatalogWeightInput;
-use App\Application\Catalog\Dto\CatalogItemImageGetResult;
 use App\Application\Catalog\Dto\PatchCatalogItemRequest;
 use App\Application\Catalog\Dto\PicnicCatalogProductHintResponse;
 use App\Application\Catalog\Dto\PostCatalogItemRequest;
+use App\Domain\Catalog\CatalogImageContentType;
 use App\Domain\Catalog\Entity\CatalogItem;
-use App\Domain\Catalog\Entity\CatalogItemId;
+use App\Domain\Catalog\Exception\CatalogItemImageNotFoundInStorage;
+use App\Domain\Catalog\Port\CatalogItemImageStoragePort;
 use App\Domain\Catalog\Repository\CatalogItemRepository;
 use App\Domain\Picnic\Port\PicnicCatalogProductLookupPort;
 use App\Domain\Picnic\Repository\PicnicCatalogItemProductLinkRepository;
 use App\Domain\Shared\Barcode as BarcodeValue;
+use App\Domain\Shared\Id\CatalogItemId;
 use App\Domain\Shared\Volume;
 use App\Domain\Shared\VolumeUnit;
 use App\Domain\Shared\Weight;
 use App\Domain\Shared\WeightUnit;
-use App\Infrastructure\Catalog\Storage\CatalogItemImageStorage;
-use App\Infrastructure\Catalog\Storage\ImageContentType;
-use App\Infrastructure\Shared\ObjectStorage\ObjectStorageException;
 use InvalidArgumentException;
 use Symfony\Component\HttpFoundation\File\UploadedFile;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 use Throwable;
 
+/**
+ * @SuppressWarnings("PHPMD.ExcessiveClassComplexity")
+ */
 final readonly class CatalogItemApplicationService
 {
     public function __construct(
         private CatalogItemRepository $catalogItemRepo,
         private PicnicCatalogItemProductLinkRepository $picnicLinkRepo,
-        private CatalogItemImageStorage $catalogImageStorage,
+        private CatalogItemImageStoragePort $catalogImageStorage,
         private CreateCatalogItemStrategyRegistry $itemStrategyReg,
         private PicnicCatalogProductLookupPort $picnicProductLookup,
         private CatalogItemReadMapper $readMapper,
@@ -128,7 +131,7 @@ final readonly class CatalogItemApplicationService
         $this->catalogImageStorage->ensureBucketReady();
         $safe = $this->catalogImageStorage->sanitizeFileName($file->getClientOriginalName());
         $mime = $file->getMimeType();
-        $contentType = ImageContentType::tryFromMimeType((string) $mime) ?? ImageContentType::Jpeg;
+        $contentType = CatalogImageContentType::tryFromMimeType((string) $mime) ?? CatalogImageContentType::Jpeg;
         $this->catalogImageStorage->put($catalogItemId, $safe, $binary, $contentType);
         $item->changeImageFileName($safe);
         $this->catalogItemRepo->save($item);
@@ -155,27 +158,28 @@ final readonly class CatalogItemApplicationService
         return $this->readMapper->map($item, $link?->getProductId());
     }
 
+    /**
+     * @SuppressWarnings("PHPMD.CyclomaticComplexity")
+     */
     public function getCatalogItemImage(CatalogItemId $catalogItemId): CatalogItemImageGetResult
     {
         $item = $this->mustFind($catalogItemId);
-        $imageFileName = $item->getImageFileName();
-        if (null === $imageFileName || '' === $imageFileName) {
+        $fileName = $item->getImageFileName();
+        if (null === $fileName || '' === $fileName) {
             throw new NotFoundHttpException('Catalog item has no image.');
         }
         try {
-            $got = $this->catalogImageStorage->get($catalogItemId, $imageFileName);
-        } catch (ObjectStorageException $e) {
-            if (str_contains($e->getMessage(), 'Object not found')) {
-                throw new NotFoundHttpException('Image not found in storage.');
-            }
-            throw $e;
+            $got = $this->catalogImageStorage->get($catalogItemId, $fileName);
+        } catch (CatalogItemImageNotFoundInStorage) {
+            throw new NotFoundHttpException('Image not found in storage.');
         }
-        $contentType = $got->contentType;
-        if (null === $contentType || '' === $contentType) {
-            $contentType = 'application/octet-stream';
-        }
+        $mime = $got->contentType;
 
-        return new CatalogItemImageGetResult($got->body, $contentType, $got->eTag);
+        return new CatalogItemImageGetResult(
+            $got->body,
+            (null === $mime || '' === $mime) ? 'application/octet-stream' : $mime,
+            $got->eTag,
+        );
     }
 
     private function mustFind(CatalogItemId $catalogItemId): CatalogItem

@@ -9,6 +9,7 @@ use BackedEnum;
 use DateTimeInterface;
 use ReflectionClass;
 use ReflectionProperty;
+use Stringable;
 use UnitEnum;
 
 final class DomainEventPersistedPayloadBuilder
@@ -31,19 +32,24 @@ final class DomainEventPersistedPayloadBuilder
         if ($depth > self::MAX_DEPTH) {
             return null;
         }
-        if (is_array($value)) {
-            $out = [];
-            foreach ($value as $key => $item) {
-                $out[$key] = $this->toSerializableData($item, $depth + 1);
-            }
-
-            return $out;
+        if (\is_array($value)) {
+            return $this->serializeArray($value, $depth);
         }
-        if (null === $value || is_bool($value) || is_int($value) || is_float($value) || is_string($value)) {
+
+        return $this->serializeNonArrayValue($value, $depth);
+    }
+
+    /**
+     * @SuppressWarnings("PHPMD.CyclomaticComplexity")
+     * @SuppressWarnings("PHPMD.NPathComplexity")
+     */
+    private function serializeNonArrayValue(mixed $value, int $depth): mixed
+    {
+        if (null === $value || \is_bool($value) || \is_int($value) || \is_float($value) || \is_string($value)) {
             return $value;
         }
         if ($value instanceof DateTimeInterface) {
-            return $value->format(DATE_ATOM);
+            return $value->format(\DATE_ATOM);
         }
         if ($value instanceof BackedEnum) {
             return $value->value;
@@ -57,14 +63,38 @@ final class DomainEventPersistedPayloadBuilder
         if (!\is_object($value)) {
             return null;
         }
-        if (is_callable([$value, 'getId'])) {
-            $id = $value->getId();
 
+        return $this->serializeObject($value, $depth);
+    }
+
+    /**
+     * @param array<mixed> $value
+     *
+     * @return array<mixed>
+     */
+    private function serializeArray(array $value, int $depth): array
+    {
+        $out = [];
+        foreach ($value as $key => $item) {
+            $out[$key] = $this->toSerializableData($item, $depth + 1);
+        }
+
+        return $out;
+    }
+
+    /**
+     * @SuppressWarnings("PHPMD.CyclomaticComplexity")
+     * @SuppressWarnings("PHPMD.ExcessiveMethodLength")
+     */
+    private function serializeObject(object $value, int $depth): mixed
+    {
+        if (\is_callable([$value, 'getId'])) {
+            $entityId = $value->getId();
             $shortName = (new ReflectionClass($value))->getShortName();
 
             return [
                 'entity' => $shortName,
-                'id' => $this->idValueToString($id),
+                'id' => $this->idValueToString($entityId),
             ];
         }
 
@@ -85,25 +115,26 @@ final class DomainEventPersistedPayloadBuilder
             return $data;
         }
 
-        if ($value instanceof \Stringable) {
+        if ($value instanceof Stringable) {
             return (string) $value;
         }
 
         return $reflection->getName();
     }
 
-    private function idValueToString(mixed $id): string
+    /**
+     * @SuppressWarnings("PHPMD.CyclomaticComplexity")
+     */
+    private function idValueToString(mixed $rawId): string
     {
-        if ($id instanceof \Stringable) {
-            return (string) $id;
+        if ($rawId instanceof Stringable) {
+            return (string) $rawId;
         }
-        if (is_string($id)) {
-            return $id;
+        if (\is_string($rawId) || \is_int($rawId) || \is_float($rawId)) {
+            return (string) $rawId;
         }
-        if (is_int($id) || is_float($id)) {
-            return (string) $id;
-        }
+        $encoded = json_encode($rawId);
 
-        return (string) json_encode($id, \JSON_THROW_ON_ERROR);
+        return false === $encoded ? '' : $encoded;
     }
 }
