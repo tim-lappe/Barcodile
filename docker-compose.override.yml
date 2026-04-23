@@ -1,0 +1,20 @@
+services:
+  app:
+    build:
+      args:
+        COMPOSER_NO_DEV: "0"
+    ports:
+      - "8000:8000"
+      - "5173:5173"
+    environment:
+      BARCODILE_RUNTIME: dev
+      APP_ENV: dev
+      APP_DEBUG: "1"
+      DEFAULT_URI: ${DEFAULT_URI:-http://localhost:8000}
+    volumes:
+      - ./backend:/var/www/html
+      - ./frontend:/app/frontend
+      - frontend_node_modules:/app/frontend/node_modules
+
+volumes:
+  frontend_node_modules:

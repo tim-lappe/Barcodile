@@ -4,146 +4,78 @@
 
 # Barcodile
 
-**Catalog, inventory, carts, and scanner devices** — Symfony API plus a React admin UI, with optional Picnic integration and local filesystem storage for catalog images.
+**Catalog, inventory, carts, and scanner devices** — a web app with a Symfony API and a React admin UI, with optional Picnic integration. Item images are stored in the database (PostgreSQL).
 
 </div>
 
 ---
 
-## Prerequisites
+## Self-hosting with Docker
 
-| Tool | Version | Notes |
-|------|---------|--------|
-| [PHP](https://www.php.net/) | **8.5+** | Extensions: `bcmath`, `ctype`, `iconv` |
-| [Composer](https://getcomposer.org/) | 2.x | Backend dependencies |
-| [Node.js](https://nodejs.org/) | **22** (recommended) | Frontend; LTS 20+ usually works |
-| [Docker](https://docs.docker.com/get-docker/) | recent | Optional; full stack |
+You need [Docker](https://docs.docker.com/get-docker/) and [Docker Compose](https://docs.docker.com/compose/) on your machine. No separate database install is required: one image includes PostgreSQL, the app, and the web server.
+
+**1. Create a folder** for the configuration files. Compose will download the image when you start the stack. If the download is denied, sign in to [GitHub Container Registry](https://docs.github.com/en/packages/working-with-a-github-packages-registry/working-with-the-container-registry) — for a public package you usually do not need to sign in.
+
+```bash
+mkdir barcodile && cd barcodile
+```
+
+**2. Set secrets and URLs.** The app must have a long random `APP_SECRET`, strong database credentials, a `DATABASE_URL` that uses the same user and password, and a browser origin rule that matches the address you will type in the web browser. Replace the example host and password with your own. Save the file as `.env` in the same folder as `docker-compose.yml` (and keep that file private; do not post it online):
+
+```bash
+APP_SECRET=at-least-32-random-characters
+POSTGRES_USER=barcodile
+POSTGRES_PASSWORD=choose-a-strong-password
+POSTGRES_DB=barcodile
+DATABASE_URL=postgresql://barcodile:choose-a-strong-password@127.0.0.1:5432/barcodile?serverVersion=16&charset=utf8
+DEFAULT_URI=https://barcodile.example.com
+CORS_ALLOW_ORIGIN=^https://barcodile\.example\.com$
+```
+
+`DEFAULT_URI` should be the URL people use to open the app. `CORS_ALLOW_ORIGIN` is a [regular expression](https://www.php.net/manual/en/reference.pcre.pattern.syntax.php) for allowed browser origins; at minimum it must cover that same address.
+
+**3. Create `docker-compose.yml`** (update the image name to match the package published for this project — on GitHub: **Packages** for the repository, usually `ghcr.io/tim-lappe/barcodile` in lowercase):
+
+```yaml
+services:
+  app:
+    image: ghcr.io/tim-lappe/barcodile:latest
+    restart: unless-stopped
+    ports:
+      - "8080:80"
+      - "5432:5432"
+    env_file: .env
+    environment:
+      BARCODILE_RUNTIME: prod
+      APP_ENV: prod
+      APP_DEBUG: "0"
+    privileged: true
+    volumes:
+      - barcodile_pgdata:/var/lib/postgresql/data
+      - barcodile_var:/var/www/html/var
+      - /dev/input:/dev/input
+
+volumes:
+  barcodile_pgdata:
+  barcodile_var:
+```
+
+**4. Start the stack**
+
+```bash
+docker compose up -d
+```
+
+Open `http://localhost:8080` (or your server’s hostname and port) in a browser. The first start can take a minute while the database and application start.
+
+`5432` is exposed for backups or external tools; you can remove the `ports` line for it if you do not need that. The `/dev/input` mount and `privileged: true` are for USB barcode scanners on Linux; if you do not use that feature, you can try omitting `privileged` and the `/dev/input` volume (some hosts require these for input devices to work inside the container).
+
+**Optional: Picnic grocery integration** — set `PICNIC_COUNTRY`, `PICNIC_API_VERSION`, `PICNIC_URL`, and `PICNIC_AUTH_KEY` in the same `.env` file if you use that integration.
 
 ---
 
-## Option A — Docker Compose (recommended)
+## Build the image from source
 
-Runs backend and frontend dev server. Catalog images are stored under `backend/var/storage` (bind-mounted with the backend).
+If you prefer to build locally instead of pulling from the registry, clone the repository, replace the `image:` line in the compose file with a `build` section pointing at the repo root, and run `docker compose up -d --build` from that directory.
 
-### 1. Backend environment
-
-Create `backend/.env.local` (this file is not committed). Symfony needs at least a database URL, app secret, and CORS pattern for the Vite origin:
-
-```bash
-# backend/.env.local
-APP_SECRET=replace-with-a-long-random-string-at-least-32-chars
-DATABASE_URL="sqlite:///%kernel.project_dir%/var/dev.db"
-CORS_ALLOW_ORIGIN=^https?://localhost(:[0-9]+)?$
-```
-
-`docker-compose.yml` sets `FILE_STORAGE_ROOT` and `FILE_STORAGE_BUCKET` for the backend container.
-
-### 2. Start services
-
-From the repository root:
-
-```bash
-docker compose up --build
-```
-
-### 3. Run migrations
-
-In another terminal:
-
-```bash
-docker compose exec backend php bin/console doctrine:migrations:migrate --no-interaction
-```
-
-### 4. Open the app
-
-| Service | URL |
-|---------|-----|
-| Frontend (Vite) | [http://localhost:5173](http://localhost:5173) |
-| Backend (PHP built-in server) | [http://localhost:8000](http://localhost:8000) |
-
-The frontend proxies `/api`, `/bundles`, and Symfony profiler paths to the backend (see `frontend/vite.config.ts`).
-
-### Shell inside backend container
-
-```bash
-./bin/docker.sh
-```
-
----
-
-## Option B — Local PHP + Node (no Docker)
-
-Use this when you prefer native tooling. Image storage uses `var/storage` under the backend project by default (see `config/services.yaml`).
-
-### Backend
-
-```bash
-cd backend
-composer install
-```
-
-Create `backend/.env.local` as in Option A. Override paths only if needed:
-
-```bash
-FILE_STORAGE_ROOT=/absolute/path/to/storage
-FILE_STORAGE_BUCKET=barcodile
-```
-
-Apply schema:
-
-```bash
-php bin/console doctrine:migrations:migrate --no-interaction
-php -S 127.0.0.1:8000 -t public
-```
-
-### Frontend
-
-```bash
-cd frontend
-npm install
-npm run dev
-```
-
-Vite defaults to proxying the API to `http://127.0.0.1:8000`. Override with `DEV_PROXY_TARGET` if your backend listens elsewhere.
-
-### Convenience script
-
-From the repo root, `bin/dev.sh` starts the PHP server on port 8000 and then `npm run dev` in `frontend` (database must already be configured).
-
----
-
-## Environment reference
-
-Variables with defaults in `backend/config/services.yaml` can be omitted unless you want to override Picnic defaults.
-
-| Variable | Purpose |
-|----------|---------|
-| `APP_SECRET` | Symfony secret (encryption, CSRF); required |
-| `DATABASE_URL` | Doctrine connection (e.g. SQLite or PostgreSQL) |
-| `CORS_ALLOW_ORIGIN` | Regex allowed origins for the browser UI |
-| `FILE_STORAGE_ROOT` | Base directory for catalog images (default: `var/storage` under the backend project) |
-| `FILE_STORAGE_BUCKET` | Subdirectory name under `FILE_STORAGE_ROOT` (default: `barcodile`) |
-| `PICNIC_COUNTRY`, `PICNIC_API_VERSION`, `PICNIC_URL`, `PICNIC_AUTH_KEY` | Picnic grocery integration (optional) |
-
-Existing image blobs are not migrated automatically if you change storage backends; copy files manually or re-upload.
-
----
-
-## Quality checks (backend)
-
-```bash
-cd backend
-composer qa
-```
-
----
-
-## Production-shaped stack
-
-See `docker-compose.prod.yaml` and `Dockerfile.prod` for a consolidated production image and environment variables such as `DEFAULT_URI` and `DATABASE_URL`. Production persists uploads on the `barcodile_var` volume under `/var/www/html/var` by default (`FILE_STORAGE_ROOT`).
-
----
-
-## Scanner tooling (Linux)
-
-Console commands under `backend/src/Command/` that interact with input devices expect a Linux environment with evdev access (not available inside default macOS or generic Docker desktop setups). Run them on the host or a VM with the appropriate device permissions.
+For development, the repository’s own `docker-compose.yml` and `docker-compose.override.yml` support a multi-port development layout; that setup is intended for people working on the code.

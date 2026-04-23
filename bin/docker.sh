@@ -1,3 +1,3 @@
 #!/usr/bin/env bash
 
-docker compose exec -it backend /bin/bash
+docker compose exec -it app /bin/bash

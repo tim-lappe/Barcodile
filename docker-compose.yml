@@ -1,35 +1,28 @@
 services:
-  backend:
+  app:
     build:
       context: .
-      dockerfile: backend/Dockerfile
-    working_dir: /var/www/html
-    volumes:
-      - ./backend:/var/www/html
+      dockerfile: Dockerfile
     ports:
-      - "8000:8000"
+      - "8080:80"
+      - "5432:5432"
     environment:
-      FILE_STORAGE_ROOT: /var/www/html/var/storage
-      FILE_STORAGE_BUCKET: barcodile
-
-  frontend:
-    image: node:22-bookworm-slim
-    working_dir: /app
+      BARCODILE_RUNTIME: prod
+      APP_ENV: prod
+      APP_DEBUG: "0"
+      APP_SECRET: ${APP_SECRET:-00000000000000000000000000000000}
+      DATABASE_URL: ${DATABASE_URL:-postgresql://barcodile:barcodile@127.0.0.1:5432/barcodile?serverVersion=16&charset=utf8}
+      DEFAULT_URI: ${DEFAULT_URI:-http://localhost:8080}
+      CORS_ALLOW_ORIGIN: ${CORS_ALLOW_ORIGIN:-^https?://localhost(:[0-9]+)?$}
+      POSTGRES_USER: ${POSTGRES_USER:-barcodile}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-barcodile}
+      POSTGRES_DB: ${POSTGRES_DB:-barcodile}
+    privileged: true
     volumes:
-      - ./frontend:/app
-      - frontend_node_modules:/app/node_modules
-    ports:
-      - "5173:5173"
-    environment:
-      DEV_PROXY_TARGET: http://backend:8000
-    command:
-      [
-        "sh",
-        "-c",
-        "npm install && exec npm run dev -- --host 0.0.0.0",
-      ]
-    depends_on:
-      - backend
+      - barcodile_pgdata:/var/lib/postgresql/data
+      - barcodile_var:/var/www/html/var
+      - /dev/input:/dev/input
 
 volumes:
-  frontend_node_modules:
+  barcodile_var:
+  barcodile_pgdata:
