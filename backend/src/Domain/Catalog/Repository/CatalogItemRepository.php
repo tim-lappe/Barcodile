@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Domain\Catalog\Repository;
 
 use App\Domain\Catalog\Entity\CatalogItem;
+use App\Domain\Shared\Id\CatalogItemId;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\Persistence\ManagerRegistry;
 
@@ -65,6 +66,18 @@ final class CatalogItemRepository extends ServiceEntityRepository
             ->setParameter('code', $code)
             ->setParameter('type', $type)
             ->setMaxResults(1)
+            ->getQuery()
+            ->getOneOrNullResult();
+
+        return $result instanceof CatalogItem ? $result : null;
+    }
+
+    public function findWithCatalogItemImage(CatalogItemId $catalogItemId): ?CatalogItem
+    {
+        $result = $this->createQueryBuilder('c')
+            ->leftJoin('c.catalogItemImage', 'img')->addSelect('img')
+            ->andWhere('c.catalogItemId = :id')
+            ->setParameter('id', $catalogItemId, 'catalog_item_id')
             ->getQuery()
             ->getOneOrNullResult();
 

@@ -15,8 +15,7 @@ use App\Application\Catalog\Dto\PicnicCatalogProductHintResponse;
 use App\Application\Catalog\Dto\PostCatalogItemRequest;
 use App\Domain\Catalog\CatalogImageContentType;
 use App\Domain\Catalog\Entity\CatalogItem;
-use App\Domain\Catalog\Exception\CatalogItemImageNotFoundInStorage;
-use App\Domain\Catalog\Port\CatalogItemImageStoragePort;
+use App\Domain\Catalog\Entity\CatalogItemImage;
 use App\Domain\Catalog\Repository\CatalogItemRepository;
 use App\Domain\Picnic\Port\PicnicCatalogProductLookupPort;
 use App\Domain\Picnic\Repository\PicnicCatalogItemProductLinkRepository;
@@ -29,7 +28,6 @@ use App\Domain\Shared\WeightUnit;
 use InvalidArgumentException;
 use Symfony\Component\HttpFoundation\File\UploadedFile;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
-use Throwable;
 
 /**
  * @SuppressWarnings("PHPMD.ExcessiveClassComplexity")
@@ -39,7 +37,6 @@ final readonly class CatalogItemApplicationService
     public function __construct(
         private CatalogItemRepository $catalogItemRepo,
         private PicnicCatalogItemProductLinkRepository $picnicLinkRepo,
-        private CatalogItemImageStoragePort $catalogImageStorage,
         private CreateCatalogItemStrategyRegistry $itemStrategyReg,
         private PicnicCatalogProductLookupPort $picnicProductLookup,
         private CatalogItemReadMapper $readMapper,
@@ -110,14 +107,6 @@ final readonly class CatalogItemApplicationService
     public function deleteCatalogItem(CatalogItemId $catalogItemId): void
     {
         $item = $this->mustFind($catalogItemId);
-        $imageFileName = $item->getImageFileName();
-        if (null !== $imageFileName && '' !== $imageFileName) {
-            try {
-                $this->catalogImageStorage->delete($catalogItemId, $imageFileName);
-            } catch (Throwable) {
-                $this->ignoreRemoteImageStorageFailure();
-            }
-        }
         $this->catalogItemRepo->remove($item);
     }
 
@@ -128,12 +117,10 @@ final readonly class CatalogItemApplicationService
         if (false === $binary) {
             throw new InvalidArgumentException('Uploaded file could not be read.');
         }
-        $this->catalogImageStorage->ensureBucketReady();
-        $safe = $this->catalogImageStorage->sanitizeFileName($file->getClientOriginalName());
+        $safe = $this->sanitizeCatalogImageFileName($file->getClientOriginalName());
         $mime = $file->getMimeType();
         $contentType = CatalogImageContentType::tryFromMimeType((string) $mime) ?? CatalogImageContentType::Jpeg;
-        $this->catalogImageStorage->put($catalogItemId, $safe, $binary, $contentType);
-        $item->changeImageFileName($safe);
+        $item->assignImage($safe, $binary, $contentType);
         $this->catalogItemRepo->save($item);
         $link = $this->picnicLinkRepo->findOneByCatalogItemId($catalogItemId);
 
@@ -143,14 +130,8 @@ final readonly class CatalogItemApplicationService
     public function deleteCatalogItemImage(CatalogItemId $catalogItemId): CatalogItemResponse
     {
         $item = $this->mustFind($catalogItemId);
-        $imageFileName = $item->getImageFileName();
-        if (null !== $imageFileName && '' !== $imageFileName) {
-            try {
-                $this->catalogImageStorage->delete($catalogItemId, $imageFileName);
-            } catch (Throwable) {
-                $this->ignoreRemoteImageStorageFailure();
-            }
-            $item->changeImageFileName(null);
+        if (null !== $item->getImageFileName() && '' !== $item->getImageFileName()) {
+            $item->clearImage();
             $this->catalogItemRepo->save($item);
         }
         $link = $this->picnicLinkRepo->findOneByCatalogItemId($catalogItemId);
@@ -158,28 +139,14 @@ final readonly class CatalogItemApplicationService
         return $this->readMapper->map($item, $link?->getProductId());
     }
 
-    /**
-     * @SuppressWarnings("PHPMD.CyclomaticComplexity")
-     */
     public function getCatalogItemImage(CatalogItemId $catalogItemId): CatalogItemImageGetResult
     {
-        $item = $this->mustFind($catalogItemId);
-        $fileName = $item->getImageFileName();
-        if (null === $fileName || '' === $fileName) {
-            throw new NotFoundHttpException('Catalog item has no image.');
+        $item = $this->catalogItemRepo->findWithCatalogItemImage($catalogItemId);
+        if (!$item instanceof CatalogItem) {
+            throw new NotFoundHttpException('Catalog item not found.');
         }
-        try {
-            $got = $this->catalogImageStorage->get($catalogItemId, $fileName);
-        } catch (CatalogItemImageNotFoundInStorage) {
-            throw new NotFoundHttpException('Image not found in storage.');
-        }
-        $mime = $got->contentType;
 
-        return new CatalogItemImageGetResult(
-            $got->body,
-            (null === $mime || '' === $mime) ? 'application/octet-stream' : $mime,
-            $got->eTag,
-        );
+        return $this->catalogItemImageGetResultFromLoadedItem($item);
     }
 
     private function mustFind(CatalogItemId $catalogItemId): CatalogItem
@@ -190,6 +157,45 @@ final readonly class CatalogItemApplicationService
         }
 
         return $item;
+    }
+
+    private function catalogItemImageGetResultFromLoadedItem(CatalogItem $item): CatalogItemImageGetResult
+    {
+        return $this->catalogItemImageToGetResult($this->requireStoredCatalogItemImage($item));
+    }
+
+    private function requireStoredCatalogItemImage(CatalogItem $item): CatalogItemImage
+    {
+        $fileName = $item->getImageFileName();
+        if (null === $fileName || '' === $fileName) {
+            throw new NotFoundHttpException('Catalog item has no image.');
+        }
+        $image = $item->getCatalogItemImage();
+        if (null === $image) {
+            throw new NotFoundHttpException('Image not found in storage.');
+        }
+
+        return $image;
+    }
+
+    private function catalogItemImageToGetResult(CatalogItemImage $image): CatalogItemImageGetResult
+    {
+        $body = $image->getBody();
+        $mime = $image->getContentType();
+
+        return new CatalogItemImageGetResult(
+            $body,
+            ('' === $mime) ? 'application/octet-stream' : $mime,
+            md5($body),
+        );
+    }
+
+    private function sanitizeCatalogImageFileName(string $fileName): string
+    {
+        $trimmed = trim($fileName);
+        $base = basename(str_replace('\\', '/', $trimmed));
+
+        return '' === $base ? 'image' : $base;
     }
 
     private function applyNameFromPatch(CatalogItem $item, PatchCatalogItemRequest $request): void
@@ -279,10 +285,5 @@ final readonly class CatalogItemApplicationService
     public function minimalCatalogItemResponse(string $catalogItemId, string $name, ?string $picnicProductId): CatalogItemResponse
     {
         return new CatalogItemResponse($catalogItemId, $name, null, null, null, null, [], $picnicProductId);
-    }
-
-    private function ignoreRemoteImageStorageFailure(): void
-    {
-        clearstatcache(false);
     }
 }

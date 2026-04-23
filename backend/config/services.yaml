@@ -1,6 +1,4 @@
 parameters:
-    env(FILE_STORAGE_ROOT): '%kernel.project_dir%/var/storage'
-    env(FILE_STORAGE_BUCKET): barcodile
     env(PICNIC_COUNTRY): NL
     env(PICNIC_API_VERSION): '15'
     env(PICNIC_URL): ''
@@ -26,25 +24,6 @@ services:
         resource: '../src/Application/'
         exclude:
             - '../src/Application/**/Dto/'
-
-    App\Infrastructure\Shared\ObjectStorage\LocalFilesystemObjectStorageClient:
-        arguments:
-            $rootDirectory: '%env(FILE_STORAGE_ROOT)%'
-
-    App\Infrastructure\Shared\ObjectStorage\ObjectStorageClientInterface:
-        alias: App\Infrastructure\Shared\ObjectStorage\LocalFilesystemObjectStorageClient
-
-    app.storage.catalog_item_images_bucket:
-        class: App\Infrastructure\Shared\ObjectStorage\StorageBucket
-        arguments:
-            $name: '%env(FILE_STORAGE_BUCKET)%'
-
-    App\Infrastructure\Catalog\Storage\CatalogItemImageStorage:
-        arguments:
-            $bucket: '@app.storage.catalog_item_images_bucket'
-
-    App\Domain\Catalog\Port\CatalogItemImageStoragePort:
-        alias: App\Infrastructure\Catalog\Storage\CatalogItemImageStorage
 
     App\Domain\Picnic\Port\PicnicCredentialCipherPort:
         alias: App\Infrastructure\Picnic\PicnicCredentialCipherAdapter

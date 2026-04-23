@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Domain\Catalog\Entity;
 
+use App\Domain\Catalog\CatalogImageContentType;
 use App\Domain\Catalog\Entity\Embeddable\BarcodeEmbeddable;
 use App\Domain\Catalog\Entity\Embeddable\VolumeEmbeddable;
 use App\Domain\Catalog\Entity\Embeddable\WeightEmbeddable;
@@ -37,6 +38,9 @@ class CatalogItem
     #[ORM\Column(length: 255, nullable: true)]
     #[Assert\Length(max: 255)]
     private ?string $imageFileName = null;
+
+    #[ORM\OneToOne(targetEntity: CatalogItemImage::class, mappedBy: 'catalogItem', cascade: ['persist', 'remove'], orphanRemoval: true)]
+    private ?CatalogItemImage $catalogItemImage = null;
 
     #[ORM\Embedded(class: VolumeEmbeddable::class, columnPrefix: 'volume_')]
     private VolumeEmbeddable $volumeEmbeddable;
@@ -85,11 +89,27 @@ class CatalogItem
         return $this->imageFileName;
     }
 
-    public function changeImageFileName(?string $imageFileName): static
+    public function assignImage(string $sanitizedFileName, string $binary, CatalogImageContentType $contentType): void
     {
-        $this->imageFileName = $imageFileName;
+        $this->imageFileName = $sanitizedFileName;
+        $mime = $contentType->value;
+        if (null !== $this->catalogItemImage) {
+            $this->catalogItemImage->rewrite($binary, $mime);
 
-        return $this;
+            return;
+        }
+        $this->catalogItemImage = new CatalogItemImage($this, $binary, $mime);
+    }
+
+    public function clearImage(): void
+    {
+        $this->imageFileName = null;
+        $this->catalogItemImage = null;
+    }
+
+    public function getCatalogItemImage(): ?CatalogItemImage
+    {
+        return $this->catalogItemImage;
     }
 
     #[Groups(['catalog_item:read', 'catalog_item:write', 'inventory_item:read'])]
