@@ -14,7 +14,7 @@
 
 | Tool | Version | Notes |
 |------|---------|--------|
-| [PHP](https://www.php.net/) | **8.4+** | Extensions: `bcmath`, `ctype`, `iconv` |
+| [PHP](https://www.php.net/) | **8.5+** | Extensions: `bcmath`, `ctype`, `iconv` |
 | [Composer](https://getcomposer.org/) | 2.x | Backend dependencies |
 | [Node.js](https://nodejs.org/) | **22** (recommended) | Frontend; LTS 20+ usually works |
 | [Docker](https://docs.docker.com/get-docker/) | recent | Optional; full stack |
