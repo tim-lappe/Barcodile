@@ -22,6 +22,8 @@ def main() -> None:
             if not isinstance(item, dict):
                 continue
             ident = item.get("identifier")
+            if backend == "linux_kernel" and isinstance(ident, str) and ident.startswith("/dev/"):
+                ident = f"file://{ident}"
             if ident and ident not in seen:
                 seen.add(ident)
                 out.append(

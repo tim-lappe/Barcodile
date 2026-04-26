@@ -10,7 +10,10 @@ import {
 } from "@mui/material";
 import { useCallback, useEffect, useState } from "react";
 import { Link as RouterLink, useParams } from "react-router-dom";
-import { fetchPrinterDevice, postPrinterTestPrint } from "../api/barcodileClient";
+import {
+	fetchPrinterDevice,
+	postPrinterTestPrint,
+} from "../api/barcodileClient";
 import type { PrinterDeviceDto } from "../domain/barcodile";
 
 const paperSx = {
@@ -63,7 +66,9 @@ export function PrinterDetailPage() {
 		try {
 			const r = await postPrinterTestPrint(id);
 			setPrintOk(
-				r.status === "queued" ? "Test label sent to the printer." : `Status: ${r.status}`,
+				r.status === "queued"
+					? "Test label sent to the printer."
+					: `Status: ${r.status}`,
 			);
 		} catch (e) {
 			setError(e instanceof Error ? e.message : "Print failed");
@@ -96,9 +101,15 @@ export function PrinterDetailPage() {
 					</Typography>
 					<Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
 						Driver:{" "}
-						<Box component="span" sx={{ fontFamily: "ui-monospace, monospace" }}>
+						<Box
+							component="span"
+							sx={{ fontFamily: "ui-monospace, monospace" }}
+						>
 							{device.driverCode}
 						</Box>
+					</Typography>
+					<Typography variant="subtitle2" sx={{ fontWeight: 700, mb: 1 }}>
+						Connection
 					</Typography>
 					<Typography
 						component="pre"
@@ -118,13 +129,42 @@ export function PrinterDetailPage() {
 					>
 						{JSON.stringify(device.connection, null, 2)}
 					</Typography>
+					<Typography variant="subtitle2" sx={{ fontWeight: 700, mb: 1 }}>
+						Print settings
+					</Typography>
+					<Typography
+						component="pre"
+						variant="body2"
+						sx={{
+							fontFamily: "ui-monospace, monospace",
+							fontSize: 12,
+							wordBreak: "break-all",
+							whiteSpace: "pre-wrap",
+							mb: 2,
+							p: 1.5,
+							borderRadius: 1,
+							border: "1px solid",
+							borderColor: "divider",
+							bgcolor: "action.hover",
+						}}
+					>
+						{JSON.stringify(device.printSettings, null, 2)}
+					</Typography>
 					{error && (
-						<Alert severity="error" sx={{ mb: 2 }} onClose={() => setError(null)}>
+						<Alert
+							severity="error"
+							sx={{ mb: 2 }}
+							onClose={() => setError(null)}
+						>
 							{error}
 						</Alert>
 					)}
 					{printOk && (
-						<Alert severity="success" sx={{ mb: 2 }} onClose={() => setPrintOk(null)}>
+						<Alert
+							severity="success"
+							sx={{ mb: 2 }}
+							onClose={() => setPrintOk(null)}
+						>
 							{printOk}
 						</Alert>
 					)}

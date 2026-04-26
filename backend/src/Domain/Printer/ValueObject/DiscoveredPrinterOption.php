@@ -8,11 +8,13 @@ final readonly class DiscoveredPrinterOption
 {
     /**
      * @param array<string, mixed> $suggestedConnection
+     * @param array<string, mixed> $suggestedSettings
      */
     public function __construct(
         public string $deviceIdentifier,
         public string $label,
         public array $suggestedConnection = [],
+        public array $suggestedSettings = [],
     ) {
     }
 }

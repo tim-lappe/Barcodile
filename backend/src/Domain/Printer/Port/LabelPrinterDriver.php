@@ -13,6 +13,16 @@ interface LabelPrinterDriver
     public function displayLabel(): string;
 
     /**
+     * @return array<string, mixed>
+     */
+    public function defaultPrintSettings(): array;
+
+    /**
+     * @return array<string, mixed>
+     */
+    public function printSettingOptions(): array;
+
+    /**
      * @return list<DiscoveredPrinterOption>
      */
     public function discover(): array;
@@ -23,7 +33,13 @@ interface LabelPrinterDriver
     public function assertValidConnection(array $connection): void;
 
     /**
-     * @param array<string, mixed> $connection
+     * @param array<string, mixed> $printSettings
      */
-    public function printTestLabel(array $connection): void;
+    public function assertValidPrintSettings(array $printSettings): void;
+
+    /**
+     * @param array<string, mixed> $connection
+     * @param array<string, mixed> $printSettings
+     */
+    public function printTestLabel(array $connection, array $printSettings): void;
 }

@@ -10,12 +10,14 @@ final readonly class PrinterDeviceResponse
 {
     /**
      * @param array<string, mixed> $connection
+     * @param array<string, mixed> $printSettings
      */
     public function __construct(
         #[SerializedName('id')]
         public string $resourceId,
         public string $driverCode,
         public array $connection,
+        public array $printSettings,
         public string $name,
     ) {
     }

@@ -84,18 +84,38 @@ export type PrinterDeviceDto = {
 	id: PrinterDeviceId;
 	driverCode: string;
 	connection: Record<string, unknown>;
+	printSettings: Record<string, unknown>;
 	name: string;
+};
+
+export type PrinterLabelSizeOptionDto = {
+	value: string;
+	label: string;
+};
+
+export type PrinterColorModeOptionDto = {
+	value: string;
+	label: string;
+	red: boolean;
+};
+
+export type PrinterPrintSettingOptionsDto = {
+	labelSizes: PrinterLabelSizeOptionDto[];
+	colorModes: PrinterColorModeOptionDto[];
 };
 
 export type PrinterDriverDto = {
 	code: string;
 	label: string;
+	defaultPrintSettings: Record<string, unknown>;
+	printSettingOptions: PrinterPrintSettingOptionsDto;
 };
 
 export type DiscoveredPrinterOptionDto = {
 	deviceIdentifier: string;
 	label: string;
 	suggestedConnection: Record<string, string>;
+	suggestedPrintSettings: Record<string, unknown>;
 };
 
 export type LocationDto = {

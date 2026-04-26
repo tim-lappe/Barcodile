@@ -89,4 +89,3 @@ services:
     App\Infrastructure\Printer\BrotherQl\BrotherQlLabelPrinterDriver:
         arguments:
             $projectDir: '%kernel.project_dir%'
-            $environment: '%kernel.environment%'

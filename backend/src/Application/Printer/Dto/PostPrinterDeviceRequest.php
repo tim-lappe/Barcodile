@@ -10,6 +10,7 @@ final readonly class PostPrinterDeviceRequest
 {
     /**
      * @param array<string, mixed> $connection
+     * @param array<string, mixed> $printSettings
      */
     public function __construct(
         #[Assert\NotBlank]
@@ -17,6 +18,8 @@ final readonly class PostPrinterDeviceRequest
         public string $driverCode,
         #[Assert\Type('array')]
         public array $connection,
+        #[Assert\Type('array')]
+        public array $printSettings,
         #[Assert\NotBlank]
         #[Assert\Length(max: 255)]
         public string $name,

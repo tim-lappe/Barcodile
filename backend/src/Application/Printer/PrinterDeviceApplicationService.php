@@ -12,6 +12,7 @@ use App\Domain\Printer\Entity\PrinterDevice;
 use App\Domain\Printer\Exception\LabelPrintJobFailedException;
 use App\Domain\Printer\Repository\PrinterDeviceRepository;
 use App\Domain\Shared\Id\PrinterDeviceId;
+use Psr\Log\LoggerInterface;
 use Symfony\Component\HttpKernel\Exception\BadRequestHttpException;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 
@@ -20,6 +21,7 @@ final readonly class PrinterDeviceApplicationService
     public function __construct(
         private PrinterDeviceRepository $deviceRepository,
         private LabelPrinterDriverRegistry $driverRegistry,
+        private LoggerInterface $logger,
     ) {
     }
 
@@ -43,7 +45,12 @@ final readonly class PrinterDeviceApplicationService
     {
         $out = [];
         foreach ($this->driverRegistry->all() as $driver) {
-            $out[] = new PrinterDriverListItemResponse($driver->driverCode(), $driver->displayLabel());
+            $out[] = new PrinterDriverListItemResponse(
+                $driver->driverCode(),
+                $driver->displayLabel(),
+                $driver->defaultPrintSettings(),
+                $driver->printSettingOptions(),
+            );
         }
 
         return $out;
@@ -61,6 +68,7 @@ final readonly class PrinterDeviceApplicationService
                 $option->deviceIdentifier,
                 $option->label,
                 $option->suggestedConnection,
+                $option->suggestedSettings,
             );
         }
 
@@ -71,12 +79,20 @@ final readonly class PrinterDeviceApplicationService
     {
         $driver = $this->driverRegistry->get(trim($request->driverCode));
         $driver->assertValidConnection($request->connection);
+        $driver->assertValidPrintSettings($request->printSettings);
 
         $device = new PrinterDevice();
         $device->changeDriverCode(trim($request->driverCode));
         $device->changeConnection($request->connection);
+        $device->changePrintSettings($request->printSettings);
         $device->changeName(trim($request->name));
         $this->deviceRepository->save($device);
+        $this->logger->info('Printer device created.', [
+            'printerDeviceId' => (string) $device->getId(),
+            'driverCode' => $device->getDriverCode(),
+            'connection' => $device->getConnection(),
+            'printSettings' => $device->getPrintSettings(),
+        ]);
 
         return $this->map($device);
     }
@@ -108,12 +124,18 @@ final readonly class PrinterDeviceApplicationService
         }
 
         $driver = $this->driverRegistry->get($device->getDriverCode());
+        $this->logTestPrintRequest($device);
 
         try {
-            $driver->printTestLabel($device->getConnection());
+            $driver->printTestLabel($device->getConnection(), $device->getPrintSettings());
         } catch (LabelPrintJobFailedException $e) {
+            $this->logTestPrintFailure($device, $e);
             throw new BadRequestHttpException($e->getMessage(), $e);
         }
+        $this->logger->info('Printer test label finished.', [
+            'printerDeviceId' => (string) $device->getId(),
+            'driverCode' => $device->getDriverCode(),
+        ]);
     }
 
     private function map(PrinterDevice $device): PrinterDeviceResponse
@@ -122,7 +144,29 @@ final readonly class PrinterDeviceApplicationService
             (string) $device->getId(),
             $device->getDriverCode(),
             $device->getConnection(),
+            $device->getPrintSettings(),
             $device->getName(),
         );
+    }
+
+    private function logTestPrintRequest(PrinterDevice $device): void
+    {
+        $this->logger->info('Printer test label requested.', [
+            'printerDeviceId' => (string) $device->getId(),
+            'driverCode' => $device->getDriverCode(),
+            'connection' => $device->getConnection(),
+            'printSettings' => $device->getPrintSettings(),
+        ]);
+    }
+
+    private function logTestPrintFailure(
+        PrinterDevice $device,
+        LabelPrintJobFailedException $failure,
+    ): void {
+        $this->logger->error('Printer test label failed.', [
+            'printerDeviceId' => (string) $device->getId(),
+            'driverCode' => $device->getDriverCode(),
+            'error' => $failure->getMessage(),
+        ]);
     }
 }

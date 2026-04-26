@@ -1,4 +1,5 @@
 import type {
+	ActivityListDto,
 	CartProviderIndexEntryDto,
 	CartStockAutomationRuleDto,
 	CartStockAutomationRuleId,
@@ -6,29 +7,28 @@ import type {
 	CatalogItemAttributeKey,
 	CatalogItemDto,
 	CatalogItemId,
+	DiscoveredPrinterOptionDto,
 	InputDeviceOptionDto,
 	InventoryItemDto,
 	InventoryItemId,
 	LocationDto,
 	LocationId,
-	ScannerDeviceDto,
-	ScannerDeviceId,
 	PicnicCatalogProductSummaryDto,
 	PicnicCatalogSearchHitDto,
 	PicnicIntegrationSettingsDto,
 	PicnicLoginResponse,
 	PicnicRequestTwoFactorCodeResponse,
+	PrinterDeviceDto,
+	PrinterDeviceId,
+	PrinterDriverDto,
+	ScannerDeviceDto,
+	ScannerDeviceId,
 	ShoppingCartDto,
 	ShoppingCartId,
 	ShoppingCartLineDto,
 	ShoppingCartLineId,
 	VolumeDto,
 	WeightDto,
-	ActivityListDto,
-	DiscoveredPrinterOptionDto,
-	PrinterDeviceDto,
-	PrinterDeviceId,
-	PrinterDriverDto,
 } from "../domain/barcodile";
 import { readJsonArray } from "./collection";
 
@@ -315,6 +315,7 @@ export async function fetchPrinterDiscoveryOptions(
 export async function postPrinterDevice(input: {
 	driverCode: string;
 	connection: Record<string, unknown>;
+	printSettings: Record<string, unknown>;
 	name: string;
 }): Promise<PrinterDeviceDto> {
 	const res = await fetch("/api/printer_devices", {
@@ -323,6 +324,7 @@ export async function postPrinterDevice(input: {
 		body: JSON.stringify({
 			driverCode: input.driverCode,
 			connection: input.connection,
+			printSettings: input.printSettings,
 			name: input.name,
 		}),
 	});
@@ -971,7 +973,9 @@ export async function picnicRequestTwoFactorCode(body: {
 }
 
 export async function fetchActivity(): Promise<ActivityListDto> {
-	const res = await fetch("/api/activity", { headers: { Accept: "application/json" } });
+	const res = await fetch("/api/activity", {
+		headers: { Accept: "application/json" },
+	});
 	if (!res.ok) {
 		throw new Error(await readErrorMessage(res));
 	}

@@ -28,6 +28,12 @@ class PrinterDevice
     #[ORM\Column(type: 'json')]
     private array $connection = [];
 
+    /**
+     * @var array<string, mixed>
+     */
+    #[ORM\Column(name: 'print_settings', type: 'json')]
+    private array $printSettings = [];
+
     #[ORM\Column(length: 255)]
     #[Assert\NotBlank]
     #[Assert\Length(max: 255)]
@@ -69,6 +75,24 @@ class PrinterDevice
     public function changeConnection(array $connection): static
     {
         $this->connection = $connection;
+
+        return $this;
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    public function getPrintSettings(): array
+    {
+        return $this->printSettings;
+    }
+
+    /**
+     * @param array<string, mixed> $printSettings
+     */
+    public function changePrintSettings(array $printSettings): static
+    {
+        $this->printSettings = $printSettings;
 
         return $this;
     }

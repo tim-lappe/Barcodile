@@ -26,14 +26,13 @@ final class BrotherQlConnectionValidator
         $model = $this->stringFrom($connection, 'model');
         $printerIdentifier = $this->stringFrom($connection, 'printerIdentifier');
         $backend = $this->stringFrom($connection, 'backend');
-        $labelSize = $this->stringFrom($connection, 'labelSize');
 
         $this->requireBrotherModel($model);
         $this->requirePrinterIdentifierPresent($printerIdentifier);
         $this->requireBackendAllowed($backend);
-        $this->requireLabelSizeFormat($labelSize);
         $this->requireTcpForNetworkBackend($backend, $printerIdentifier);
         $this->requireUsbForPyusbBackend($backend, $printerIdentifier);
+        $this->requireFileForKernelBackend($backend, $printerIdentifier);
     }
 
     private function requireBrotherModel(string $model): void
@@ -57,13 +56,6 @@ final class BrotherQlConnectionValidator
         }
     }
 
-    private function requireLabelSizeFormat(string $labelSize): void
-    {
-        if ('' === $labelSize || 1 !== preg_match('/^[a-zA-Z0-9x]+$/', $labelSize)) {
-            throw new LabelPrintJobFailedException('Invalid labelSize.');
-        }
-    }
-
     private function requireTcpForNetworkBackend(string $backend, string $printerIdentifier): void
     {
         if ('network' !== $backend) {
@@ -71,6 +63,16 @@ final class BrotherQlConnectionValidator
         }
         if (!str_starts_with($printerIdentifier, 'tcp://')) {
             throw new LabelPrintJobFailedException('network backend expects printerIdentifier like tcp://host:9100');
+        }
+    }
+
+    private function requireFileForKernelBackend(string $backend, string $printerIdentifier): void
+    {
+        if ('linux_kernel' !== $backend) {
+            return;
+        }
+        if (!str_starts_with($printerIdentifier, 'file:///')) {
+            throw new LabelPrintJobFailedException('linux_kernel backend expects printerIdentifier like file:///dev/usb/lp1');
         }
     }
 
