@@ -26,8 +26,10 @@ export default defineConfig({
 	plugins: [react()],
 	server: {
 		proxy: devProxy,
+		allowedHosts: true,
 	},
 	preview: {
 		proxy: devProxy,
+		allowedHosts: true,
 	},
 });
