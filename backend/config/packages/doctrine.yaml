@@ -1,6 +1,7 @@
 doctrine:
     dbal:
         url: '%env(resolve:DATABASE_URL)%'
+        server_version: '16.0.0'
         types:
             catalog_item_id:
                 class: App\Infrastructure\Catalog\Doctrine\CatalogItemIdType
