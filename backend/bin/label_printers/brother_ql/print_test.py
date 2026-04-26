@@ -3,6 +3,14 @@
 import json
 import sys
 
+from brother_ql_labels import (
+    UnknownLabelSize,
+    resolve_label,
+    suppress_devicedependent_deprecation_warning,
+)
+
+suppress_devicedependent_deprecation_warning()
+
 
 def debug(message: str) -> None:
     print(message, file=sys.stderr)
@@ -49,7 +57,6 @@ def main() -> None:
         from PIL import Image, ImageDraw
         from brother_ql.backends.helpers import send
         from brother_ql.conversion import convert
-        from brother_ql.labels import LabelsManager
         from brother_ql.raster import BrotherQLRaster
     except ImportError as exc:
         print(str(exc), file=sys.stderr)
@@ -61,10 +68,9 @@ def main() -> None:
         f"model={model} backend={backend} printer={printer} labelSize={label} red={use_red}"
     )
 
-    label_manager = LabelsManager()
     try:
-        spec = label_manager.get_label_by_identifier(label)
-    except Exception:
+        spec = resolve_label(label)
+    except UnknownLabelSize:
         print(f"Unknown label size: {label}", file=sys.stderr)
         sys.exit(1)
 

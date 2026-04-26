@@ -5,6 +5,14 @@ import io
 import json
 import sys
 
+from brother_ql_labels import (
+    UnknownLabelSize,
+    resolve_label,
+    suppress_devicedependent_deprecation_warning,
+)
+
+suppress_devicedependent_deprecation_warning()
+
 
 THRESHOLD = 180
 
@@ -61,6 +69,15 @@ def load_image(data: dict):
         fail(f"Could not load label image: {exc}")
 
 
+def image_for_label(data: dict, spec):
+    width, height = spec.dots_printable
+    if height > 0:
+        debug(f"Resolved label printable dots: width={width} height={height}")
+        return fit_centered(load_image(data), width, height)
+    debug(f"Resolved label printable dots: width={width} height=endless")
+    return threshold_image(load_image(data))
+
+
 def main() -> None:
     try:
         data = json.load(sys.stdin)
@@ -84,7 +101,6 @@ def main() -> None:
     try:
         from brother_ql.backends.helpers import send
         from brother_ql.conversion import convert
-        from brother_ql.labels import LabelsManager
         from brother_ql.raster import BrotherQLRaster
     except ImportError as exc:
         fail(str(exc))
@@ -93,15 +109,12 @@ def main() -> None:
         "Brother QL label image print settings: "
         f"model={model} backend={backend} printer={printer} labelSize={label}"
     )
-    label_manager = LabelsManager()
     try:
-        spec = label_manager.get_label_by_identifier(label)
-    except Exception:
+        spec = resolve_label(label)
+    except UnknownLabelSize:
         fail(f"Unknown label size: {label}")
 
-    width, height = spec.dots_printable
-    debug(f"Resolved label printable dots: width={width} height={height}")
-    image = fit_centered(load_image(data), width, height)
+    image = image_for_label(data, spec)
 
     qlr = BrotherQLRaster(model)
     instructions = convert(
