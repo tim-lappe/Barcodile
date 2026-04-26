@@ -3,6 +3,8 @@
 import json
 import sys
 
+from brother_ql_labels import normalize_printer_identifier
+
 
 def main() -> None:
     try:
@@ -24,6 +26,8 @@ def main() -> None:
             ident = item.get("identifier")
             if backend == "linux_kernel" and isinstance(ident, str) and ident.startswith("/dev/"):
                 ident = f"file://{ident}"
+            if isinstance(ident, str):
+                ident = normalize_printer_identifier(backend, ident)
             if ident and ident not in seen:
                 seen.add(ident)
                 out.append(

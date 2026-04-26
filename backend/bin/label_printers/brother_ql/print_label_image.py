@@ -7,6 +7,7 @@ import sys
 
 from brother_ql_labels import (
     UnknownLabelSize,
+    normalize_printer_identifier,
     resolve_label,
     suppress_devicedependent_deprecation_warning,
 )
@@ -97,6 +98,7 @@ def main() -> None:
             "Missing required keys: connection.model, connection.printerIdentifier, "
             "connection.backend, printSettings.labelSize",
         )
+    printer = normalize_printer_identifier(backend, printer)
 
     try:
         from brother_ql.backends.helpers import send

@@ -5,6 +5,7 @@ import sys
 
 from brother_ql_labels import (
     UnknownLabelSize,
+    normalize_printer_identifier,
     resolve_label,
     suppress_devicedependent_deprecation_warning,
 )
@@ -52,6 +53,7 @@ def main() -> None:
             file=sys.stderr,
         )
         sys.exit(1)
+    printer = normalize_printer_identifier(backend, printer)
 
     try:
         from PIL import Image, ImageDraw
