@@ -86,4 +86,16 @@ final readonly class TestLabelPrinterDriver implements LabelPrinterDriver
             'printSettings' => $printSettings,
         ]);
     }
+
+    public function printLabelImage(array $connection, array $printSettings, string $pngBytes): void
+    {
+        $this->assertValidConnection($connection);
+        $this->assertValidPrintSettings($printSettings);
+        $this->logger->info('Test printer received a label image print request.', [
+            'driverCode' => self::DRIVER_CODE,
+            'connection' => $connection,
+            'printSettings' => $printSettings,
+            'imageBytes' => \strlen($pngBytes),
+        ]);
+    }
 }

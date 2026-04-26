@@ -6,7 +6,9 @@ namespace App\Application\Inventory;
 
 use App\Application\Catalog\CatalogItemApplicationService;
 use App\Application\Inventory\Dto\InventoryItemResponse;
+use App\Application\Inventory\Port\InventoryLabelImageGenerator;
 use App\Application\Location\Dto\LocationResponse;
+use App\Application\Printer\PrinterDeviceApplicationService;
 use App\Application\Shared\ApiIri;
 use App\Domain\Catalog\Entity\CatalogItem;
 use App\Domain\Inventory\Entity\InventoryItem;
@@ -16,6 +18,7 @@ use App\Domain\Picnic\Repository\PicnicCatalogItemProductLinkRepository;
 use App\Domain\Shared\Id\CatalogItemId;
 use App\Domain\Shared\Id\InventoryItemId;
 use App\Domain\Shared\Id\LocationId;
+use App\Domain\Shared\Id\PrinterDeviceId;
 use DateTimeInterface;
 use Doctrine\ORM\EntityManagerInterface;
 use LogicException;
@@ -28,6 +31,8 @@ final readonly class InventoryItemApplicationService
         private PicnicCatalogItemProductLinkRepository $picnicLinkRepo,
         private CatalogItemApplicationService $catalogItemSvc,
         private EntityManagerInterface $entityManager,
+        private InventoryLabelImageGenerator $labelImageGenerator,
+        private PrinterDeviceApplicationService $printerDeviceApp,
     ) {
     }
 
@@ -51,14 +56,24 @@ final readonly class InventoryItemApplicationService
 
     public function getInventoryItem(InventoryItemId $inventoryItemId): InventoryItemResponse
     {
-        $item = $this->inventoryItemRepo->find($inventoryItemId);
-        if (!$item instanceof InventoryItem) {
-            throw new NotFoundHttpException('Inventory item not found.');
-        }
+        $item = $this->findInventoryItem($inventoryItemId);
         $catalogItemId = $item->getCatalogItem()?->getId();
         $picnic = null === $catalogItemId ? [] : $this->picnicLinkRepo->mapProductIdByCatalogItemId([$catalogItemId]);
 
         return $this->map($item, $picnic);
+    }
+
+    public function getInventoryItemLabelImage(InventoryItemId $inventoryItemId): string
+    {
+        return $this->labelImageGenerator->generate($this->findInventoryItem($inventoryItemId)->getPublicCode());
+    }
+
+    public function printInventoryItemLabel(InventoryItemId $inventoryItemId, PrinterDeviceId $printerDeviceId): void
+    {
+        $this->printerDeviceApp->printLabelImage(
+            $printerDeviceId,
+            $this->getInventoryItemLabelImage($inventoryItemId),
+        );
     }
 
     public function createInventoryItem(
@@ -86,10 +101,7 @@ final readonly class InventoryItemApplicationService
         ?LocationId $locationId,
         ?DateTimeInterface $expirationDate,
     ): void {
-        $item = $this->inventoryItemRepo->find($inventoryItemId);
-        if (!$item instanceof InventoryItem) {
-            throw new NotFoundHttpException('Inventory item not found.');
-        }
+        $item = $this->findInventoryItem($inventoryItemId);
         $catalog = $this->catalogItemRepositoryFind($catalogItemId);
         $loc = null;
         if (null !== $locationId) {
@@ -103,11 +115,18 @@ final readonly class InventoryItemApplicationService
 
     public function deleteInventoryItem(InventoryItemId $inventoryItemId): void
     {
+        $item = $this->findInventoryItem($inventoryItemId);
+        $this->inventoryItemRepo->remove($item);
+    }
+
+    private function findInventoryItem(InventoryItemId $inventoryItemId): InventoryItem
+    {
         $item = $this->inventoryItemRepo->find($inventoryItemId);
         if (!$item instanceof InventoryItem) {
             throw new NotFoundHttpException('Inventory item not found.');
         }
-        $this->inventoryItemRepo->remove($item);
+
+        return $item;
     }
 
     /**

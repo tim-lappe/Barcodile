@@ -42,6 +42,9 @@ services:
     App\Domain\Scanner\Input\ScanLineKeyAccumulatorFactory:
         alias: App\Infrastructure\Scanner\EvdevScanLineKeyAccumulatorFactory
 
+    App\Application\Inventory\Port\InventoryLabelImageGenerator:
+        alias: App\Infrastructure\Inventory\PythonInventoryLabelImageGenerator
+
     App\Infrastructure\Picnic\PicnicAnonymousAuthenticationAdapter:
         arguments:
             $picnicApiVersion: '%env(string:PICNIC_API_VERSION)%'
@@ -87,5 +90,9 @@ services:
         alias: App\Infrastructure\Scanner\LinuxInputDeviceByIdListingAdapter
 
     App\Infrastructure\Printer\BrotherQl\BrotherQlLabelPrinterDriver:
+        arguments:
+            $projectDir: '%kernel.project_dir%'
+
+    App\Infrastructure\Inventory\PythonInventoryLabelImageGenerator:
         arguments:
             $projectDir: '%kernel.project_dir%'

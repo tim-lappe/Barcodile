@@ -211,6 +211,10 @@ export type InventoryItemDto = {
 	createdAt: string;
 };
 
+export type InventoryItemLabelPrintResponse = {
+	status: string;
+};
+
 export function firstBarcodeCode(type: {
 	barcode?: BarcodeDto | null;
 }): string {

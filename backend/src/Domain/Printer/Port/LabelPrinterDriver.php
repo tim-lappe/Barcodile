@@ -42,4 +42,10 @@ interface LabelPrinterDriver
      * @param array<string, mixed> $printSettings
      */
     public function printTestLabel(array $connection, array $printSettings): void;
+
+    /**
+     * @param array<string, mixed> $connection
+     * @param array<string, mixed> $printSettings
+     */
+    public function printLabelImage(array $connection, array $printSettings, string $pngBytes): void;
 }

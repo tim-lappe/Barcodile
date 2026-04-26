@@ -85,6 +85,25 @@ final class BrotherQlLabelPrinterDriver implements LabelPrinterDriver
         $this->runPythonScript('print_test.py', $payload);
     }
 
+    public function printLabelImage(array $connection, array $printSettings, string $pngBytes): void
+    {
+        $this->assertValidConnection($connection);
+        $this->assertValidPrintSettings($printSettings);
+        $this->logger->info('Brother QL label image print started.', [
+            'model' => $connection['model'] ?? null,
+            'backend' => $connection['backend'] ?? null,
+            'printerIdentifier' => $connection['printerIdentifier'] ?? null,
+            'labelSize' => $printSettings['labelSize'] ?? null,
+            'imageBytes' => \strlen($pngBytes),
+        ]);
+        $payload = json_encode([
+            'connection' => $connection,
+            'printSettings' => $printSettings,
+            'imageBase64' => base64_encode($pngBytes),
+        ], \JSON_THROW_ON_ERROR);
+        $this->runPythonScript('print_label_image.py', $payload);
+    }
+
     public function assertValidPrintSettings(array $printSettings): void
     {
         $labelSize = $this->stringFrom($printSettings, 'labelSize');

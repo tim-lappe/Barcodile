@@ -1,4 +1,5 @@
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
+import PrintOutlinedIcon from "@mui/icons-material/PrintOutlined";
 import {
 	Alert,
 	Box,
@@ -27,6 +28,9 @@ import {
 	createLocation,
 	fetchInventoryItem,
 	fetchLocations,
+	fetchPrinterDevices,
+	inventoryItemLabelImageUrl,
+	postInventoryItemPrintLabel,
 	updateInventoryItem,
 } from "../api/barcodileClient";
 import { CatalogItemSearchInput } from "../components/CatalogItemSearchInput";
@@ -35,6 +39,8 @@ import type {
 	InventoryItemDto,
 	InventoryItemId,
 	LocationId,
+	PrinterDeviceDto,
+	PrinterDeviceId,
 } from "../domain/barcodile";
 
 const shellSx = {
@@ -107,9 +113,20 @@ export function StockItemFormPage() {
 	const [locationDialogOpen, setLocationDialogOpen] = useState(false);
 	const [newLocationName, setNewLocationName] = useState("");
 	const [locationSaving, setLocationSaving] = useState(false);
+	const [printers, setPrinters] = useState<PrinterDeviceDto[]>([]);
+	const [selectedPrinterId, setSelectedPrinterId] = useState<
+		PrinterDeviceId | ""
+	>("");
+	const [printingLabel, setPrintingLabel] = useState(false);
+	const [printError, setPrintError] = useState<string | null>(null);
+	const [printOk, setPrintOk] = useState<string | null>(null);
+	const [labelImageFailed, setLabelImageFailed] = useState(false);
 
 	const load = useCallback(async () => {
 		setLoadError(null);
+		setPrintError(null);
+		setPrintOk(null);
+		setLabelImageFailed(false);
 		setLoading(true);
 		try {
 			const [hasTypes, loc] = await Promise.all([
@@ -121,8 +138,28 @@ export function StockItemFormPage() {
 			if (isEdit && idParam) {
 				const row = await fetchInventoryItem(idParam as InventoryItemId);
 				setForm(dtoToForm(row));
+				try {
+					const printerRows = await fetchPrinterDevices();
+					const sortedPrinters = printerRows.sort((a, b) =>
+						a.name.localeCompare(b.name),
+					);
+					setPrinters(sortedPrinters);
+					setSelectedPrinterId((current) =>
+						current && sortedPrinters.some((printer) => printer.id === current)
+							? current
+							: (sortedPrinters[0]?.id ?? ""),
+					);
+				} catch (e) {
+					setPrinters([]);
+					setSelectedPrinterId("");
+					setPrintError(
+						e instanceof Error ? e.message : "Could not load printers",
+					);
+				}
 			} else {
 				setForm(emptyForm(""));
+				setPrinters([]);
+				setSelectedPrinterId("");
 			}
 		} catch (e) {
 			setLoadError(e instanceof Error ? e.message : "Request failed");
@@ -186,6 +223,31 @@ export function StockItemFormPage() {
 			);
 		} finally {
 			setLocationSaving(false);
+		}
+	}
+
+	async function printLabel() {
+		if (!idParam || selectedPrinterId === "") {
+			setPrintError("Select a label printer.");
+			return;
+		}
+		setPrintError(null);
+		setPrintOk(null);
+		setPrintingLabel(true);
+		try {
+			const result = await postInventoryItemPrintLabel(
+				idParam as InventoryItemId,
+				selectedPrinterId,
+			);
+			setPrintOk(
+				result.status === "queued"
+					? "Label sent to the printer."
+					: `Status: ${result.status}`,
+			);
+		} catch (e) {
+			setPrintError(e instanceof Error ? e.message : "Print failed");
+		} finally {
+			setPrintingLabel(false);
 		}
 	}
 
@@ -284,22 +346,134 @@ export function StockItemFormPage() {
 			<Box sx={{ display: "flex", flexDirection: "column", gap: 2.5, mb: 10 }}>
 				{isEdit && form.publicCode != null ? (
 					<Paper elevation={0} sx={sectionPaperSx}>
-						<Typography variant="subtitle1" sx={{ fontWeight: 700, mb: 0.5 }}>
-							Label code
-						</Typography>
-						<Typography
-							variant="body2"
-							color="text.secondary"
-							sx={{ mb: 1.5 }}
+						<Box
+							sx={{
+								display: "grid",
+								gridTemplateColumns: { xs: "1fr", sm: "minmax(0, 1fr) 360px" },
+								gap: 2,
+								alignItems: "center",
+							}}
 						>
-							Fixed when this unit was created; use for printing.
-						</Typography>
-						<Typography
-							variant="h6"
-							sx={{ fontFamily: "ui-monospace, monospace", fontWeight: 600 }}
+							<Box>
+								<Typography
+									variant="subtitle1"
+									sx={{ fontWeight: 700, mb: 0.5 }}
+								>
+									Label code
+								</Typography>
+								<Typography
+									variant="body2"
+									color="text.secondary"
+									sx={{ mb: 1.5 }}
+								>
+									Fixed when this unit was created; use for printing.
+								</Typography>
+								<Typography
+									variant="h6"
+									sx={{
+										fontFamily: "ui-monospace, monospace",
+										fontWeight: 600,
+									}}
+								>
+									{form.publicCode}
+								</Typography>
+							</Box>
+							<Box
+								sx={{
+									border: "1px solid",
+									borderColor: "divider",
+									borderRadius: 1.5,
+									bgcolor: "common.white",
+									p: 1,
+								}}
+							>
+								{labelImageFailed || !idParam ? (
+									<Alert severity="warning">
+										Label preview could not be loaded.
+									</Alert>
+								) : (
+									<Box
+										component="img"
+										src={inventoryItemLabelImageUrl(
+											idParam as InventoryItemId,
+											form.publicCode,
+										)}
+										alt={`Barcodile label ${form.publicCode}`}
+										onError={() => setLabelImageFailed(true)}
+										sx={{
+											display: "block",
+											width: "100%",
+											aspectRatio: "2 / 1",
+											objectFit: "contain",
+										}}
+									/>
+								)}
+							</Box>
+						</Box>
+						<Box
+							sx={{
+								display: "flex",
+								flexWrap: "wrap",
+								gap: 1.5,
+								alignItems: "flex-start",
+								mt: 2,
+							}}
 						>
-							{form.publicCode}
-						</Typography>
+							<FormControl sx={{ minWidth: 240, flex: "1 1 240px" }}>
+								<InputLabel id="inventory-label-printer-label">
+									Label printer
+								</InputLabel>
+								<Select<string>
+									labelId="inventory-label-printer-label"
+									label="Label printer"
+									value={selectedPrinterId}
+									onChange={(e: SelectChangeEvent) =>
+										setSelectedPrinterId(e.target.value as PrinterDeviceId | "")
+									}
+									disabled={printingLabel || printers.length === 0}
+								>
+									<MenuItem value="">
+										<em>No printer selected</em>
+									</MenuItem>
+									{printers.map((printer) => (
+										<MenuItem key={printer.id} value={printer.id}>
+											{printer.name}
+										</MenuItem>
+									))}
+								</Select>
+							</FormControl>
+							<Button
+								variant="contained"
+								startIcon={<PrintOutlinedIcon />}
+								onClick={() => void printLabel()}
+								disabled={printingLabel || selectedPrinterId === ""}
+							>
+								{printingLabel ? "Printing…" : "Print Label"}
+							</Button>
+						</Box>
+						{printers.length === 0 ? (
+							<Alert severity="info" sx={{ mt: 2 }}>
+								Add a label printer before printing this label.
+							</Alert>
+						) : null}
+						{printError ? (
+							<Alert
+								severity="error"
+								sx={{ mt: 2 }}
+								onClose={() => setPrintError(null)}
+							>
+								{printError}
+							</Alert>
+						) : null}
+						{printOk ? (
+							<Alert
+								severity="success"
+								sx={{ mt: 2 }}
+								onClose={() => setPrintOk(null)}
+							>
+								{printOk}
+							</Alert>
+						) : null}
 					</Paper>
 				) : null}
 				<Paper elevation={0} sx={sectionPaperSx}>

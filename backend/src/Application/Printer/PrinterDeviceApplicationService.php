@@ -138,6 +138,28 @@ final readonly class PrinterDeviceApplicationService
         ]);
     }
 
+    public function printLabelImage(PrinterDeviceId $printerDeviceId, string $pngBytes): void
+    {
+        $device = $this->deviceRepository->find($printerDeviceId);
+        if (!$device instanceof PrinterDevice) {
+            throw new NotFoundHttpException('Printer device not found.');
+        }
+
+        $driver = $this->driverRegistry->get($device->getDriverCode());
+        $this->logLabelImagePrintRequest($device, $pngBytes);
+
+        try {
+            $driver->printLabelImage($device->getConnection(), $device->getPrintSettings(), $pngBytes);
+        } catch (LabelPrintJobFailedException $e) {
+            $this->logLabelImagePrintFailure($device, $e);
+            throw new BadRequestHttpException($e->getMessage(), $e);
+        }
+        $this->logger->info('Printer label image finished.', [
+            'printerDeviceId' => (string) $device->getId(),
+            'driverCode' => $device->getDriverCode(),
+        ]);
+    }
+
     private function map(PrinterDevice $device): PrinterDeviceResponse
     {
         return new PrinterDeviceResponse(
@@ -164,6 +186,28 @@ final readonly class PrinterDeviceApplicationService
         LabelPrintJobFailedException $failure,
     ): void {
         $this->logger->error('Printer test label failed.', [
+            'printerDeviceId' => (string) $device->getId(),
+            'driverCode' => $device->getDriverCode(),
+            'error' => $failure->getMessage(),
+        ]);
+    }
+
+    private function logLabelImagePrintRequest(PrinterDevice $device, string $pngBytes): void
+    {
+        $this->logger->info('Printer label image requested.', [
+            'printerDeviceId' => (string) $device->getId(),
+            'driverCode' => $device->getDriverCode(),
+            'connection' => $device->getConnection(),
+            'printSettings' => $device->getPrintSettings(),
+            'imageBytes' => \strlen($pngBytes),
+        ]);
+    }
+
+    private function logLabelImagePrintFailure(
+        PrinterDevice $device,
+        LabelPrintJobFailedException $failure,
+    ): void {
+        $this->logger->error('Printer label image failed.', [
             'printerDeviceId' => (string) $device->getId(),
             'driverCode' => $device->getDriverCode(),
             'error' => $failure->getMessage(),

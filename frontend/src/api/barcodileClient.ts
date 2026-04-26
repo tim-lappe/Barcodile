@@ -11,6 +11,7 @@ import type {
 	InputDeviceOptionDto,
 	InventoryItemDto,
 	InventoryItemId,
+	InventoryItemLabelPrintResponse,
 	LocationDto,
 	LocationId,
 	PicnicCatalogProductSummaryDto,
@@ -109,6 +110,17 @@ export async function deleteCatalogItemImage(
 
 export function inventoryItemIri(id: InventoryItemId): string {
 	return `/api/inventory_items/${id}`;
+}
+
+export function inventoryItemLabelImageUrl(
+	id: InventoryItemId,
+	cacheBust?: string | number,
+): string {
+	const path = `${inventoryItemIri(id)}/label_image`;
+	if (cacheBust === undefined) {
+		return path;
+	}
+	return `${path}?v=${encodeURIComponent(String(cacheBust))}`;
 }
 
 export async function fetchLocations(): Promise<LocationDto[]> {
@@ -711,6 +723,21 @@ export async function deleteInventoryItem(id: InventoryItemId): Promise<void> {
 	if (!res.ok) {
 		throw new Error(await readErrorMessage(res));
 	}
+}
+
+export async function postInventoryItemPrintLabel(
+	inventoryItemId: InventoryItemId,
+	printerDeviceId: PrinterDeviceId,
+): Promise<InventoryItemLabelPrintResponse> {
+	const res = await fetch(`${inventoryItemIri(inventoryItemId)}/print_label`, {
+		method: "POST",
+		headers: JSON_HEADERS,
+		body: JSON.stringify({ printerDeviceId }),
+	});
+	if (!res.ok) {
+		throw new Error(await readErrorMessage(res));
+	}
+	return (await res.json()) as InventoryItemLabelPrintResponse;
 }
 
 export async function fetchPicnicIntegrationSettings(): Promise<PicnicIntegrationSettingsDto> {
