@@ -47,8 +47,8 @@ services:
     env_file: .env
     environment:
       BARCODILE_RUNTIME: prod
-      APP_ENV: prod
-      APP_DEBUG: "0"
+      APP_ENV: dev
+      APP_DEBUG: "1"
     privileged: true
     volumes:
       - barcodile_pgdata:/var/lib/postgresql/data

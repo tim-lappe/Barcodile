@@ -7,7 +7,7 @@ RUN npm run build
 
 FROM php:8.5-fpm-bookworm
 
-ARG COMPOSER_NO_DEV=1
+ARG COMPOSER_NO_DEV=0
 
 RUN set -eux; \
     apt-get update; \
@@ -59,11 +59,15 @@ COPY backend/composer.json backend/composer.lock ./
 RUN if [ "$COMPOSER_NO_DEV" = "1" ]; then \
       composer install --no-dev --optimize-autoloader --no-interaction --no-scripts; \
     else \
-      composer install --optimize-autoloader --no-interaction --no-scripts; \
+      composer install --no-interaction --no-scripts; \
     fi
 
 COPY backend/ ./
-RUN composer dump-autoload --optimize --classmap-authoritative
+RUN if [ "$COMPOSER_NO_DEV" = "1" ]; then \
+      composer dump-autoload --optimize --classmap-authoritative; \
+    else \
+      composer dump-autoload; \
+    fi
 
 COPY --from=frontend /app/dist /var/www/html/spa
 
@@ -86,8 +90,8 @@ COPY docker/supervisor/prod.d/ /etc/supervisor/prod.d/
 COPY docker/entrypoint.sh /usr/local/bin/entrypoint.sh
 RUN chmod +x /usr/local/bin/entrypoint.sh
 
-ENV APP_ENV=prod \
-    APP_DEBUG=0 \
+ENV APP_ENV=dev \
+    APP_DEBUG=1 \
     BARCODILE_RUNTIME=prod
 
 EXPOSE 80 8000 5173 5432

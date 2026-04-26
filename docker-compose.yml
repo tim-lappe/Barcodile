@@ -3,13 +3,15 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
+      args:
+        COMPOSER_NO_DEV: "0"
     ports:
       - "8080:80"
       - "5432:5432"
     environment:
       BARCODILE_RUNTIME: prod
-      APP_ENV: prod
-      APP_DEBUG: "0"
+      APP_ENV: dev
+      APP_DEBUG: "1"
       APP_SECRET: ${APP_SECRET:-00000000000000000000000000000000}
       DATABASE_URL: ${DATABASE_URL:-postgresql://barcodile:barcodile@127.0.0.1:5432/barcodile?serverVersion=16&charset=utf8}
       DEFAULT_URI: ${DEFAULT_URI:-http://localhost:8080}
