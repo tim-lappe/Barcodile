@@ -42,11 +42,11 @@ services:
     image: ghcr.io/tim-lappe/barcodile:latest
     restart: unless-stopped
     ports:
-      - "8080:80"
+      - "8080:8000"
+      - "5173:5173"
       - "5432:5432"
     env_file: .env
     environment:
-      BARCODILE_RUNTIME: prod
       APP_ENV: dev
       APP_DEBUG: "1"
     privileged: true
@@ -66,7 +66,7 @@ volumes:
 docker compose up -d
 ```
 
-Open `http://localhost:8080` (or your server’s hostname and port) in a browser. The first start can take a minute while the database and application start.
+Open `http://localhost:5173` (or your server’s hostname and port) in a browser. The first start can take a minute while the database and application start.
 
 `5432` is exposed for backups or external tools; you can remove the `ports` line for it if you do not need that. The `/dev/input` mount and `privileged: true` are for USB barcode scanners on Linux; if you do not use that feature, you can try omitting `privileged` and the `/dev/input` volume (some hosts require these for input devices to work inside the container).
 
@@ -78,4 +78,4 @@ Open `http://localhost:8080` (or your server’s hostname and port) in a browser
 
 If you prefer to build locally instead of pulling from the registry, clone the repository, replace the `image:` line in the compose file with a `build` section pointing at the repo root, and run `docker compose up -d --build` from that directory.
 
-For development, the repository’s own `docker-compose.yml` and `docker-compose.override.yml` support a multi-port development layout; that setup is intended for people working on the code.
+For local builds, the repository’s own `docker-compose.yml` uses the same supervisor layout while building the image from source.

@@ -7,8 +7,6 @@ RUN npm run build
 
 FROM php:8.5-fpm-bookworm
 
-ARG COMPOSER_NO_DEV=0
-
 RUN set -eux; \
     apt-get update; \
     apt-get install -y --no-install-recommends \
@@ -25,7 +23,6 @@ RUN set -eux; \
         python3 \
         python3-pip \
         python3-venv \
-        nginx \
         supervisor \
         unzip \
         wget \
@@ -47,7 +44,7 @@ RUN set -eux; \
 
 COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
 
-COPY --from=node:22-bookworm-slim /usr/local /usr/local
+COPY --from=frontend /usr/local /usr/local
 
 WORKDIR /var/www/html
 
@@ -56,44 +53,27 @@ RUN pip3 install --no-cache-dir --break-system-packages -r /tmp/requirements-lab
     && rm -f /tmp/requirements-label.txt
 
 COPY backend/composer.json backend/composer.lock ./
-RUN if [ "$COMPOSER_NO_DEV" = "1" ]; then \
-      composer install --no-dev --optimize-autoloader --no-interaction --no-scripts; \
-    else \
-      composer install --no-interaction --no-scripts; \
-    fi
+RUN composer install --no-interaction --no-scripts
 
 COPY backend/ ./
-RUN if [ "$COMPOSER_NO_DEV" = "1" ]; then \
-      composer dump-autoload --optimize --classmap-authoritative; \
-    else \
-      composer dump-autoload; \
-    fi
+RUN composer dump-autoload
 
 COPY --from=frontend /app/dist /var/www/html/spa
 
 COPY frontend/ /app/frontend/
 
-COPY docker/prod/nginx-site.conf /etc/nginx/sites-available/barcodile
-RUN rm -f /etc/nginx/sites-enabled/default \
-    && ln -sf /etc/nginx/sites-available/barcodile /etc/nginx/sites-enabled/barcodile
-
 RUN mkdir -p /var/log/supervisor \
-    && mkdir -p /etc/supervisor/dev.d /etc/supervisor/prod.d \
+    && mkdir -p /etc/supervisor/conf.d \
     && mkdir -p var/cache var/log var/share \
     && chown -R www-data:www-data var
 
-COPY docker/supervisor/supervisord.dev.conf /etc/supervisor/supervisord.dev.conf
-COPY docker/supervisor/supervisord.prod.conf /etc/supervisor/supervisord.prod.conf
-COPY docker/supervisor/dev.d/ /etc/supervisor/dev.d/
-COPY docker/supervisor/prod.d/ /etc/supervisor/prod.d/
+COPY docker/supervisor/supervisord.conf /etc/supervisor/supervisord.conf
+COPY docker/supervisor/conf.d/ /etc/supervisor/conf.d/
 
 COPY docker/entrypoint.sh /usr/local/bin/entrypoint.sh
 RUN chmod +x /usr/local/bin/entrypoint.sh
 
 ENV APP_ENV=dev \
-    APP_DEBUG=1 \
-    BARCODILE_RUNTIME=prod
-
-EXPOSE 80 8000 5173 5432
+    APP_DEBUG=1
 
 ENTRYPOINT ["/usr/local/bin/entrypoint.sh"]
