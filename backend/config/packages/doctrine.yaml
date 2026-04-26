@@ -21,6 +21,8 @@ doctrine:
                 class: App\Infrastructure\Picnic\Doctrine\PicnicIntegrationSettingsIdType
             scanner_device_id:
                 class: App\Infrastructure\Scanner\Doctrine\ScannerDeviceIdType
+            printer_device_id:
+                class: App\Infrastructure\Printer\Doctrine\PrinterDeviceIdType
             persisted_domain_event_id:
                 class: App\Infrastructure\Shared\Doctrine\PersistedDomainEventIdType
 
@@ -62,6 +64,12 @@ doctrine:
                 dir: '%kernel.project_dir%/src/Domain/Scanner/Entity'
                 prefix: 'App\Domain\Scanner\Entity'
                 alias: Scanner
+            Printer:
+                type: attribute
+                is_bundle: false
+                dir: '%kernel.project_dir%/src/Domain/Printer/Entity'
+                prefix: 'App\Domain\Printer\Entity'
+                alias: Printer
             Shared:
                 type: attribute
                 is_bundle: false

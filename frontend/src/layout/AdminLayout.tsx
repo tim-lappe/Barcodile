@@ -26,7 +26,8 @@ export type AdminNavKey =
 	| "locations"
 	| "stock"
 	| "carts"
-	| "devices";
+	| "devices"
+	| "printers";
 
 const NAV_ITEMS: { key: AdminNavKey; label: string }[] = [
 	{ key: "dashboard", label: "Dashboard" },
@@ -35,6 +36,7 @@ const NAV_ITEMS: { key: AdminNavKey; label: string }[] = [
 	{ key: "stock", label: "Inventory" },
 	{ key: "carts", label: "Carts" },
 	{ key: "devices", label: "Devices" },
+	{ key: "printers", label: "Printers" },
 ];
 
 function navKeyFromPath(pathname: string): AdminNavKey {
@@ -52,6 +54,9 @@ function navKeyFromPath(pathname: string): AdminNavKey {
 	}
 	if (pathname.startsWith("/devices")) {
 		return "devices";
+	}
+	if (pathname.startsWith("/printers")) {
+		return "printers";
 	}
 	return "dashboard";
 }
@@ -77,6 +82,8 @@ export function AdminLayout({ children }: AdminLayoutProps) {
 			navigate("/carts");
 		} else if (key === "devices") {
 			navigate("/devices");
+		} else if (key === "printers") {
+			navigate("/printers");
 		} else {
 			navigate("/inventory");
 		}

@@ -18,9 +18,13 @@ RUN set -eux; \
         git \
         gnupg \
         libicu-dev \
+        libusb-1.0-0 \
         libpq-dev \
         libsqlite3-dev \
         libzip-dev \
+        python3 \
+        python3-pip \
+        python3-venv \
         nginx \
         supervisor \
         unzip \
@@ -46,6 +50,10 @@ COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
 COPY --from=node:22-bookworm-slim /usr/local /usr/local
 
 WORKDIR /var/www/html
+
+COPY backend/requirements-label.txt /tmp/requirements-label.txt
+RUN pip3 install --no-cache-dir --break-system-packages -r /tmp/requirements-label.txt \
+    && rm -f /tmp/requirements-label.txt
 
 COPY backend/composer.json backend/composer.lock ./
 RUN if [ "$COMPOSER_NO_DEV" = "1" ]; then \

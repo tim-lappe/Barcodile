@@ -12,6 +12,8 @@ services:
     _instanceof:
         Symfony\Bundle\FrameworkBundle\Controller\AbstractController:
             tags: ['controller.service_arguments']
+        App\Domain\Printer\Port\LabelPrinterDriver:
+            tags: ['barcodile.label_printer_driver']
 
     App\:
         resource: '../src/'
@@ -83,3 +85,8 @@ services:
 
     App\Domain\Scanner\Port\InputDeviceListingPort:
         alias: App\Infrastructure\Scanner\LinuxInputDeviceByIdListingAdapter
+
+    App\Infrastructure\Printer\BrotherQl\BrotherQlLabelPrinterDriver:
+        arguments:
+            $projectDir: '%kernel.project_dir%'
+            $environment: '%kernel.environment%'

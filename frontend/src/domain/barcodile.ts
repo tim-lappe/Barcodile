@@ -78,6 +78,26 @@ export type InputDeviceOptionDto = {
 	label: string;
 };
 
+export type PrinterDeviceId = string;
+
+export type PrinterDeviceDto = {
+	id: PrinterDeviceId;
+	driverCode: string;
+	connection: Record<string, unknown>;
+	name: string;
+};
+
+export type PrinterDriverDto = {
+	code: string;
+	label: string;
+};
+
+export type DiscoveredPrinterOptionDto = {
+	deviceIdentifier: string;
+	label: string;
+	suggestedConnection: Record<string, string>;
+};
+
 export type LocationDto = {
 	id: LocationId;
 	name: string;

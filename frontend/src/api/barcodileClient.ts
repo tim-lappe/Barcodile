@@ -25,6 +25,10 @@ import type {
 	VolumeDto,
 	WeightDto,
 	ActivityListDto,
+	DiscoveredPrinterOptionDto,
+	PrinterDeviceDto,
+	PrinterDeviceId,
+	PrinterDriverDto,
 } from "../domain/barcodile";
 import { readJsonArray } from "./collection";
 
@@ -254,6 +258,99 @@ export async function deleteScannerDevice(id: ScannerDeviceId): Promise<void> {
 	if (!res.ok) {
 		throw new Error(await readErrorMessage(res));
 	}
+}
+
+export function printerDeviceIri(id: PrinterDeviceId): string {
+	return `/api/printer_devices/${id}`;
+}
+
+export async function fetchPrinterDevices(): Promise<PrinterDeviceDto[]> {
+	const res = await fetch("/api/printer_devices", {
+		headers: { Accept: "application/json" },
+	});
+	if (!res.ok) {
+		throw new Error(await readErrorMessage(res));
+	}
+	const data: unknown = await res.json();
+	return readJsonArray<PrinterDeviceDto>(data);
+}
+
+export async function fetchPrinterDevice(
+	id: PrinterDeviceId,
+): Promise<PrinterDeviceDto> {
+	const res = await fetch(printerDeviceIri(id), {
+		headers: { Accept: "application/json" },
+	});
+	if (!res.ok) {
+		throw new Error(await readErrorMessage(res));
+	}
+	return (await res.json()) as PrinterDeviceDto;
+}
+
+export async function fetchPrinterDrivers(): Promise<PrinterDriverDto[]> {
+	const res = await fetch("/api/printer_drivers", {
+		headers: { Accept: "application/json" },
+	});
+	if (!res.ok) {
+		throw new Error(await readErrorMessage(res));
+	}
+	const data: unknown = await res.json();
+	return readJsonArray<PrinterDriverDto>(data);
+}
+
+export async function fetchPrinterDiscoveryOptions(
+	driverCode: string,
+): Promise<DiscoveredPrinterOptionDto[]> {
+	const q = new URLSearchParams({ driver: driverCode });
+	const res = await fetch(`/api/printer_devices/discovery_options?${q}`, {
+		headers: { Accept: "application/json" },
+	});
+	if (!res.ok) {
+		throw new Error(await readErrorMessage(res));
+	}
+	const data: unknown = await res.json();
+	return readJsonArray<DiscoveredPrinterOptionDto>(data);
+}
+
+export async function postPrinterDevice(input: {
+	driverCode: string;
+	connection: Record<string, unknown>;
+	name: string;
+}): Promise<PrinterDeviceDto> {
+	const res = await fetch("/api/printer_devices", {
+		method: "POST",
+		headers: JSON_HEADERS,
+		body: JSON.stringify({
+			driverCode: input.driverCode,
+			connection: input.connection,
+			name: input.name,
+		}),
+	});
+	if (!res.ok) {
+		throw new Error(await readErrorMessage(res));
+	}
+	return (await res.json()) as PrinterDeviceDto;
+}
+
+export async function deletePrinterDevice(id: PrinterDeviceId): Promise<void> {
+	const res = await fetch(printerDeviceIri(id), { method: "DELETE" });
+	if (!res.ok) {
+		throw new Error(await readErrorMessage(res));
+	}
+}
+
+export async function postPrinterTestPrint(
+	id: PrinterDeviceId,
+): Promise<{ status: string }> {
+	const res = await fetch(`${printerDeviceIri(id)}/test_print`, {
+		method: "POST",
+		headers: JSON_HEADERS,
+		body: JSON.stringify({}),
+	});
+	if (!res.ok) {
+		throw new Error(await readErrorMessage(res));
+	}
+	return (await res.json()) as { status: string };
 }
 
 const CATALOG_ITEM_PAGE_SIZE = 100;
