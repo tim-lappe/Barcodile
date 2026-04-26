@@ -15,6 +15,13 @@ def read_object(data: dict, key: str) -> dict:
     return {}
 
 
+def test_label_dimensions(spec):
+    width, height = spec.dots_printable
+    if height > 0:
+        return width, height
+    return width, 300
+
+
 def main() -> None:
     try:
         data = json.load(sys.stdin)
@@ -61,7 +68,7 @@ def main() -> None:
         print(f"Unknown label size: {label}", file=sys.stderr)
         sys.exit(1)
 
-    w, h = spec.dots_printable
+    w, h = test_label_dimensions(spec)
     debug(f"Resolved label printable dots: width={w} height={h}")
     im = Image.new("RGB", (w, h), (255, 255, 255))
     draw = ImageDraw.Draw(im)
