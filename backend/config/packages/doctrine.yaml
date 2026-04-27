@@ -29,6 +29,8 @@ doctrine:
                 class: App\Printer\Infrastructure\Doctrine\PrintedLabelIdType
             persisted_domain_event_id:
                 class: App\SharedKernel\Infrastructure\Doctrine\PersistedDomainEventIdType
+            llm_profile_id:
+                class: App\AI\Infrastructure\Doctrine\LlmProfileIdType
 
         profiling_collect_backtrace: '%kernel.debug%'
     orm:
@@ -74,6 +76,12 @@ doctrine:
                 dir: '%kernel.project_dir%/src/Printer/Domain/Entity'
                 prefix: 'App\Printer\Domain\Entity'
                 alias: Printer
+            AI:
+                type: attribute
+                is_bundle: false
+                dir: '%kernel.project_dir%/src/AI/Domain/Entity'
+                prefix: 'App\AI\Domain\Entity'
+                alias: AI
             Shared:
                 type: attribute
                 is_bundle: false

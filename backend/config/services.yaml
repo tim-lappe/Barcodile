@@ -21,6 +21,9 @@ services:
             - '../src/Kernel.php'
             - '../src/**/Dto/'
 
+    App\AI\Domain\Port\LlmCompletionProbePort:
+        alias: App\AI\Infrastructure\SymfonyAiLlmCompletionProbeAdapter
+
     App\Picnic\Domain\Port\PicnicCredentialCipherPort:
         alias: App\Picnic\Infrastructure\PicnicCredentialCipherAdapter
 

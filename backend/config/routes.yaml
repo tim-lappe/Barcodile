@@ -11,6 +11,10 @@ activity_controllers:
     resource: ../src/Activity/Api/Controller/
     type: attribute
 
+ai_controllers:
+    resource: ../src/AI/Api/Controller/
+    type: attribute
+
 cart_controllers:
     resource: ../src/Cart/Api/Controller/
     type: attribute
