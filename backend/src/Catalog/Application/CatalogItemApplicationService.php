@@ -13,7 +13,7 @@ use App\Catalog\Application\Dto\PostCatalogItemRequest;
 use App\Catalog\Domain\CatalogImageContentType;
 use App\Catalog\Domain\Entity\CatalogItem;
 use App\Catalog\Domain\Entity\CatalogItemAttribute;
-use App\Catalog\Domain\Entity\CatalogItemImage;
+use App\Catalog\Domain\Image;
 use App\Catalog\Domain\Repository\CatalogItemRepository;
 use App\Picnic\Application\PicnicIntegrationApplicationService;
 use App\SharedKernel\Domain\Barcode as BarcodeValue;
@@ -170,8 +170,12 @@ final readonly class CatalogItemApplicationService
         }
 
         $item = $this->mustFind(CatalogItemId::fromString($catalogItemId));
-        $contentType = CatalogImageContentType::tryFromMimeType((string) $file->getMimeType()) ?? CatalogImageContentType::Jpeg;
-        $item->assignImage($this->sanitizeCatalogImageFileName($file->getClientOriginalName()), $binary, $contentType);
+        $image = Image::fromCatalogContentType(
+            $this->sanitizeCatalogImageFileName($file->getClientOriginalName()),
+            $binary,
+            CatalogImageContentType::tryFromMimeType((string) $file->getMimeType()) ?? CatalogImageContentType::Jpeg,
+        );
+        $item->assignImage($image);
         $this->catalogItemRepo->save($item);
 
         return $this->responseMapper->fromView($this->map($item, $this->picnic->productIdForCatalogItem($catalogItemId)));
@@ -196,7 +200,7 @@ final readonly class CatalogItemApplicationService
         }
         $image = $this->requireStoredCatalogItemImage($item);
 
-        return new CatalogItemImageGetResult($image->getBody(), $this->contentType($image), md5($image->getBody()));
+        return new CatalogItemImageGetResult($image->getBody(), $image->getMimeType(), $image->getETag());
     }
 
     /**
@@ -333,25 +337,14 @@ final readonly class CatalogItemApplicationService
         }
     }
 
-    private function requireStoredCatalogItemImage(CatalogItem $item): CatalogItemImage
+    private function requireStoredCatalogItemImage(CatalogItem $item): Image
     {
-        $fileName = $item->getImageFileName();
-        if (null === $fileName || '' === $fileName) {
-            throw new NotFoundHttpException('Catalog item has no image.');
-        }
-        $image = $item->getCatalogItemImage();
+        $image = $item->getImage();
         if (null === $image) {
-            throw new NotFoundHttpException('Image not found in storage.');
+            throw new NotFoundHttpException('Catalog item has no image.');
         }
 
         return $image;
-    }
-
-    private function contentType(CatalogItemImage $image): string
-    {
-        $mime = $image->getContentType();
-
-        return '' === $mime ? 'application/octet-stream' : $mime;
     }
 
     private function sanitizeCatalogImageFileName(string $fileName): string

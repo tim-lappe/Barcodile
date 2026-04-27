@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Catalog\Domain\Entity;
 
+use App\Catalog\Domain\Image;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
 
@@ -22,17 +23,16 @@ class CatalogItemImage
     #[ORM\Column(length: 64)]
     private string $contentType;
 
-    public function __construct(CatalogItem $catalogItem, string $body, string $contentType)
+    public function __construct(CatalogItem $catalogItem, Image $image)
     {
         $this->catalogItem = $catalogItem;
-        $this->body = $body;
-        $this->contentType = $contentType;
+        $this->rewrite($image);
     }
 
-    public function rewrite(string $body, string $contentType): void
+    public function rewrite(Image $image): void
     {
-        $this->body = $body;
-        $this->contentType = $contentType;
+        $this->body = $image->getBody();
+        $this->contentType = $image->getMimeType();
     }
 
     public function getBody(): string
@@ -43,5 +43,10 @@ class CatalogItemImage
     public function getContentType(): string
     {
         return $this->contentType;
+    }
+
+    public function toImage(string $fileName): Image
+    {
+        return new Image($fileName, $this->body, $this->contentType);
     }
 }

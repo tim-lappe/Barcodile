@@ -4,10 +4,10 @@ declare(strict_types=1);
 
 namespace App\Catalog\Domain\Entity;
 
-use App\Catalog\Domain\CatalogImageContentType;
 use App\Catalog\Domain\Entity\Embeddable\BarcodeEmbeddable;
 use App\Catalog\Domain\Entity\Embeddable\VolumeEmbeddable;
 use App\Catalog\Domain\Entity\Embeddable\WeightEmbeddable;
+use App\Catalog\Domain\Image;
 use App\Catalog\Domain\Repository\CatalogItemRepository;
 use App\SharedKernel\Domain\Barcode as BarcodeValue;
 use App\SharedKernel\Domain\Id\CatalogItemId;
@@ -79,16 +79,15 @@ class CatalogItem
         return $this->imageFileName;
     }
 
-    public function assignImage(string $sanitizedFileName, string $binary, CatalogImageContentType $contentType): void
+    public function assignImage(Image $image): void
     {
-        $this->imageFileName = $sanitizedFileName;
-        $mime = $contentType->value;
+        $this->imageFileName = $image->getFileName();
         if (null !== $this->catalogItemImage) {
-            $this->catalogItemImage->rewrite($binary, $mime);
+            $this->catalogItemImage->rewrite($image);
 
             return;
         }
-        $this->catalogItemImage = new CatalogItemImage($this, $binary, $mime);
+        $this->catalogItemImage = new CatalogItemImage($this, $image);
     }
 
     public function clearImage(): void
@@ -100,6 +99,15 @@ class CatalogItem
     public function getCatalogItemImage(): ?CatalogItemImage
     {
         return $this->catalogItemImage;
+    }
+
+    public function getImage(): ?Image
+    {
+        if (null === $this->imageFileName || '' === $this->imageFileName || null === $this->catalogItemImage) {
+            return null;
+        }
+
+        return $this->catalogItemImage->toImage($this->imageFileName);
     }
 
     public function getVolume(): ?Volume
