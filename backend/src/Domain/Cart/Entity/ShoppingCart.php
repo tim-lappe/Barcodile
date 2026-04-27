@@ -5,38 +5,31 @@ declare(strict_types=1);
 namespace App\Domain\Cart\Entity;
 
 use App\Domain\Cart\Repository\ShoppingCartRepository;
-use App\Domain\Catalog\Entity\CatalogItem;
+use App\Domain\Shared\Id\CatalogItemId;
 use App\Domain\Shared\Id\ShoppingCartId;
 use App\Domain\Shared\Id\ShoppingCartLineId;
 use DateTimeImmutable;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
-use Symfony\Component\Serializer\Attribute\Groups;
-use Symfony\Component\Validator\Constraints as Assert;
 
 #[ORM\Entity(repositoryClass: ShoppingCartRepository::class)]
 #[ORM\Table(name: 'shopping_cart')]
 class ShoppingCart
 {
-    #[Groups(['shopping_cart:read'])]
     #[ORM\Id]
     #[ORM\Column(name: 'id', type: 'shopping_cart_id', unique: true)]
     private ShoppingCartId $shoppingCartId;
 
-    #[Groups(['shopping_cart:read', 'shopping_cart:create', 'shopping_cart:patch'])]
     #[ORM\Column(length: 255, nullable: true)]
-    #[Assert\Length(max: 255)]
     private ?string $name = null;
 
-    #[Groups(['shopping_cart:read'])]
     #[ORM\Column]
     private DateTimeImmutable $createdAt;
 
     /**
      * @var Collection<int, ShoppingCartLine>
      */
-    #[Groups(['shopping_cart:read'])]
     #[ORM\OneToMany(targetEntity: ShoppingCartLine::class, mappedBy: 'shoppingCart', cascade: ['persist', 'remove'], orphanRemoval: true)]
     #[ORM\OrderBy(['createdAt' => 'ASC'])]
     private Collection $lines;
@@ -95,12 +88,11 @@ class ShoppingCart
         return $this;
     }
 
-    public function mergeOrAddLineForCatalogItem(CatalogItem $catalogItem, int $quantity): ShoppingCartLine
+    public function mergeOrAddLineForCatalogItem(CatalogItemId $catalogItemId, int $quantity): ShoppingCartLine
     {
-        $catalogItemId = $catalogItem->getId();
         foreach ($this->lines as $existing) {
-            $existingItem = $existing->getCatalogItem();
-            if (null !== $existingItem && $existingItem->getId()->equals($catalogItemId)) {
+            $existingItemId = $existing->getCatalogItemId();
+            if (null !== $existingItemId && $existingItemId->equals($catalogItemId)) {
                 $existing->increaseQuantity($quantity);
 
                 return $existing;
@@ -108,7 +100,7 @@ class ShoppingCart
         }
         $line = new ShoppingCartLine();
         $line->changeShoppingCart($this);
-        $line->changeCatalogItem($catalogItem);
+        $line->changeCatalogItemId($catalogItemId);
         $line->changeQuantity($quantity);
         $this->addLine($line);
 

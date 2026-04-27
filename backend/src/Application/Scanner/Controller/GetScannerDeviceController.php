@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace App\Application\Scanner\Controller;
 
 use App\Application\Scanner\ScannerDeviceApplicationService;
-use App\Domain\Shared\Id\ScannerDeviceId;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\Routing\Attribute\Route;
@@ -24,6 +23,6 @@ final class GetScannerDeviceController extends AbstractController
     )]
     public function __invoke(string $scannerDeviceId): JsonResponse
     {
-        return $this->json($this->scannerDeviceApp->getScannerDevice(ScannerDeviceId::fromString($scannerDeviceId)));
+        return $this->json($this->scannerDeviceApp->getScannerDevice($scannerDeviceId));
     }
 }

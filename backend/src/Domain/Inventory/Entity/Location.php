@@ -7,24 +7,17 @@ namespace App\Domain\Inventory\Entity;
 use App\Domain\Inventory\Repository\LocationRepository;
 use App\Domain\Shared\Id\LocationId;
 use Doctrine\ORM\Mapping as ORM;
-use Symfony\Component\Serializer\Attribute\Groups;
-use Symfony\Component\Validator\Constraints as Assert;
 
 #[ORM\Entity(repositoryClass: LocationRepository::class)]
 class Location
 {
-    #[Groups(['location:read', 'inventory_item:read'])]
     #[ORM\Id]
     #[ORM\Column(type: 'location_id', unique: true)]
     private LocationId $locationId;
 
-    #[Groups(['location:read', 'location:write', 'inventory_item:read'])]
     #[ORM\Column(length: 255)]
-    #[Assert\NotBlank]
-    #[Assert\Length(max: 255)]
     private string $name = '';
 
-    #[Groups(['location:read', 'location:write'])]
     #[ORM\ManyToOne(targetEntity: self::class)]
     #[ORM\JoinColumn(referencedColumnName: 'location_id', onDelete: 'SET NULL')]
     private ?Location $parent = null;

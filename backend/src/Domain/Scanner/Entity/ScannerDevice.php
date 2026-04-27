@@ -10,8 +10,6 @@ use App\Domain\Shared\DomainEventRecorder;
 use App\Domain\Shared\Id\ScannerDeviceId;
 use App\Domain\Shared\RecordsDomainEvents;
 use Doctrine\ORM\Mapping as ORM;
-use Symfony\Component\Serializer\Attribute\Groups;
-use Symfony\Component\Validator\Constraints as Assert;
 
 #[ORM\Entity(repositoryClass: ScannerDeviceRepository::class)]
 #[ORM\Table(name: 'scanner_device')]
@@ -21,39 +19,28 @@ class ScannerDevice implements RecordsDomainEvents
 
     private const int MAX_LAST_SCANNED_CODES = 100;
 
-    #[Groups(['scanner_device:read'])]
     #[ORM\Id]
     #[ORM\Column(name: 'scanner_device_id', type: 'scanner_device_id', unique: true)]
     private ScannerDeviceId $scannerDeviceId;
 
-    #[Groups(['scanner_device:read', 'scanner_device:write'])]
     #[ORM\Column(name: 'device_identifier', length: 512)]
-    #[Assert\NotBlank]
-    #[Assert\Length(max: 512)]
     private string $deviceIdentifier = '';
 
-    #[Groups(['scanner_device:read', 'scanner_device:write'])]
     #[ORM\Column(length: 255)]
-    #[Assert\NotBlank]
-    #[Assert\Length(max: 255)]
     private string $name = '';
 
     /**
      * @var list<string>|null
      */
-    #[Groups(['scanner_device:read'])]
     #[ORM\Column(type: 'json', nullable: true)]
     private ?array $lastScannedCodes = null;
 
-    #[Groups(['scanner_device:read', 'scanner_device:write'])]
     #[ORM\Column(name: 'automation_add_inventory_on_ean_scan', options: ['default' => false])]
     private bool $addInvOnEan = false;
 
-    #[Groups(['scanner_device:read', 'scanner_device:write'])]
     #[ORM\Column(name: 'automation_create_catalog_item_if_missing_for_ean', options: ['default' => false])]
     private bool $createItemIfEan = false;
 
-    #[Groups(['scanner_device:read', 'scanner_device:write'])]
     #[ORM\Column(name: 'automation_remove_inventory_on_public_code_scan', options: ['default' => false])]
     private bool $remInvOnPublic = false;
 

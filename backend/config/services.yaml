@@ -42,7 +42,7 @@ services:
     App\Domain\Scanner\Input\ScanLineKeyAccumulatorFactory:
         alias: App\Infrastructure\Scanner\EvdevScanLineKeyAccumulatorFactory
 
-    App\Application\Inventory\Port\InventoryLabelImageGenerator:
+    App\Domain\Inventory\Facade\InventoryLabelImageGenerator:
         alias: App\Infrastructure\Inventory\PythonInventoryLabelImageGenerator
 
     App\Infrastructure\Picnic\PicnicAnonymousAuthenticationAdapter:
@@ -57,7 +57,7 @@ services:
         arguments:
             $providers:
                 barcodile: '@App\Infrastructure\Cart\Integration\InternalCartProvider'
-                picnic: '@App\Domain\Picnic\Cart\PicnicCartProvider'
+                picnic: '@App\Domain\Picnic\Adapter\Cart\PicnicCartProvider'
 
     App\Infrastructure\Picnic\PicnicApiConfigFactory:
         arguments:

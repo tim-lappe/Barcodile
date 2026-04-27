@@ -6,14 +6,12 @@ namespace App\Application\Picnic;
 
 use App\Application\Picnic\Dto\PicnicCatalogProductSummaryResponse;
 use App\Application\Picnic\Dto\PicnicCatalogSearchHitResponse;
-use App\Domain\Picnic\Port\PicnicCatalogProductLookupPort;
-use App\Domain\Picnic\Port\PicnicCatalogSearchPort;
+use App\Domain\Picnic\Facade\PicnicFacade;
 
 final readonly class PicnicCatalogOperations
 {
     public function __construct(
-        private PicnicCatalogProductLookupPort $catalogLookup,
-        private PicnicCatalogSearchPort $catalogSearch,
+        private PicnicFacade $picnic,
     ) {
     }
 
@@ -22,9 +20,8 @@ final readonly class PicnicCatalogOperations
      */
     public function search(string $query): array
     {
-        $units = $this->catalogSearch->search($query);
         $hits = [];
-        foreach ($units as $unit) {
+        foreach ($this->picnic->searchCatalog($query) as $unit) {
             $hits[] = new PicnicCatalogSearchHitResponse(
                 $unit->productId,
                 $unit->name,
@@ -39,13 +36,13 @@ final readonly class PicnicCatalogOperations
 
     public function productSummary(string $productId): PicnicCatalogProductSummaryResponse
     {
-        $summary = $this->catalogLookup->lookupByProductId($productId);
+        $summary = $this->picnic->productSummary($productId);
 
         return new PicnicCatalogProductSummaryResponse(
             $summary->productId,
             $summary->name,
-            $summary->brand,
-            $summary->unitQuantity,
+            $summary->brand ?? '',
+            $summary->unitQuantity ?? '',
         );
     }
 }

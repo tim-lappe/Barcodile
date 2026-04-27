@@ -60,7 +60,7 @@ final class InventoryItemRepository extends ServiceEntityRepository
     {
         $queryBuilder = $this->createQueryBuilder('i')
             ->select('COUNT(i.inventoryItemId)')
-            ->andWhere('i.catalogItem = :cid')
+            ->andWhere('i.catalogItemId = :cid')
             ->setParameter('cid', $catalogItemId, CatalogItemId::DOCTRINE_TYPE_NAME);
         $raw = $queryBuilder->getQuery()->getSingleScalarResult();
 

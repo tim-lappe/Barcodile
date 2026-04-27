@@ -6,8 +6,6 @@ namespace App\Application\Inventory\Controller;
 
 use App\Application\Inventory\CartStockRuleApplicationService;
 use App\Application\Inventory\Dto\PatchCartStockAutomationRuleRequest;
-use App\Domain\Shared\Id\CartStockAutomationRuleId;
-use App\Domain\Shared\Id\CatalogItemId;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpKernel\Attribute\MapRequestPayload;
@@ -24,8 +22,8 @@ final class PatchCartStockAutomationRuleController extends AbstractController
     public function __invoke(string $catalogItemId, string $ruleId, #[MapRequestPayload] PatchCartStockAutomationRuleRequest $request): Response
     {
         $this->cartStockRulesApp->patchRule(
-            CatalogItemId::fromString($catalogItemId),
-            CartStockAutomationRuleId::fromString($ruleId),
+            $catalogItemId,
+            $ruleId,
             $request,
         );
 

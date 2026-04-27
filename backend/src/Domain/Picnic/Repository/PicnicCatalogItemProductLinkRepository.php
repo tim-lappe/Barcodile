@@ -22,7 +22,7 @@ final class PicnicCatalogItemProductLinkRepository extends ServiceEntityReposito
     public function findOneByCatalogItemId(CatalogItemId $catalogItemId): ?PicnicCatalogItemProductLink
     {
         $result = $this->createQueryBuilder('l')
-            ->andWhere('l.catalogItem = :id')
+            ->andWhere('l.catalogItemId = :id')
             ->setParameter('id', $catalogItemId, CatalogItemId::DOCTRINE_TYPE_NAME)
             ->getQuery()
             ->getOneOrNullResult();
@@ -42,13 +42,13 @@ final class PicnicCatalogItemProductLinkRepository extends ServiceEntityReposito
         }
         /** @var list<PicnicCatalogItemProductLink> $rows */
         $rows = $this->createQueryBuilder('l')
-            ->where('l.catalogItem IN (:ids)')
+            ->where('l.catalogItemId IN (:ids)')
             ->setParameter('ids', $catalogItemIds)
             ->getQuery()
             ->getResult();
         $out = [];
         foreach ($rows as $row) {
-            $out[(string) $row->getCatalogItem()->getId()] = $row->getProductId();
+            $out[(string) $row->getCatalogItemId()] = $row->getProductId();
         }
 
         return $out;

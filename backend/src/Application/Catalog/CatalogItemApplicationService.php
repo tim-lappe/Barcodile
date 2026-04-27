@@ -4,56 +4,43 @@ declare(strict_types=1);
 
 namespace App\Application\Catalog;
 
-use App\Application\Catalog\CreateCatalogItem\CreateCatalogItemStrategyRegistry;
-use App\Application\Catalog\Dto\CatalogBarcodeInput;
+use App\Application\Catalog\Dto\BarcodeResponse;
+use App\Application\Catalog\Dto\CatalogItemAttributeResponse;
+use App\Application\Catalog\Dto\CatalogItemAttributeRowInput;
 use App\Application\Catalog\Dto\CatalogItemImageGetResult;
 use App\Application\Catalog\Dto\CatalogItemResponse;
-use App\Application\Catalog\Dto\CatalogVolumeInput;
-use App\Application\Catalog\Dto\CatalogWeightInput;
 use App\Application\Catalog\Dto\PatchCatalogItemRequest;
 use App\Application\Catalog\Dto\PicnicCatalogProductHintResponse;
 use App\Application\Catalog\Dto\PostCatalogItemRequest;
-use App\Domain\Catalog\CatalogImageContentType;
-use App\Domain\Catalog\Entity\CatalogItem;
-use App\Domain\Catalog\Entity\CatalogItemImage;
-use App\Domain\Catalog\Repository\CatalogItemRepository;
-use App\Domain\Picnic\Port\PicnicCatalogProductLookupPort;
-use App\Domain\Picnic\Repository\PicnicCatalogItemProductLinkRepository;
-use App\Domain\Shared\Barcode as BarcodeValue;
-use App\Domain\Shared\Id\CatalogItemId;
-use App\Domain\Shared\Volume;
-use App\Domain\Shared\VolumeUnit;
-use App\Domain\Shared\Weight;
-use App\Domain\Shared\WeightUnit;
+use App\Application\Catalog\Dto\VolumeResponse;
+use App\Application\Catalog\Dto\WeightResponse;
+use App\Domain\Catalog\Facade\CatalogFacade;
+use App\Domain\Catalog\Facade\CatalogItemAttributeView;
+use App\Domain\Catalog\Facade\CatalogItemView;
+use App\Domain\Picnic\Facade\PicnicFacade;
 use InvalidArgumentException;
 use Symfony\Component\HttpFoundation\File\UploadedFile;
-use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 
 /**
- * @SuppressWarnings("PHPMD.ExcessiveClassComplexity")
+ * @SuppressWarnings("PHPMD.CyclomaticComplexity")
  */
 final readonly class CatalogItemApplicationService
 {
     public function __construct(
-        private CatalogItemRepository $catalogItemRepo,
-        private PicnicCatalogItemProductLinkRepository $picnicLinkRepo,
-        private CreateCatalogItemStrategyRegistry $itemStrategyReg,
-        private PicnicCatalogProductLookupPort $picnicProductLookup,
-        private CatalogItemReadMapper $readMapper,
-        private CatalogItemAttributeRowsApplier $attributeRowsApplier,
-        private CatalogItemPicnicLinkPatcher $picnicLinkPatcher,
+        private CatalogFacade $catalog,
+        private PicnicFacade $picnic,
     ) {
     }
 
     public function picnicProductHint(string $productId): PicnicCatalogProductHintResponse
     {
-        $hint = $this->picnicProductLookup->lookupByProductId($productId);
+        $hint = $this->picnic->productSummary($productId);
 
         return new PicnicCatalogProductHintResponse(
             $hint->productId,
             $hint->name,
-            $hint->brand,
-            $hint->unitQuantity,
+            $hint->brand ?? '',
+            $hint->unitQuantity ?? '',
         );
     }
 
@@ -62,228 +49,137 @@ final readonly class CatalogItemApplicationService
      */
     public function listCatalogItems(int $page, int $itemsPerPage, string $orderNameDir, ?string $nameContains): array
     {
-        $page = max(1, $page);
-        $itemsPerPage = max(1, min(500, $itemsPerPage));
-        $offset = ($page - 1) * $itemsPerPage;
-        $rows = $this->catalogItemRepo->findPagedByNameOrder($offset, $itemsPerPage, $orderNameDir, $nameContains);
-        $ids = array_map(static fn (CatalogItem $catalogItem) => $catalogItem->getId(), $rows);
-        $picnic = [] === $ids ? [] : $this->picnicLinkRepo->mapProductIdByCatalogItemId($ids);
-        $out = [];
-        foreach ($rows as $row) {
-            $pid = $picnic[(string) $row->getId()] ?? null;
-            $out[] = $this->readMapper->map($row, $pid);
-        }
-
-        return $out;
+        return array_map(
+            fn (CatalogItemView $item): CatalogItemResponse => $this->map($item),
+            $this->catalog->listCatalogItems($page, $itemsPerPage, $orderNameDir, $nameContains),
+        );
     }
 
-    public function getCatalogItem(CatalogItemId $catalogItemId): CatalogItemResponse
+    public function getCatalogItem(string $catalogItemId): CatalogItemResponse
     {
-        $item = $this->catalogItemRepo->find($catalogItemId);
-        if (!$item instanceof CatalogItem) {
-            throw new NotFoundHttpException('Catalog item not found.');
-        }
-        $link = $this->picnicLinkRepo->findOneByCatalogItemId($catalogItemId);
-
-        return $this->readMapper->map($item, $link?->getProductId());
+        return $this->map($this->catalog->getCatalogItem($catalogItemId));
     }
 
     public function createCatalogItem(PostCatalogItemRequest $request): CatalogItemResponse
     {
-        return $this->itemStrategyReg->get($request->creationSource)->create($request);
+        return $this->map($this->catalog->createCatalogItem(
+            $request->name,
+            $request->volume?->amount,
+            $request->volume?->unit,
+            $request->weight?->amount,
+            $request->weight?->unit,
+            $request->barcode?->code,
+            $request->barcode?->type,
+            $this->attributeRows($request->itemAttributes),
+            $request->picnicProductLink,
+            $request->creationSource->value,
+        ));
     }
 
-    public function updateCatalogItem(CatalogItemId $catalogItemId, PatchCatalogItemRequest $request): void
+    public function updateCatalogItem(string $catalogItemId, PatchCatalogItemRequest $request): void
     {
-        $item = $this->mustFind($catalogItemId);
-        $this->applyNameFromPatch($item, $request);
-        $this->applyVolumeWeightFromPatch($item, $request);
-        $this->applyBarcodeFromPatchInput($item, $request);
-        $this->applyAttributesFromPatchInput($item, $request);
-        $this->picnicLinkPatcher->applyFromPatch($item, $request);
-        $this->catalogItemRepo->save($item);
+        $this->catalog->updateCatalogItem(
+            $catalogItemId,
+            $request->nameSpecified,
+            $request->name,
+            $request->volumeSpecified,
+            $request->volume?->amount,
+            $request->volume?->unit,
+            $request->weightSpecified,
+            $request->weight?->amount,
+            $request->weight?->unit,
+            $request->barcodeSpecified,
+            $request->barcode?->code,
+            $request->barcode?->type,
+            $request->relations->attrsSpecified,
+            $this->attributeRows($request->relations->attrs),
+            $request->relations->picnicLinkSpecified,
+            $request->relations->picnicProductId,
+        );
     }
 
-    public function deleteCatalogItem(CatalogItemId $catalogItemId): void
+    public function deleteCatalogItem(string $catalogItemId): void
     {
-        $item = $this->mustFind($catalogItemId);
-        $this->catalogItemRepo->remove($item);
+        $this->catalog->deleteCatalogItem($catalogItemId);
     }
 
-    public function uploadCatalogItemImage(CatalogItemId $catalogItemId, UploadedFile $file): CatalogItemResponse
+    public function uploadCatalogItemImage(string $catalogItemId, UploadedFile $file): CatalogItemResponse
     {
-        $item = $this->mustFind($catalogItemId);
         $binary = file_get_contents($file->getPathname());
         if (false === $binary) {
             throw new InvalidArgumentException('Uploaded file could not be read.');
         }
-        $safe = $this->sanitizeCatalogImageFileName($file->getClientOriginalName());
-        $mime = $file->getMimeType();
-        $contentType = CatalogImageContentType::tryFromMimeType((string) $mime) ?? CatalogImageContentType::Jpeg;
-        $item->assignImage($safe, $binary, $contentType);
-        $this->catalogItemRepo->save($item);
-        $link = $this->picnicLinkRepo->findOneByCatalogItemId($catalogItemId);
 
-        return $this->readMapper->map($item, $link?->getProductId());
+        return $this->map($this->catalog->uploadCatalogItemImage(
+            $catalogItemId,
+            $file->getClientOriginalName(),
+            (string) $file->getMimeType(),
+            $binary,
+        ));
     }
 
-    public function deleteCatalogItemImage(CatalogItemId $catalogItemId): CatalogItemResponse
+    public function deleteCatalogItemImage(string $catalogItemId): CatalogItemResponse
     {
-        $item = $this->mustFind($catalogItemId);
-        if (null !== $item->getImageFileName() && '' !== $item->getImageFileName()) {
-            $item->clearImage();
-            $this->catalogItemRepo->save($item);
-        }
-        $link = $this->picnicLinkRepo->findOneByCatalogItemId($catalogItemId);
-
-        return $this->readMapper->map($item, $link?->getProductId());
+        return $this->map($this->catalog->deleteCatalogItemImage($catalogItemId));
     }
 
-    public function getCatalogItemImage(CatalogItemId $catalogItemId): CatalogItemImageGetResult
+    public function getCatalogItemImage(string $catalogItemId): CatalogItemImageGetResult
     {
-        $item = $this->catalogItemRepo->findWithCatalogItemImage($catalogItemId);
-        if (!$item instanceof CatalogItem) {
-            throw new NotFoundHttpException('Catalog item not found.');
-        }
+        $image = $this->catalog->getCatalogItemImage($catalogItemId);
 
-        return $this->catalogItemImageGetResultFromLoadedItem($item);
-    }
-
-    private function mustFind(CatalogItemId $catalogItemId): CatalogItem
-    {
-        $item = $this->catalogItemRepo->find($catalogItemId);
-        if (!$item instanceof CatalogItem) {
-            throw new NotFoundHttpException('Catalog item not found.');
-        }
-
-        return $item;
-    }
-
-    private function catalogItemImageGetResultFromLoadedItem(CatalogItem $item): CatalogItemImageGetResult
-    {
-        return $this->catalogItemImageToGetResult($this->requireStoredCatalogItemImage($item));
-    }
-
-    private function requireStoredCatalogItemImage(CatalogItem $item): CatalogItemImage
-    {
-        $fileName = $item->getImageFileName();
-        if (null === $fileName || '' === $fileName) {
-            throw new NotFoundHttpException('Catalog item has no image.');
-        }
-        $image = $item->getCatalogItemImage();
-        if (null === $image) {
-            throw new NotFoundHttpException('Image not found in storage.');
-        }
-
-        return $image;
-    }
-
-    private function catalogItemImageToGetResult(CatalogItemImage $image): CatalogItemImageGetResult
-    {
-        $body = $image->getBody();
-        $mime = $image->getContentType();
-
-        return new CatalogItemImageGetResult(
-            $body,
-            ('' === $mime) ? 'application/octet-stream' : $mime,
-            md5($body),
-        );
-    }
-
-    private function sanitizeCatalogImageFileName(string $fileName): string
-    {
-        $trimmed = trim($fileName);
-        $base = basename(str_replace('\\', '/', $trimmed));
-
-        return '' === $base ? 'image' : $base;
-    }
-
-    private function applyNameFromPatch(CatalogItem $item, PatchCatalogItemRequest $request): void
-    {
-        if ($request->nameSpecified && null !== $request->name) {
-            $item->changeName($request->name);
-        }
-    }
-
-    private function applyVolumeWeightFromPatch(CatalogItem $item, PatchCatalogItemRequest $request): void
-    {
-        $this->applyVolumeIfSpecified($item, $request);
-        $this->applyWeightIfSpecified($item, $request);
-    }
-
-    private function applyVolumeIfSpecified(CatalogItem $item, PatchCatalogItemRequest $request): void
-    {
-        if (!$request->volumeSpecified) {
-            return;
-        }
-        $item->changeVolume($this->volumeInputToDomain($request->volume));
-    }
-
-    private function applyWeightIfSpecified(CatalogItem $item, PatchCatalogItemRequest $request): void
-    {
-        if (!$request->weightSpecified) {
-            return;
-        }
-        $item->changeWeight($this->weightInputToDomain($request->weight));
-    }
-
-    private function volumeInputToDomain(?CatalogVolumeInput $input): ?Volume
-    {
-        if (null === $input) {
-            return null;
-        }
-
-        return new Volume($input->amount, VolumeUnit::from($input->unit));
-    }
-
-    private function weightInputToDomain(?CatalogWeightInput $input): ?Weight
-    {
-        if (null === $input) {
-            return null;
-        }
-
-        return new Weight($input->amount, WeightUnit::from($input->unit));
-    }
-
-    private function applyBarcodeFromInput(CatalogItem $item, ?CatalogBarcodeInput $barcode): void
-    {
-        if (null === $barcode) {
-            $item->changeBarcode(null);
-
-            return;
-        }
-        $code = trim($barcode->code);
-        if ('' === $code) {
-            $item->changeBarcode(null);
-
-            return;
-        }
-        $item->changeBarcode(new BarcodeValue($code, $barcode->type));
-    }
-
-    private function applyBarcodeFromPatchInput(CatalogItem $item, PatchCatalogItemRequest $request): void
-    {
-        if (!$request->barcodeSpecified) {
-            return;
-        }
-        $this->applyBarcodeFromInput($item, $request->barcode);
-    }
-
-    private function applyAttributesFromPatchInput(CatalogItem $item, PatchCatalogItemRequest $request): void
-    {
-        if (!$request->relations->attrsSpecified) {
-            return;
-        }
-        $this->attributeRowsApplier->apply($item, $request->relations->attrs);
-    }
-
-    public function toCatalogItemResponse(CatalogItem $item, ?string $picnicProductId): CatalogItemResponse
-    {
-        return $this->readMapper->map($item, $picnicProductId);
+        return new CatalogItemImageGetResult($image->body, $image->contentType, $image->eTag);
     }
 
     public function minimalCatalogItemResponse(string $catalogItemId, string $name, ?string $picnicProductId): CatalogItemResponse
     {
         return new CatalogItemResponse($catalogItemId, $name, null, null, null, null, [], $picnicProductId);
+    }
+
+    public function catalogItemResponse(CatalogItemView $item): CatalogItemResponse
+    {
+        return $this->map($item);
+    }
+
+    /**
+     * @param list<CatalogItemAttributeRowInput>|null $rows
+     *
+     * @return list<array{rowId: string|null, attribute: string, value: mixed}>|null
+     */
+    private function attributeRows(?array $rows): ?array
+    {
+        if (null === $rows) {
+            return null;
+        }
+        $out = [];
+        foreach ($rows as $row) {
+            $out[] = [
+                'rowId' => $row->rowId,
+                'attribute' => $row->attribute,
+                'value' => $row->value,
+            ];
+        }
+
+        return $out;
+    }
+
+    private function map(CatalogItemView $item): CatalogItemResponse
+    {
+        return new CatalogItemResponse(
+            $item->resourceId,
+            $item->name,
+            $item->imageFileName,
+            null === $item->volumeAmount || null === $item->volumeUnit ? null : new VolumeResponse($item->volumeAmount, $item->volumeUnit),
+            null === $item->weightAmount || null === $item->weightUnit ? null : new WeightResponse($item->weightAmount, $item->weightUnit),
+            null === $item->barcodeCode || null === $item->barcodeType ? null : new BarcodeResponse($item->barcodeCode, $item->barcodeType),
+            array_map(
+                static fn (CatalogItemAttributeView $attribute): CatalogItemAttributeResponse => new CatalogItemAttributeResponse(
+                    $attribute->resourceId,
+                    $attribute->attribute,
+                    $attribute->value,
+                ),
+                $item->attributes,
+            ),
+            $item->picnicProductId,
+        );
     }
 }

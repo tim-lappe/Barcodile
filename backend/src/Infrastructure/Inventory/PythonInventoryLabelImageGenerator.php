@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace App\Infrastructure\Inventory;
 
-use App\Application\Inventory\Port\InventoryLabelImageGenerator;
+use App\Domain\Inventory\Facade\InventoryLabelImageGenerator;
 use RuntimeException;
 use Symfony\Component\Process\Process;
 

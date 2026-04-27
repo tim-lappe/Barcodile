@@ -7,8 +7,6 @@ namespace App\Application\Inventory\Controller;
 use App\Application\Inventory\Dto\PrintInventoryItemLabelRequest;
 use App\Application\Inventory\Dto\PrintInventoryItemLabelResponse;
 use App\Application\Inventory\InventoryItemApplicationService;
-use App\Domain\Shared\Id\InventoryItemId;
-use App\Domain\Shared\Id\PrinterDeviceId;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpKernel\Attribute\MapRequestPayload;
@@ -27,8 +25,8 @@ final class PostInventoryItemPrintLabelController extends AbstractController
         #[MapRequestPayload] PrintInventoryItemLabelRequest $request,
     ): JsonResponse {
         $this->inventoryApp->printInventoryItemLabel(
-            InventoryItemId::fromString($inventoryItemId),
-            PrinterDeviceId::fromString($request->printerDeviceId),
+            $inventoryItemId,
+            $request->printerDeviceId,
         );
 
         return $this->json(new PrintInventoryItemLabelResponse('queued'));

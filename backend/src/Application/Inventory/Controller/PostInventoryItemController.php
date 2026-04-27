@@ -7,8 +7,6 @@ namespace App\Application\Inventory\Controller;
 use App\Application\Inventory\Dto\PostInventoryItemRequest;
 use App\Application\Inventory\InventoryItemApplicationService;
 use App\Application\Shared\ApiIri;
-use App\Domain\Shared\Id\CatalogItemId;
-use App\Domain\Shared\Id\LocationId;
 use DateTimeImmutable;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Response;
@@ -25,10 +23,10 @@ final class PostInventoryItemController extends AbstractController
     #[Route(path: '/api/inventory_items', methods: ['POST'])]
     public function __invoke(#[MapRequestPayload] PostInventoryItemRequest $request): Response
     {
-        $catalogId = CatalogItemId::fromString(ApiIri::tailAfterPrefix(ApiIri::PREFIX_CATALOG_ITEM, $request->catalogItem));
+        $catalogId = ApiIri::tailAfterPrefix(ApiIri::PREFIX_CATALOG_ITEM, $request->catalogItem);
         $locationId = null;
         if (null !== $request->location) {
-            $locationId = LocationId::fromString(ApiIri::tailAfterPrefix(ApiIri::PREFIX_LOCATION, $request->location));
+            $locationId = ApiIri::tailAfterPrefix(ApiIri::PREFIX_LOCATION, $request->location);
         }
         $expiration = null;
         if (null !== $request->expirationDate) {

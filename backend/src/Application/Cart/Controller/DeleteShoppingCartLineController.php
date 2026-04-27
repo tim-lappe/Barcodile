@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace App\Application\Cart\Controller;
 
 use App\Application\Cart\ShoppingCartApplicationService;
-use App\Domain\Shared\Id\ShoppingCartLineId;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
@@ -20,7 +19,7 @@ final class DeleteShoppingCartLineController extends AbstractController
     #[Route(path: '/api/shopping_cart_lines/{lineId}', methods: ['DELETE'])]
     public function __invoke(string $lineId): Response
     {
-        $this->cartAppSvc->deleteShoppingCartLine(ShoppingCartLineId::fromString($lineId));
+        $this->cartAppSvc->deleteShoppingCartLine($lineId);
 
         return new Response('', Response::HTTP_NO_CONTENT);
     }

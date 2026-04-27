@@ -7,7 +7,6 @@ namespace App\Domain\Printer\Entity;
 use App\Domain\Printer\Repository\PrinterDeviceRepository;
 use App\Domain\Shared\Id\PrinterDeviceId;
 use Doctrine\ORM\Mapping as ORM;
-use Symfony\Component\Validator\Constraints as Assert;
 
 #[ORM\Entity(repositoryClass: PrinterDeviceRepository::class)]
 #[ORM\Table(name: 'printer_device')]
@@ -18,8 +17,6 @@ class PrinterDevice
     private PrinterDeviceId $printerDeviceId;
 
     #[ORM\Column(name: 'driver_code', length: 64)]
-    #[Assert\NotBlank]
-    #[Assert\Length(max: 64)]
     private string $driverCode = '';
 
     /**
@@ -35,8 +32,6 @@ class PrinterDevice
     private array $printSettings = [];
 
     #[ORM\Column(length: 255)]
-    #[Assert\NotBlank]
-    #[Assert\Length(max: 255)]
     private string $name = '';
 
     public function __construct()

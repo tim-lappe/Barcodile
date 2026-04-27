@@ -28,7 +28,7 @@ final class CartStockAutomationRuleRepository extends ServiceEntityRepository
     {
         /** @var list<CartStockAutomationRule> */
         return $this->createQueryBuilder('r')
-            ->andWhere('r.catalogItem = :cid')
+            ->andWhere('r.catalogItemId = :cid')
             ->andWhere('r.enabled = true')
             ->setParameter('cid', $catalogItemId, CatalogItemId::DOCTRINE_TYPE_NAME)
             ->orderBy('r.createdAt', 'ASC')
@@ -43,7 +43,7 @@ final class CartStockAutomationRuleRepository extends ServiceEntityRepository
     {
         /** @var list<CartStockAutomationRule> */
         return $this->createQueryBuilder('r')
-            ->andWhere('r.catalogItem = :cid')
+            ->andWhere('r.catalogItemId = :cid')
             ->setParameter('cid', $catalogItemId, CatalogItemId::DOCTRINE_TYPE_NAME)
             ->orderBy('r.createdAt', 'ASC')
             ->getQuery()
@@ -53,8 +53,8 @@ final class CartStockAutomationRuleRepository extends ServiceEntityRepository
     public function findOneByIdAndCatalogItemId(CartStockAutomationRuleId $ruleId, CatalogItemId $catalogItemId): ?CartStockAutomationRule
     {
         $result = $this->createQueryBuilder('r')
-            ->andWhere('r.id = :rid')
-            ->andWhere('r.catalogItem = :cid')
+            ->andWhere('r.ruleId = :rid')
+            ->andWhere('r.catalogItemId = :cid')
             ->setParameter('rid', $ruleId, CartStockAutomationRuleId::DOCTRINE_TYPE_NAME)
             ->setParameter('cid', $catalogItemId, CatalogItemId::DOCTRINE_TYPE_NAME)
             ->getQuery()
@@ -66,8 +66,8 @@ final class CartStockAutomationRuleRepository extends ServiceEntityRepository
     public function findOneByCatalogItemAndShoppingCart(CatalogItemId $catalogItemId, ShoppingCartId $shoppingCartId): ?CartStockAutomationRule
     {
         $result = $this->createQueryBuilder('r')
-            ->andWhere('r.catalogItem = :cid')
-            ->andWhere('r.shoppingCart = :sid')
+            ->andWhere('r.catalogItemId = :cid')
+            ->andWhere('r.shoppingCartId = :sid')
             ->setParameter('cid', $catalogItemId, CatalogItemId::DOCTRINE_TYPE_NAME)
             ->setParameter('sid', $shoppingCartId, ShoppingCartId::DOCTRINE_TYPE_NAME)
             ->setMaxResults(1)

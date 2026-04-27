@@ -7,8 +7,6 @@ namespace App\Domain\Catalog\Entity;
 use App\Domain\Shared\CatalogItemAttributeKey;
 use App\Domain\Shared\Id\CatalogItemAttributeId;
 use Doctrine\ORM\Mapping as ORM;
-use Symfony\Component\Serializer\Attribute\Groups;
-use Symfony\Component\Validator\Constraints as Assert;
 
 #[ORM\Entity]
 #[ORM\Table(
@@ -19,23 +17,17 @@ use Symfony\Component\Validator\Constraints as Assert;
 )]
 class CatalogItemAttribute
 {
-    #[Groups(['catalog_item_attribute:read', 'catalog_item:read', 'inventory_item:read'])]
     #[ORM\Id]
     #[ORM\Column(type: 'catalog_item_attribute_id', unique: true)]
     private CatalogItemAttributeId $attributeId;
 
-    #[Groups(['catalog_item_attribute:read', 'catalog_item_attribute:write'])]
     #[ORM\ManyToOne(inversedBy: 'itemAttributes')]
     #[ORM\JoinColumn(name: 'item_type_id', referencedColumnName: 'catalog_item_id', nullable: false, onDelete: 'CASCADE')]
-    #[Assert\NotNull]
     private ?CatalogItem $catalogItem = null;
 
-    #[Groups(['catalog_item_attribute:read', 'catalog_item_attribute:write', 'catalog_item:read', 'inventory_item:read'])]
     #[ORM\Column(name: 'item_attribute', length: 32, enumType: CatalogItemAttributeKey::class)]
-    #[Assert\NotNull]
     private ?CatalogItemAttributeKey $attribute = null;
 
-    #[Groups(['catalog_item_attribute:read', 'catalog_item_attribute:write', 'catalog_item:read', 'inventory_item:read'])]
     #[ORM\Column(type: 'json', nullable: true)]
     private mixed $value = null;
 

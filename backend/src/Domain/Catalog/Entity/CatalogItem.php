@@ -16,27 +16,19 @@ use App\Domain\Shared\Weight;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
-use Symfony\Component\Serializer\Attribute\Groups;
-use Symfony\Component\Validator\Constraints as Assert;
 
 #[ORM\Entity(repositoryClass: CatalogItemRepository::class)]
 #[ORM\Table(name: 'item_type')]
 class CatalogItem
 {
-    #[Groups(['catalog_item:read', 'inventory_item:read', 'shopping_cart_line:read'])]
     #[ORM\Id]
     #[ORM\Column(type: 'catalog_item_id', unique: true)]
     private CatalogItemId $catalogItemId;
 
-    #[Groups(['catalog_item:read', 'catalog_item:write', 'inventory_item:read', 'shopping_cart_line:read'])]
     #[ORM\Column(length: 255)]
-    #[Assert\NotBlank]
-    #[Assert\Length(max: 255)]
     private string $name = '';
 
-    #[Groups(['catalog_item:read', 'inventory_item:read', 'shopping_cart_line:read'])]
     #[ORM\Column(length: 255, nullable: true)]
-    #[Assert\Length(max: 255)]
     private ?string $imageFileName = null;
 
     #[ORM\OneToOne(targetEntity: CatalogItemImage::class, mappedBy: 'catalogItem', cascade: ['persist', 'remove'], orphanRemoval: true)]
@@ -54,8 +46,6 @@ class CatalogItem
     /**
      * @var Collection<int, CatalogItemAttribute>
      */
-    #[Assert\Valid]
-    #[Groups(['catalog_item:read', 'inventory_item:read'])]
     #[ORM\OneToMany(targetEntity: CatalogItemAttribute::class, mappedBy: 'catalogItem', cascade: ['persist', 'remove'], orphanRemoval: true)]
     private Collection $itemAttributes;
 
@@ -112,7 +102,6 @@ class CatalogItem
         return $this->catalogItemImage;
     }
 
-    #[Groups(['catalog_item:read', 'catalog_item:write', 'inventory_item:read'])]
     public function getVolume(): ?Volume
     {
         return $this->volumeEmbeddable->toValue();
@@ -125,7 +114,6 @@ class CatalogItem
         return $this;
     }
 
-    #[Groups(['catalog_item:read', 'catalog_item:write', 'inventory_item:read'])]
     public function getWeight(): ?Weight
     {
         return $this->weightEmbeddable->toValue();
@@ -138,7 +126,6 @@ class CatalogItem
         return $this;
     }
 
-    #[Groups(['catalog_item:read', 'inventory_item:read', 'shopping_cart_line:read'])]
     public function getBarcode(): ?BarcodeValue
     {
         return $this->barcode?->toValue();

@@ -6,7 +6,6 @@ namespace App\Application\Printer\Controller;
 
 use App\Application\Printer\Dto\TestPrintResponse;
 use App\Application\Printer\PrinterDeviceApplicationService;
-use App\Domain\Shared\Id\PrinterDeviceId;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\Routing\Attribute\Route;
@@ -24,7 +23,7 @@ final class PostPrinterDeviceTestPrintController extends AbstractController
     )]
     public function __invoke(string $printerDeviceId): JsonResponse
     {
-        $this->printerDeviceApp->printTestLabel(PrinterDeviceId::fromString($printerDeviceId));
+        $this->printerDeviceApp->printTestLabel($printerDeviceId);
 
         return $this->json(new TestPrintResponse('queued'));
     }

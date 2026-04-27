@@ -5,8 +5,6 @@ declare(strict_types=1);
 namespace App\Application\Inventory\Controller;
 
 use App\Application\Inventory\CartStockRuleApplicationService;
-use App\Domain\Shared\Id\CartStockAutomationRuleId;
-use App\Domain\Shared\Id\CatalogItemId;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
@@ -22,8 +20,8 @@ final class DeleteCartStockAutomationRuleController extends AbstractController
     public function __invoke(string $catalogItemId, string $ruleId): Response
     {
         $this->cartStockRulesApp->deleteRule(
-            CatalogItemId::fromString($catalogItemId),
-            CartStockAutomationRuleId::fromString($ruleId),
+            $catalogItemId,
+            $ruleId,
         );
 
         return new Response('', Response::HTTP_NO_CONTENT);

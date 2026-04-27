@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace App\Application\Inventory\Controller;
 
 use App\Application\Inventory\InventoryItemApplicationService;
-use App\Domain\Shared\Id\InventoryItemId;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
@@ -20,7 +19,7 @@ final class DeleteInventoryItemController extends AbstractController
     #[Route(path: '/api/inventory_items/{inventoryItemId}', methods: ['DELETE'])]
     public function __invoke(string $inventoryItemId): Response
     {
-        $this->inventoryApp->deleteInventoryItem(InventoryItemId::fromString($inventoryItemId));
+        $this->inventoryApp->deleteInventoryItem($inventoryItemId);
 
         return new Response('', Response::HTTP_NO_CONTENT);
     }

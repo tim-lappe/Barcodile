@@ -7,17 +7,14 @@ namespace App\Application\Scanner;
 use App\Application\Scanner\Dto\InputDeviceOptionResponse;
 use App\Application\Scanner\Dto\PatchScannerDeviceAutomationsRequest;
 use App\Application\Scanner\Dto\ScannerDeviceResponse;
-use App\Domain\Scanner\Entity\ScannerDevice;
-use App\Domain\Scanner\Port\InputDeviceListingPort;
-use App\Domain\Scanner\Repository\ScannerDeviceRepository;
-use App\Domain\Shared\Id\ScannerDeviceId;
-use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
+use App\Domain\Scanner\Facade\InputDeviceOptionView;
+use App\Domain\Scanner\Facade\ScannerDeviceFacade;
+use App\Domain\Scanner\Facade\ScannerDeviceView;
 
 final readonly class ScannerDeviceApplicationService
 {
     public function __construct(
-        private ScannerDeviceRepository $deviceRepository,
-        private InputDeviceListingPort $listingPort,
+        private ScannerDeviceFacade $scannerDevices,
     ) {
     }
 
@@ -26,12 +23,7 @@ final readonly class ScannerDeviceApplicationService
      */
     public function listScannerDevices(): array
     {
-        $out = [];
-        foreach ($this->deviceRepository->findAllOrderedByName() as $device) {
-            $out[] = $this->map($device);
-        }
-
-        return $out;
+        return array_map(fn (ScannerDeviceView $device): ScannerDeviceResponse => $this->map($device), $this->scannerDevices->listScannerDevices());
     }
 
     /**
@@ -39,71 +31,49 @@ final readonly class ScannerDeviceApplicationService
      */
     public function listInputDeviceOptions(): array
     {
-        $out = [];
-        foreach ($this->listingPort->listAvailableInputDevices() as $listed) {
-            $out[] = new InputDeviceOptionResponse($listed->deviceIdentifier, $listed->label);
-        }
-
-        return $out;
+        return array_map(
+            static fn (InputDeviceOptionView $listed): InputDeviceOptionResponse => new InputDeviceOptionResponse($listed->deviceIdentifier, $listed->label),
+            $this->scannerDevices->listInputDeviceOptions(),
+        );
     }
 
     public function createScannerDevice(string $deviceIdentifier, string $name): ScannerDeviceResponse
     {
-        $device = new ScannerDevice();
-        $device->changeDeviceIdentifier(trim($deviceIdentifier));
-        $device->changeName(trim($name));
-        $this->deviceRepository->save($device);
-
-        return $this->map($device);
+        return $this->map($this->scannerDevices->createScannerDevice($deviceIdentifier, $name));
     }
 
-    public function deleteScannerDevice(ScannerDeviceId $scannerDeviceId): void
+    public function deleteScannerDevice(string $scannerDeviceId): void
     {
-        $device = $this->deviceRepository->find($scannerDeviceId);
-        if (!$device instanceof ScannerDevice) {
-            throw new NotFoundHttpException('Scanner device not found.');
-        }
-        $this->deviceRepository->remove($device);
+        $this->scannerDevices->deleteScannerDevice($scannerDeviceId);
     }
 
-    public function getScannerDevice(ScannerDeviceId $scannerDeviceId): ScannerDeviceResponse
+    public function getScannerDevice(string $scannerDeviceId): ScannerDeviceResponse
     {
-        $device = $this->deviceRepository->find($scannerDeviceId);
-        if (!$device instanceof ScannerDevice) {
-            throw new NotFoundHttpException('Scanner device not found.');
-        }
-
-        return $this->map($device);
+        return $this->map($this->scannerDevices->getScannerDevice($scannerDeviceId));
     }
 
     public function patchScannerDeviceAutomations(
-        ScannerDeviceId $scannerDeviceId,
+        string $scannerDeviceId,
         PatchScannerDeviceAutomationsRequest $request,
     ): ScannerDeviceResponse {
-        $device = $this->deviceRepository->find($scannerDeviceId);
-        if (!$device instanceof ScannerDevice) {
-            throw new NotFoundHttpException('Scanner device not found.');
-        }
-        $device->changeAutomationAddInventoryOnEanScan($request->addOnEan);
-        if ($device->isAutomationAddInventoryOnEanScan()) {
-            $device->changeAutomationCreateCatalogItemIfMissingForEan($request->createIfMissingEan);
-        }
-        $device->changeAutomationRemoveInventoryOnPublicCodeScan($request->remOnPublic);
-        $this->deviceRepository->save($device);
-
-        return $this->map($device);
+        return $this->map($this->scannerDevices->patchScannerDeviceAutomations(
+            $scannerDeviceId,
+            $request->addOnEan,
+            $request->createIfMissingEan,
+            $request->remOnPublic,
+        ));
     }
 
-    private function map(ScannerDevice $device): ScannerDeviceResponse
+    private function map(ScannerDeviceView $device): ScannerDeviceResponse
     {
         return new ScannerDeviceResponse(
-            (string) $device->getId(),
-            $device->getDeviceIdentifier(),
-            $device->getName(),
-            $device->getLastScannedCodes(),
-            addOnEan: $device->isAutomationAddInventoryOnEanScan(),
-            createIfMissingEan: $device->isAutomationCreateCatalogItemIfMissingForEan(),
-            remOnPublic: $device->isAutomationRemoveInventoryOnPublicCodeScan(),
+            $device->resourceId,
+            $device->deviceIdentifier,
+            $device->name,
+            $device->lastScannedCodes,
+            addOnEan: $device->addOnEan,
+            createIfMissingEan: $device->createIfMissingEan,
+            remOnPublic: $device->remOnPublic,
         );
     }
 }

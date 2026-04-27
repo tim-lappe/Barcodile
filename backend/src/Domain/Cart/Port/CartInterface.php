@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace App\Domain\Cart\Port;
 
-use App\Domain\Catalog\Entity\CatalogItem;
+use App\Domain\Shared\Id\CatalogItemId;
 use App\Domain\Shared\Id\ShoppingCartLineId;
 use DateTimeImmutable;
 use Generator;
@@ -24,7 +24,7 @@ interface CartInterface
      */
     public function listLines(): Generator;
 
-    public function addItem(CatalogItem $catalogItem, int $quantity): void;
+    public function addItem(CatalogItemId $catalogItemId, int $quantity): void;
 
     public function removeLine(ShoppingCartLineId $lineId): void;
 

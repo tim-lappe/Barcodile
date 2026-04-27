@@ -7,7 +7,8 @@ namespace App\Infrastructure\Cart\Integration;
 use App\Domain\Cart\Entity\ShoppingCart;
 use App\Domain\Cart\Port\CartInterface;
 use App\Domain\Cart\Repository\ShoppingCartRepository;
-use App\Domain\Catalog\Entity\CatalogItem;
+use App\Domain\Catalog\Repository\CatalogItemRepository;
+use App\Domain\Shared\Id\CatalogItemId;
 use App\Domain\Shared\Id\ShoppingCartLineId;
 use DateTimeImmutable;
 use Generator;
@@ -18,6 +19,7 @@ final readonly class ManagedShoppingCart implements CartInterface
     public function __construct(
         private ShoppingCart $cart,
         private ShoppingCartRepository $cartRepo,
+        private CatalogItemRepository $catalogItemRepo,
     ) {
     }
 
@@ -50,13 +52,14 @@ final readonly class ManagedShoppingCart implements CartInterface
     public function listLines(): Generator
     {
         foreach ($this->cart->getLines() as $line) {
-            $catalogItem = $line->getCatalogItem();
-            if (null === $catalogItem) {
+            $catalogItemId = $line->getCatalogItemId();
+            if (null === $catalogItemId) {
                 continue;
             }
+            $catalogItem = $this->catalogItemRepo->find($catalogItemId);
+            $displayName = null === $catalogItem ? (string) $catalogItemId : $catalogItem->getName();
             $lineId = $line->getId();
-            $itemId = $catalogItem->getId();
-            $itemView = new BarcodileCartCatalogItemView($itemId->toUuid()->toRfc4122(), $catalogItem->getName());
+            $itemView = new BarcodileCartCatalogItemView($catalogItemId->toUuid()->toRfc4122(), $displayName);
             yield new BarcodileCartCatalogLineView(
                 $lineId,
                 $line->getQuantity(),
@@ -66,12 +69,12 @@ final readonly class ManagedShoppingCart implements CartInterface
         }
     }
 
-    public function addItem(CatalogItem $catalogItem, int $quantity): void
+    public function addItem(CatalogItemId $catalogItemId, int $quantity): void
     {
         if ($quantity < 1) {
             throw new InvalidArgumentException('Quantity must be at least 1.');
         }
-        $this->cart->mergeOrAddLineForCatalogItem($catalogItem, $quantity);
+        $this->cart->mergeOrAddLineForCatalogItem($catalogItemId, $quantity);
         $this->cartRepo->save($this->cart);
     }
 

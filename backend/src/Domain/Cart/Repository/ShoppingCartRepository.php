@@ -68,8 +68,8 @@ final class ShoppingCartRepository extends ServiceEntityRepository
             ->select('l')
             ->from(ShoppingCartLine::class, 'l')
             ->join('l.shoppingCart', 'c')
-            ->andWhere('c.id = :cid')
-            ->andWhere('l.catalogItem = :item')
+            ->andWhere('c.shoppingCartId = :cid')
+            ->andWhere('l.catalogItemId = :item')
             ->setParameter('cid', $shoppingCartId, ShoppingCartId::DOCTRINE_TYPE_NAME)
             ->setParameter('item', $catalogItemId, CatalogItemId::DOCTRINE_TYPE_NAME)
             ->setMaxResults(1)
@@ -89,7 +89,8 @@ final class ShoppingCartRepository extends ServiceEntityRepository
             ->from(ShoppingCartLine::class, 'l')
             ->orderBy('l.createdAt', 'ASC');
         if (null !== $shoppingCartId) {
-            $queryBuilder->andWhere('l.shoppingCart = :cid')
+            $queryBuilder->join('l.shoppingCart', 'c')
+                ->andWhere('c.shoppingCartId = :cid')
                 ->setParameter('cid', $shoppingCartId, ShoppingCartId::DOCTRINE_TYPE_NAME);
         }
 

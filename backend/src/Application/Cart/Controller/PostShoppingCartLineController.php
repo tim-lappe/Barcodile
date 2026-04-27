@@ -7,7 +7,6 @@ namespace App\Application\Cart\Controller;
 use App\Application\Cart\Dto\PostShoppingCartLineRequest;
 use App\Application\Cart\ShoppingCartApplicationService;
 use App\Application\Shared\ApiIri;
-use App\Domain\Shared\Id\CatalogItemId;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpKernel\Attribute\MapRequestPayload;
@@ -24,7 +23,7 @@ final class PostShoppingCartLineController extends AbstractController
     public function __invoke(#[MapRequestPayload] PostShoppingCartLineRequest $request): JsonResponse
     {
         $cartRef = ApiIri::tailAfterPrefix(ApiIri::PREFIX_SHOPPING_CART, $request->shoppingCart);
-        $catalogItemId = CatalogItemId::fromString(ApiIri::tailAfterPrefix(ApiIri::PREFIX_CATALOG_ITEM, $request->catalogItem));
+        $catalogItemId = ApiIri::tailAfterPrefix(ApiIri::PREFIX_CATALOG_ITEM, $request->catalogItem);
 
         return $this->json($this->cartAppSvc->createShoppingCartLine(
             $cartRef,

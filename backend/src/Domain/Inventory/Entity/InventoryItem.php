@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace App\Domain\Inventory\Entity;
 
-use App\Domain\Catalog\Entity\CatalogItem;
 use App\Domain\Inventory\Events\InventoryItemCatalogItemChanged;
 use App\Domain\Inventory\Events\InventoryItemCreated;
 use App\Domain\Inventory\Events\InventoryItemDeleted;
@@ -12,14 +11,13 @@ use App\Domain\Inventory\Events\InventoryItemExpirationDateChanged;
 use App\Domain\Inventory\Events\InventoryItemLocationChanged;
 use App\Domain\Inventory\Repository\InventoryItemRepository;
 use App\Domain\Shared\DomainEventRecorder;
+use App\Domain\Shared\Id\CatalogItemId;
 use App\Domain\Shared\Id\InventoryItemId;
 use App\Domain\Shared\RecordsDomainEvents;
 use DateTimeImmutable;
 use DateTimeInterface;
 use Doctrine\ORM\Mapping as ORM;
 use LogicException;
-use Symfony\Component\Serializer\Attribute\Groups;
-use Symfony\Component\Validator\Constraints as Assert;
 
 #[ORM\Entity(repositoryClass: InventoryItemRepository::class)]
 #[ORM\Table(name: 'inventory_item')]
@@ -28,33 +26,23 @@ class InventoryItem implements RecordsDomainEvents
 {
     use DomainEventRecorder;
 
-    #[Groups(['inventory_item:read'])]
     #[ORM\Id]
     #[ORM\Column(type: 'inventory_item_id', unique: true)]
     private InventoryItemId $inventoryItemId;
 
-    #[Groups(['inventory_item:read'])]
     #[ORM\Column(length: 32, unique: true)]
-    #[Assert\NotBlank]
-    #[Assert\Regex(pattern: '/^\d+$/')]
     private string $publicCode = '';
 
-    #[Groups(['inventory_item:read', 'inventory_item:write'])]
-    #[ORM\ManyToOne]
-    #[ORM\JoinColumn(name: 'item_type_id', referencedColumnName: 'catalog_item_id', nullable: false, onDelete: 'CASCADE')]
-    #[Assert\NotNull]
-    private ?CatalogItem $catalogItem = null;
+    #[ORM\Column(name: 'item_type_id', type: 'catalog_item_id')]
+    private ?CatalogItemId $catalogItemId = null;
 
-    #[Groups(['inventory_item:read', 'inventory_item:write'])]
     #[ORM\ManyToOne]
     #[ORM\JoinColumn(referencedColumnName: 'location_id', onDelete: 'SET NULL')]
     private ?Location $location = null;
 
-    #[Groups(['inventory_item:read', 'inventory_item:write'])]
     #[ORM\Column(type: 'datetime', nullable: true)]
     private ?DateTimeInterface $expirationDate = null;
 
-    #[Groups(['inventory_item:read'])]
     #[ORM\Column]
     private DateTimeImmutable $createdAt;
 
@@ -86,19 +74,24 @@ class InventoryItem implements RecordsDomainEvents
         return $this->publicCode;
     }
 
-    public function getCatalogItem(): ?CatalogItem
+    public function getCatalogItemId(): ?CatalogItemId
     {
-        return $this->catalogItem;
+        return $this->catalogItemId;
     }
 
-    public function changeCatalogItem(?CatalogItem $catalogItem): static
+    /**
+     * @SuppressWarnings("PHPMD.CyclomaticComplexity")
+     */
+    public function changeCatalogItemId(?CatalogItemId $catalogItemId): static
     {
-        if ($this->catalogItem === $catalogItem) {
+        if ((null === $this->catalogItemId && null === $catalogItemId)
+            || (null !== $this->catalogItemId && null !== $catalogItemId && $this->catalogItemId->equals($catalogItemId))
+        ) {
             return $this;
         }
-        $previous = $this->catalogItem;
-        $this->catalogItem = $catalogItem;
-        $this->recordDomainEvent(new InventoryItemCatalogItemChanged($this, $previous, $catalogItem));
+        $previous = $this->catalogItemId;
+        $this->catalogItemId = $catalogItemId;
+        $this->recordDomainEvent(new InventoryItemCatalogItemChanged($this, $previous, $catalogItemId));
 
         return $this;
     }
@@ -145,9 +138,8 @@ class InventoryItem implements RecordsDomainEvents
     #[ORM\PreRemove]
     public function recordDeletionEvent(): void
     {
-        $catalogId = $this->catalogItem?->getId();
-        if (null !== $catalogId) {
-            $this->recordDomainEvent(new InventoryItemDeleted($this->inventoryItemId, $catalogId));
+        if (null !== $this->catalogItemId) {
+            $this->recordDomainEvent(new InventoryItemDeleted($this->inventoryItemId, $this->catalogItemId));
         }
     }
 

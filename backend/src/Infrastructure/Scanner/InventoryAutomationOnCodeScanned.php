@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace App\Infrastructure\Scanner;
 
-use App\Application\Scanner\ScannerInvAutomationService;
 use App\Domain\Scanner\Events\CodeScanned;
 use Symfony\Component\EventDispatcher\Attribute\AsEventListener;
 

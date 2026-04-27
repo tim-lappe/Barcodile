@@ -8,25 +8,15 @@ use App\Application\Printer\Dto\DiscoveredPrinterOptionResponse;
 use App\Application\Printer\Dto\PostPrinterDeviceRequest;
 use App\Application\Printer\Dto\PrinterDeviceResponse;
 use App\Application\Printer\Dto\PrinterDriverListItemResponse;
-use App\Domain\Printer\Dto\ColorModePrintSettingOption;
-use App\Domain\Printer\Dto\LabelPrinterConnection;
-use App\Domain\Printer\Dto\LabelPrintSettingOptions;
-use App\Domain\Printer\Dto\LabelPrintSettings;
-use App\Domain\Printer\Dto\LabelSizePrintSettingOption;
-use App\Domain\Printer\Entity\PrinterDevice;
-use App\Domain\Printer\Exception\LabelPrintJobFailedException;
-use App\Domain\Printer\Repository\PrinterDeviceRepository;
-use App\Domain\Shared\Id\PrinterDeviceId;
-use Psr\Log\LoggerInterface;
-use Symfony\Component\HttpKernel\Exception\BadRequestHttpException;
-use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
+use App\Domain\Printer\Facade\DiscoveredPrinterOptionView;
+use App\Domain\Printer\Facade\PrinterDeviceFacade;
+use App\Domain\Printer\Facade\PrinterDeviceView;
+use App\Domain\Printer\Facade\PrinterDriverView;
 
 final readonly class PrinterDeviceApplicationService
 {
     public function __construct(
-        private PrinterDeviceRepository $deviceRepository,
-        private LabelPrinterDriverRegistry $driverRegistry,
-        private LoggerInterface $logger,
+        private PrinterDeviceFacade $printerDevices,
     ) {
     }
 
@@ -35,12 +25,7 @@ final readonly class PrinterDeviceApplicationService
      */
     public function listPrinterDevices(): array
     {
-        $out = [];
-        foreach ($this->deviceRepository->findAllOrderedByName() as $device) {
-            $out[] = $this->map($device);
-        }
-
-        return $out;
+        return array_map(fn (PrinterDeviceView $device): PrinterDeviceResponse => $this->mapDevice($device), $this->printerDevices->listPrinterDevices());
     }
 
     /**
@@ -48,17 +33,15 @@ final readonly class PrinterDeviceApplicationService
      */
     public function listPrinterDrivers(): array
     {
-        $out = [];
-        foreach ($this->driverRegistry->all() as $driver) {
-            $out[] = new PrinterDriverListItemResponse(
-                $driver->driverCode()->value(),
-                $driver->displayLabel()->value(),
-                $driver->defaultPrintSettings()->printSettingsData(),
-                $this->mapPrintSettingOptions($driver->printSettingOptions()),
-            );
-        }
-
-        return $out;
+        return array_map(
+            static fn (PrinterDriverView $driver): PrinterDriverListItemResponse => new PrinterDriverListItemResponse(
+                $driver->code,
+                $driver->label,
+                $driver->defaultPrintSettings,
+                $driver->printSettingOptions,
+            ),
+            $this->printerDevices->listPrinterDrivers(),
+        );
     }
 
     /**
@@ -66,211 +49,55 @@ final readonly class PrinterDeviceApplicationService
      */
     public function listDiscoveryOptions(string $driverCode): array
     {
-        $driver = $this->driverRegistry->get($driverCode);
-        $out = [];
-        foreach ($driver->discover() as $option) {
-            $out[] = new DiscoveredPrinterOptionResponse(
+        return array_map(
+            static fn (DiscoveredPrinterOptionView $option): DiscoveredPrinterOptionResponse => new DiscoveredPrinterOptionResponse(
                 $option->deviceIdentifier,
                 $option->label,
-                $this->mapSuggestedConnection($option->suggestedConnection),
-                $this->mapSuggestedSettings($option->suggestedSettings),
-            );
-        }
-
-        return $out;
+                $option->suggestedConnection,
+                $option->suggestedSettings,
+            ),
+            $this->printerDevices->listDiscoveryOptions($driverCode),
+        );
     }
 
     public function createPrinterDevice(PostPrinterDeviceRequest $request): PrinterDeviceResponse
     {
-        $driver = $this->driverRegistry->get(trim($request->driverCode));
-        $connection = $driver->createConnection($request->connection);
-        $printSettings = $driver->createPrintSettings($request->printSettings);
-
-        $device = new PrinterDevice();
-        $device->changeDriverCode(trim($request->driverCode));
-        $device->changeConnection($connection->connectionData());
-        $device->changePrintSettings($printSettings->printSettingsData());
-        $device->changeName(trim($request->name));
-        $this->deviceRepository->save($device);
-        $this->logger->info('Printer device created.', [
-            'printerDeviceId' => (string) $device->getId(),
-            'driverCode' => $device->getDriverCode(),
-            'connection' => $device->getConnection(),
-            'printSettings' => $device->getPrintSettings(),
-        ]);
-
-        return $this->map($device);
+        return $this->mapDevice($this->printerDevices->createPrinterDevice(
+            $request->driverCode,
+            $request->connection,
+            $request->printSettings,
+            $request->name,
+        ));
     }
 
-    public function deletePrinterDevice(PrinterDeviceId $printerDeviceId): void
+    public function deletePrinterDevice(string $printerDeviceId): void
     {
-        $device = $this->deviceRepository->find($printerDeviceId);
-        if (!$device instanceof PrinterDevice) {
-            throw new NotFoundHttpException('Printer device not found.');
-        }
-        $this->deviceRepository->remove($device);
+        $this->printerDevices->deletePrinterDevice($printerDeviceId);
     }
 
-    public function getPrinterDevice(PrinterDeviceId $printerDeviceId): PrinterDeviceResponse
+    public function getPrinterDevice(string $printerDeviceId): PrinterDeviceResponse
     {
-        $device = $this->deviceRepository->find($printerDeviceId);
-        if (!$device instanceof PrinterDevice) {
-            throw new NotFoundHttpException('Printer device not found.');
-        }
-
-        return $this->map($device);
+        return $this->mapDevice($this->printerDevices->getPrinterDevice($printerDeviceId));
     }
 
-    public function printTestLabel(PrinterDeviceId $printerDeviceId): void
+    public function printTestLabel(string $printerDeviceId): void
     {
-        $device = $this->deviceRepository->find($printerDeviceId);
-        if (!$device instanceof PrinterDevice) {
-            throw new NotFoundHttpException('Printer device not found.');
-        }
-
-        $driver = $this->driverRegistry->get($device->getDriverCode());
-        $this->logTestPrintRequest($device);
-
-        try {
-            $driver->printTestLabel(
-                $driver->createConnection($device->getConnection()),
-                $driver->createPrintSettings($device->getPrintSettings()),
-            );
-        } catch (LabelPrintJobFailedException $e) {
-            $this->logTestPrintFailure($device, $e);
-            throw new BadRequestHttpException($e->getMessage(), $e);
-        }
-        $this->logger->info('Printer test label finished.', [
-            'printerDeviceId' => (string) $device->getId(),
-            'driverCode' => $device->getDriverCode(),
-        ]);
+        $this->printerDevices->printTestLabel($printerDeviceId);
     }
 
-    public function printLabelImage(PrinterDeviceId $printerDeviceId, string $pngBytes): void
+    public function printLabelImage(string $printerDeviceId, string $pngBytes): void
     {
-        $device = $this->deviceRepository->find($printerDeviceId);
-        if (!$device instanceof PrinterDevice) {
-            throw new NotFoundHttpException('Printer device not found.');
-        }
-
-        $driver = $this->driverRegistry->get($device->getDriverCode());
-        $this->logLabelImagePrintRequest($device, $pngBytes);
-
-        try {
-            $driver->printLabelImage(
-                $driver->createConnection($device->getConnection()),
-                $driver->createPrintSettings($device->getPrintSettings()),
-                $pngBytes,
-            );
-        } catch (LabelPrintJobFailedException $e) {
-            $this->logLabelImagePrintFailure($device, $e);
-            throw new BadRequestHttpException($e->getMessage(), $e);
-        }
-        $this->logger->info('Printer label image finished.', [
-            'printerDeviceId' => (string) $device->getId(),
-            'driverCode' => $device->getDriverCode(),
-        ]);
+        $this->printerDevices->printLabelImage($printerDeviceId, $pngBytes);
     }
 
-    private function map(PrinterDevice $device): PrinterDeviceResponse
+    private function mapDevice(PrinterDeviceView $device): PrinterDeviceResponse
     {
         return new PrinterDeviceResponse(
-            (string) $device->getId(),
-            $device->getDriverCode(),
-            $device->getConnection(),
-            $device->getPrintSettings(),
-            $device->getName(),
+            $device->resourceId,
+            $device->driverCode,
+            $device->connection,
+            $device->printSettings,
+            $device->name,
         );
-    }
-
-    /**
-     * @return array{labelSizes: list<array{value: string, label: string}>, colorModes: list<array{value: string, label: string, red: bool}>}
-     */
-    private function mapPrintSettingOptions(LabelPrintSettingOptions $options): array
-    {
-        return [
-            'labelSizes' => array_map(
-                static fn (LabelSizePrintSettingOption $option): array => [
-                    'value' => $option->value,
-                    'label' => $option->label,
-                ],
-                $options->labelSizes,
-            ),
-            'colorModes' => array_map(
-                static fn (ColorModePrintSettingOption $option): array => [
-                    'value' => $option->value,
-                    'label' => $option->label,
-                    'red' => $option->red,
-                ],
-                $options->colorModes,
-            ),
-        ];
-    }
-
-    /**
-     * @return array<string, mixed>
-     */
-    private function mapSuggestedConnection(?LabelPrinterConnection $connection): array
-    {
-        if (null === $connection) {
-            return [];
-        }
-
-        return $connection->connectionData();
-    }
-
-    /**
-     * @return array<string, mixed>
-     */
-    private function mapSuggestedSettings(?LabelPrintSettings $settings): array
-    {
-        if (null === $settings) {
-            return [];
-        }
-
-        return $settings->printSettingsData();
-    }
-
-    private function logTestPrintRequest(PrinterDevice $device): void
-    {
-        $this->logger->info('Printer test label requested.', [
-            'printerDeviceId' => (string) $device->getId(),
-            'driverCode' => $device->getDriverCode(),
-            'connection' => $device->getConnection(),
-            'printSettings' => $device->getPrintSettings(),
-        ]);
-    }
-
-    private function logTestPrintFailure(
-        PrinterDevice $device,
-        LabelPrintJobFailedException $failure,
-    ): void {
-        $this->logger->error('Printer test label failed.', [
-            'printerDeviceId' => (string) $device->getId(),
-            'driverCode' => $device->getDriverCode(),
-            'error' => $failure->getMessage(),
-        ]);
-    }
-
-    private function logLabelImagePrintRequest(PrinterDevice $device, string $pngBytes): void
-    {
-        $this->logger->info('Printer label image requested.', [
-            'printerDeviceId' => (string) $device->getId(),
-            'driverCode' => $device->getDriverCode(),
-            'connection' => $device->getConnection(),
-            'printSettings' => $device->getPrintSettings(),
-            'imageBytes' => \strlen($pngBytes),
-        ]);
-    }
-
-    private function logLabelImagePrintFailure(
-        PrinterDevice $device,
-        LabelPrintJobFailedException $failure,
-    ): void {
-        $this->logger->error('Printer label image failed.', [
-            'printerDeviceId' => (string) $device->getId(),
-            'driverCode' => $device->getDriverCode(),
-            'error' => $failure->getMessage(),
-        ]);
     }
 }

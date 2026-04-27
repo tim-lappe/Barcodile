@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace App\Application\Catalog\Controller;
 
 use App\Application\Catalog\CatalogItemApplicationService;
-use App\Domain\Shared\Id\CatalogItemId;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\File\UploadedFile;
 use Symfony\Component\HttpFoundation\JsonResponse;
@@ -22,6 +21,6 @@ final class PostCatalogItemImageController extends AbstractController
     #[Route(path: '/api/catalog_items/{catalogItemId}/image', methods: ['POST'])]
     public function __invoke(string $catalogItemId, #[MapUploadedFile(name: 'file')] UploadedFile $file): JsonResponse
     {
-        return $this->json($this->catalogApp->uploadCatalogItemImage(CatalogItemId::fromString($catalogItemId), $file));
+        return $this->json($this->catalogApp->uploadCatalogItemImage($catalogItemId, $file));
     }
 }

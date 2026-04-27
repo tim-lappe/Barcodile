@@ -4,13 +4,12 @@ declare(strict_types=1);
 
 namespace App\Domain\Inventory\Entity;
 
-use App\Domain\Cart\Entity\ShoppingCart;
-use App\Domain\Catalog\Entity\CatalogItem;
 use App\Domain\Inventory\Repository\CartStockAutomationRuleRepository;
 use App\Domain\Shared\Id\CartStockAutomationRuleId;
+use App\Domain\Shared\Id\CatalogItemId;
+use App\Domain\Shared\Id\ShoppingCartId;
 use DateTimeImmutable;
 use Doctrine\ORM\Mapping as ORM;
-use Symfony\Component\Validator\Constraints as Assert;
 
 #[ORM\Entity(repositoryClass: CartStockAutomationRuleRepository::class)]
 #[ORM\Table(name: 'cart_stock_automation_rule')]
@@ -21,22 +20,16 @@ class CartStockAutomationRule
     #[ORM\Column(type: 'cart_stock_automation_rule_id', unique: true)]
     private CartStockAutomationRuleId $ruleId;
 
-    #[ORM\ManyToOne]
-    #[ORM\JoinColumn(name: 'catalog_item_id', referencedColumnName: 'catalog_item_id', nullable: false, onDelete: 'CASCADE')]
-    #[Assert\NotNull]
-    private ?CatalogItem $catalogItem = null;
+    #[ORM\Column(name: 'catalog_item_id', type: 'catalog_item_id')]
+    private ?CatalogItemId $catalogItemId = null;
 
-    #[ORM\ManyToOne]
-    #[ORM\JoinColumn(name: 'shopping_cart_id', referencedColumnName: 'id', nullable: false, onDelete: 'CASCADE')]
-    #[Assert\NotNull]
-    private ?ShoppingCart $shoppingCart = null;
+    #[ORM\Column(name: 'shopping_cart_id', type: 'shopping_cart_id')]
+    private ?ShoppingCartId $shoppingCartId = null;
 
     #[ORM\Column]
-    #[Assert\PositiveOrZero]
     private int $stockBelow = 0;
 
     #[ORM\Column]
-    #[Assert\Positive]
     private int $addQuantity = 1;
 
     #[ORM\Column(options: ['default' => true])]
@@ -56,26 +49,26 @@ class CartStockAutomationRule
         return $this->ruleId;
     }
 
-    public function getCatalogItem(): ?CatalogItem
+    public function getCatalogItemId(): ?CatalogItemId
     {
-        return $this->catalogItem;
+        return $this->catalogItemId;
     }
 
-    public function changeCatalogItem(?CatalogItem $catalogItem): static
+    public function changeCatalogItemId(?CatalogItemId $catalogItemId): static
     {
-        $this->catalogItem = $catalogItem;
+        $this->catalogItemId = $catalogItemId;
 
         return $this;
     }
 
-    public function getShoppingCart(): ?ShoppingCart
+    public function getShoppingCartId(): ?ShoppingCartId
     {
-        return $this->shoppingCart;
+        return $this->shoppingCartId;
     }
 
-    public function changeShoppingCart(?ShoppingCart $shoppingCart): static
+    public function changeShoppingCartId(?ShoppingCartId $shoppingCartId): static
     {
-        $this->shoppingCart = $shoppingCart;
+        $this->shoppingCartId = $shoppingCartId;
 
         return $this;
     }

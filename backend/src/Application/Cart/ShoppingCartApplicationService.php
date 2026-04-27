@@ -6,31 +6,18 @@ namespace App\Application\Cart;
 
 use App\Application\Cart\Dto\ShoppingCartLineResponse;
 use App\Application\Cart\Dto\ShoppingCartResponse;
-use App\Domain\Cart\Entity\ShoppingCart;
-use App\Domain\Cart\Entity\ShoppingCartLine;
-use App\Domain\Cart\Port\CartInterface;
-use App\Domain\Cart\Port\CartProviderRegistry;
-use App\Domain\Cart\Repository\ShoppingCartRepository;
-use App\Domain\Catalog\Entity\CatalogItem;
-use App\Domain\Picnic\Repository\PicnicCatalogItemProductLinkRepository;
-use App\Domain\Shared\Id\CatalogItemId;
-use App\Domain\Shared\Id\ShoppingCartId;
-use App\Domain\Shared\Id\ShoppingCartLineId;
-use Doctrine\ORM\EntityManagerInterface;
-use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
-use Symfony\Component\Uid\Uuid;
+use App\Application\Catalog\CatalogItemApplicationService;
+use App\Application\Catalog\Dto\CatalogItemResponse;
+use App\Domain\Cart\Facade\CartCatalogItemView;
+use App\Domain\Cart\Facade\CartFacade;
+use App\Domain\Cart\Facade\ShoppingCartLineView;
+use App\Domain\Cart\Facade\ShoppingCartView;
 
 final readonly class ShoppingCartApplicationService
 {
     public function __construct(
-        private ShoppingCartRepository $cartRepo,
-        private PicnicCatalogItemProductLinkRepository $picnicLinkRepo,
-        private CartProviderRegistry $cartProviderRegistry,
-        private EntityManagerInterface $entityManager,
-        private ShoppingCartExternalCartOperations $externalCartOps,
-        private PortableShoppingCartMapper $portableMapper,
-        private ShoppingCartEntityResponseMapper $entityResponseMapper,
-        private ShoppingCartProviderLineAppender $providerLineAppender,
+        private CartFacade $carts,
+        private CatalogItemApplicationService $catalogItems,
     ) {
     }
 
@@ -39,165 +26,75 @@ final readonly class ShoppingCartApplicationService
      */
     public function listShoppingCarts(): array
     {
-        $rows = $this->cartRepo->findPagedByCreatedAtDesc(0, \PHP_INT_MAX);
-        $out = [];
-        foreach ($rows as $cart) {
-            $out[] = $this->entityResponseMapper->mapShoppingCart($cart);
-        }
-
-        return $out;
+        return array_map(fn (ShoppingCartView $cart): ShoppingCartResponse => $this->mapCart($cart), $this->carts->listShoppingCarts());
     }
 
-    public function getShoppingCart(ShoppingCartId $cartId): ShoppingCartResponse
+    public function getShoppingCart(string $cartId): ShoppingCartResponse
     {
-        $cart = $this->cartRepo->find($cartId);
-        if (!$cart instanceof ShoppingCart) {
-            throw new NotFoundHttpException('Shopping cart not found.');
-        }
-
-        return $this->entityResponseMapper->mapShoppingCart($cart);
+        return $this->mapCart($this->carts->getShoppingCart($cartId));
     }
 
     public function createShoppingCart(?string $name): ShoppingCartResponse
     {
-        $cart = new ShoppingCart();
-        $cart->changeName($name);
-        $this->cartRepo->save($cart);
-
-        return $this->entityResponseMapper->mapShoppingCart($cart);
-    }
-
-    public function updateShoppingCart(ShoppingCartId $cartId, ?string $name): void
-    {
-        $cart = $this->mustFindCart($cartId);
-        $cart->changeName($name);
-        $this->cartRepo->save($cart);
+        return $this->mapCart($this->carts->createShoppingCart($name));
     }
 
     public function updateShoppingCartByRef(string $shoppingCartRef, ?string $name): void
     {
-        if ($this->shoppingCartRefIsUuid($shoppingCartRef)) {
-            $this->updateShoppingCart(ShoppingCartId::fromString($shoppingCartRef), $name);
-
-            return;
-        }
-        $this->externalCartOps->applyProviderCartNameChange($shoppingCartRef, $name);
+        $this->carts->updateShoppingCartByRef($shoppingCartRef, $name);
     }
 
-    public function deleteShoppingCart(ShoppingCartId $cartId): void
+    public function deleteShoppingCart(string $cartId): void
     {
-        $cart = $this->mustFindCart($cartId);
-        $this->cartRepo->remove($cart);
+        $this->carts->deleteShoppingCart($cartId);
     }
 
-    public function createShoppingCartLine(string $shoppingCartRef, CatalogItemId $catalogItemId, int $quantity): ShoppingCartLineResponse
+    public function createShoppingCartLine(string $shoppingCartRef, string $catalogItemId, int $quantity): ShoppingCartLineResponse
     {
-        if ($this->shoppingCartRefIsUuid($shoppingCartRef)) {
-            return $this->createShoppingCartLineForStoredCart(
-                ShoppingCartId::fromString($shoppingCartRef),
-                $catalogItemId,
-                $quantity,
-            );
-        }
-
-        return $this->providerLineAppender->addAndMapLine($shoppingCartRef, $catalogItemId, $quantity);
+        return $this->mapLine($this->carts->createShoppingCartLine($shoppingCartRef, $catalogItemId, $quantity));
     }
 
-    public function updateShoppingCartLine(ShoppingCartLineId $lineId, int $quantity): void
+    public function updateShoppingCartLine(string $lineId, int $quantity): void
     {
-        if ($this->tryUpdateStoredLineQuantity($lineId, $quantity)) {
-            return;
-        }
-        $this->externalCartOps->updatePortableLineQuantity($lineId, $quantity);
+        $this->carts->updateShoppingCartLine($lineId, $quantity);
     }
 
-    public function deleteShoppingCartLine(ShoppingCartLineId $lineId): void
+    public function deleteShoppingCartLine(string $lineId): void
     {
-        if ($this->tryDeleteStoredLine($lineId)) {
-            return;
-        }
-        $this->externalCartOps->deletePortableLine($lineId);
+        $this->carts->deleteShoppingCartLine($lineId);
     }
 
     public function shoppingCartFromProvider(string $providerId): ShoppingCartResponse
     {
-        $provider = $this->cartProviderRegistry->get($providerId);
-        if (null === $provider) {
-            throw new NotFoundHttpException('Cart provider not found.');
-        }
-        $first = null;
-        foreach ($provider->carts() as $cart) {
-            $first = $cart;
-            break;
-        }
-        if (!$first instanceof CartInterface) {
-            throw new NotFoundHttpException('No shopping cart for this provider.');
-        }
-
-        return $this->portableMapper->mapCart($first);
+        return $this->mapCart($this->carts->shoppingCartFromProvider($providerId));
     }
 
-    private function createShoppingCartLineForStoredCart(
-        ShoppingCartId $shoppingCartId,
-        CatalogItemId $catalogItemId,
-        int $quantity,
-    ): ShoppingCartLineResponse {
-        $cart = $this->mustFindCart($shoppingCartId);
-        $catalogItem = $this->entityManager->find(CatalogItem::class, $catalogItemId);
-        if (!$catalogItem instanceof CatalogItem) {
-            throw new NotFoundHttpException('Catalog item not found.');
-        }
-        $line = $cart->mergeOrAddLineForCatalogItem($catalogItem, $quantity);
-        $this->cartRepo->save($cart);
-        $picnic = $this->picnicLinkRepo->mapProductIdByCatalogItemId([$catalogItemId]);
-
-        return $this->entityResponseMapper->mapLine($line, $catalogItem, $picnic[(string) $catalogItemId] ?? null);
-    }
-
-    private function shoppingCartRefIsUuid(string $ref): bool
+    private function mapCart(ShoppingCartView $cart): ShoppingCartResponse
     {
-        return Uuid::isValid($ref);
+        return new ShoppingCartResponse(
+            $cart->resourceId,
+            $cart->name,
+            $cart->createdAt,
+            array_map(fn (ShoppingCartLineView $line): ShoppingCartLineResponse => $this->mapLine($line), $cart->lines),
+        );
     }
 
-    private function tryUpdateStoredLineQuantity(ShoppingCartLineId $lineId, int $quantity): bool
+    private function mapLine(ShoppingCartLineView $line): ShoppingCartLineResponse
     {
-        $line = $this->cartRepo->findLineById($lineId);
-        if (!$line instanceof ShoppingCartLine) {
-            return false;
-        }
-        $line->changeQuantity($quantity);
-        $cart = $line->getShoppingCart();
-        if (null === $cart) {
-            throw new NotFoundHttpException('Shopping cart line not found.');
-        }
-        $this->cartRepo->save($cart);
-
-        return true;
+        return new ShoppingCartLineResponse(
+            $line->resourceId,
+            $this->mapCatalogItem($line->catalogItem),
+            $line->quantity,
+            $line->createdAt,
+        );
     }
 
-    private function tryDeleteStoredLine(ShoppingCartLineId $lineId): bool
+    private function mapCatalogItem(CartCatalogItemView $item): CatalogItemResponse
     {
-        $line = $this->cartRepo->findLineById($lineId);
-        if (!$line instanceof ShoppingCartLine) {
-            return false;
-        }
-        $cart = $line->getShoppingCart();
-        if (null === $cart) {
-            throw new NotFoundHttpException('Shopping cart line not found.');
-        }
-        $cart->detachLineById($lineId);
-        $this->cartRepo->save($cart);
-
-        return true;
-    }
-
-    private function mustFindCart(ShoppingCartId $cartId): ShoppingCart
-    {
-        $cart = $this->cartRepo->find($cartId);
-        if (!$cart instanceof ShoppingCart) {
-            throw new NotFoundHttpException('Shopping cart not found.');
+        if (null !== $item->catalogItem) {
+            return $this->catalogItems->catalogItemResponse($item->catalogItem);
         }
 
-        return $cart;
+        return $this->catalogItems->minimalCatalogItemResponse($item->resourceId, $item->name, null);
     }
 }

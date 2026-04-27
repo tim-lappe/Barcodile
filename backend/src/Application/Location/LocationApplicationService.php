@@ -6,16 +6,13 @@ namespace App\Application\Location;
 
 use App\Application\Location\Dto\LocationResponse;
 use App\Application\Shared\ApiIri;
-use App\Domain\Inventory\Entity\Location;
-use App\Domain\Inventory\Repository\LocationRepository;
-use App\Domain\Shared\Id\LocationId;
-use InvalidArgumentException;
-use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
+use App\Domain\Inventory\Facade\LocationFacade;
+use App\Domain\Inventory\Facade\LocationView;
 
 final readonly class LocationApplicationService
 {
     public function __construct(
-        private LocationRepository $locationRepository,
+        private LocationFacade $locations,
     ) {
     }
 
@@ -24,85 +21,35 @@ final readonly class LocationApplicationService
      */
     public function listLocations(): array
     {
-        $out = [];
-        foreach ($this->locationRepository->findAllOrderedByName() as $loc) {
-            $out[] = $this->map($loc);
-        }
-
-        return $out;
+        return array_map(fn (LocationView $location): LocationResponse => $this->map($location), $this->locations->listLocations());
     }
 
-    public function getLocation(LocationId $locationId): LocationResponse
+    public function getLocation(string $locationId): LocationResponse
     {
-        $loc = $this->locationRepository->find($locationId);
-        if (!$loc instanceof Location) {
-            throw new NotFoundHttpException('Location not found.');
-        }
-
-        return $this->map($loc);
+        return $this->map($this->locations->getLocation($locationId));
     }
 
-    public function createLocation(string $name, ?LocationId $parentId): LocationResponse
+    public function createLocation(string $name, ?string $parentId): LocationResponse
     {
-        $loc = new Location();
-        $loc->changeName($name);
-        if (null !== $parentId) {
-            $parent = $this->locationRepository->find($parentId);
-            if (!$parent instanceof Location) {
-                throw new NotFoundHttpException('Parent location not found.');
-            }
-            $loc->changeParent($parent);
-        }
-        $this->locationRepository->save($loc);
-
-        return $this->map($loc);
+        return $this->map($this->locations->createLocation($name, $parentId));
     }
 
-    public function updateLocation(LocationId $locationId, string $name, ?LocationId $parentId): void
+    public function updateLocation(string $locationId, string $name, ?string $parentId): void
     {
-        $loc = $this->locationRepository->find($locationId);
-        if (!$loc instanceof Location) {
-            throw new NotFoundHttpException('Location not found.');
-        }
-        $loc->changeName($name);
-        $this->applyParentChange($loc, $locationId, $parentId);
-        $this->locationRepository->save($loc);
+        $this->locations->updateLocation($locationId, $name, $parentId);
     }
 
-    private function applyParentChange(Location $loc, LocationId $locationId, ?LocationId $parentId): void
+    public function deleteLocation(string $locationId): void
     {
-        if (null === $parentId) {
-            $loc->changeParent(null);
-
-            return;
-        }
-        if ($parentId->equals($locationId)) {
-            throw new InvalidArgumentException('Location cannot be its own parent.');
-        }
-        $parent = $this->locationRepository->find($parentId);
-        if (!$parent instanceof Location) {
-            throw new NotFoundHttpException('Parent location not found.');
-        }
-        $loc->changeParent($parent);
+        $this->locations->deleteLocation($locationId);
     }
 
-    public function deleteLocation(LocationId $locationId): void
+    private function map(LocationView $location): LocationResponse
     {
-        $loc = $this->locationRepository->find($locationId);
-        if (!$loc instanceof Location) {
-            throw new NotFoundHttpException('Location not found.');
-        }
-        $this->locationRepository->remove($loc);
-    }
-
-    private function map(Location $loc): LocationResponse
-    {
-        $parentLoc = $loc->getParent();
-
         return new LocationResponse(
-            (string) $loc->getId(),
-            $loc->getName(),
-            null === $parentLoc ? null : ApiIri::location((string) $parentLoc->getId()),
+            $location->resourceId,
+            $location->name,
+            null === $location->parentId ? null : ApiIri::location($location->parentId),
         );
     }
 }

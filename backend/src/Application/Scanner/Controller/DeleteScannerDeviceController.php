@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace App\Application\Scanner\Controller;
 
 use App\Application\Scanner\ScannerDeviceApplicationService;
-use App\Domain\Shared\Id\ScannerDeviceId;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
@@ -24,7 +23,7 @@ final class DeleteScannerDeviceController extends AbstractController
     )]
     public function __invoke(string $scannerDeviceId): Response
     {
-        $this->scannerDeviceApp->deleteScannerDevice(ScannerDeviceId::fromString($scannerDeviceId));
+        $this->scannerDeviceApp->deleteScannerDevice($scannerDeviceId);
 
         return new Response('', Response::HTTP_NO_CONTENT);
     }

@@ -7,28 +7,20 @@ namespace App\Domain\Picnic\Entity;
 use App\Domain\Picnic\Repository\PicnicIntegrationSettingsRepository;
 use App\Domain\Shared\Id\PicnicIntegrationSettingsId;
 use Doctrine\ORM\Mapping as ORM;
-use Symfony\Component\Serializer\Attribute\Groups;
 use Symfony\Component\Serializer\Attribute\SerializedName;
-use Symfony\Component\Validator\Constraints as Assert;
 use Symfony\Component\Validator\Context\ExecutionContextInterface;
 
 #[ORM\Entity(repositoryClass: PicnicIntegrationSettingsRepository::class)]
-#[Assert\Callback(callback: 'validateWhenCredentialsStored')]
 class PicnicIntegrationSettings
 {
-    #[Groups(['picnic_settings:read'])]
     #[ORM\Id]
     #[ORM\Column(type: 'picnic_integration_settings_id', unique: true)]
     private PicnicIntegrationSettingsId $settingsId;
 
-    #[Groups(['picnic_settings:read', 'picnic_settings:write'])]
     #[ORM\Column(length: 255, nullable: true)]
-    #[Assert\Length(max: 255)]
     private ?string $username = null;
 
-    #[Groups(['picnic_settings:read', 'picnic_settings:write'])]
     #[ORM\Column(length: 2)]
-    #[Assert\Choice(choices: ['NL', 'DE'])]
     private string $countryCode = 'NL';
 
     #[ORM\Column(type: 'text', nullable: true)]
@@ -37,15 +29,12 @@ class PicnicIntegrationSettings
     #[ORM\Column(type: 'text', nullable: true)]
     private ?string $authKeyCipher = null;
 
-    #[Groups(['picnic_settings:write'])]
     #[SerializedName('password')]
     private ?string $plainPassword = null;
 
-    #[Groups(['picnic_settings:write'])]
     private ?bool $authSessionClear = null;
 
     #[ORM\Column(length: 255, nullable: true)]
-    #[Assert\Length(max: 255)]
     private ?string $cartDisplayName = null;
 
     public function __construct()
@@ -149,14 +138,12 @@ class PicnicIntegrationSettings
         return $this;
     }
 
-    #[Groups(['picnic_settings:read'])]
     #[SerializedName('hasStoredPassword')]
     public function hasStoredPassword(): bool
     {
         return null !== $this->passwordCipher && '' !== $this->passwordCipher;
     }
 
-    #[Groups(['picnic_settings:read'])]
     #[SerializedName('hasStoredAuthSession')]
     public function hasStoredAuthSession(): bool
     {

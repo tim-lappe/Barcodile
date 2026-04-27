@@ -6,7 +6,6 @@ namespace App\Application\Scanner\Controller;
 
 use App\Application\Scanner\Dto\PatchScannerDeviceAutomationsRequest;
 use App\Application\Scanner\ScannerDeviceApplicationService;
-use App\Domain\Shared\Id\ScannerDeviceId;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpKernel\Attribute\MapRequestPayload;
@@ -29,7 +28,7 @@ final class PatchScannerDeviceAutomationsController extends AbstractController
         #[MapRequestPayload] PatchScannerDeviceAutomationsRequest $request,
     ): JsonResponse {
         return $this->json($this->scannerDeviceApp->patchScannerDeviceAutomations(
-            ScannerDeviceId::fromString($scannerDeviceId),
+            $scannerDeviceId,
             $request,
         ));
     }

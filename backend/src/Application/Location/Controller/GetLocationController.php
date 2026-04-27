@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace App\Application\Location\Controller;
 
 use App\Application\Location\LocationApplicationService;
-use App\Domain\Shared\Id\LocationId;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\Routing\Attribute\Route;
@@ -20,6 +19,6 @@ final class GetLocationController extends AbstractController
     #[Route(path: '/api/locations/{locationId}', methods: ['GET'])]
     public function __invoke(string $locationId): JsonResponse
     {
-        return $this->json($this->locationApp->getLocation(LocationId::fromString($locationId)));
+        return $this->json($this->locationApp->getLocation($locationId));
     }
 }

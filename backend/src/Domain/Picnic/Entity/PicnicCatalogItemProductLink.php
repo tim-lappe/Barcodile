@@ -4,33 +4,30 @@ declare(strict_types=1);
 
 namespace App\Domain\Picnic\Entity;
 
-use App\Domain\Catalog\Entity\CatalogItem;
 use App\Domain\Picnic\Repository\PicnicCatalogItemProductLinkRepository;
+use App\Domain\Shared\Id\CatalogItemId;
 use Doctrine\ORM\Mapping as ORM;
-use Symfony\Component\Validator\Constraints as Assert;
 
 #[ORM\Entity(repositoryClass: PicnicCatalogItemProductLinkRepository::class)]
 #[ORM\Table(name: 'picnic_catalog_item_product_link')]
 class PicnicCatalogItemProductLink
 {
     #[ORM\Id]
-    #[ORM\OneToOne(targetEntity: CatalogItem::class)]
-    #[ORM\JoinColumn(name: 'catalog_item_id', referencedColumnName: 'catalog_item_id', onDelete: 'CASCADE')]
-    private CatalogItem $catalogItem;
+    #[ORM\Column(name: 'catalog_item_id', type: 'catalog_item_id')]
+    private CatalogItemId $catalogItemId;
 
     #[ORM\Column(length: 255)]
-    #[Assert\Length(max: 255)]
     private string $productId;
 
-    public function __construct(CatalogItem $catalogItem, string $productId)
+    public function __construct(CatalogItemId $catalogItemId, string $productId)
     {
-        $this->catalogItem = $catalogItem;
+        $this->catalogItemId = $catalogItemId;
         $this->changeProductId($productId);
     }
 
-    public function getCatalogItem(): CatalogItem
+    public function getCatalogItemId(): CatalogItemId
     {
-        return $this->catalogItem;
+        return $this->catalogItemId;
     }
 
     public function getProductId(): string
