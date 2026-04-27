@@ -19,8 +19,7 @@ final class PostPrinterDeviceTestPrintController extends AbstractController
 
     #[Route(
         path: '/api/printer_devices/{printerDeviceId}/test_print',
-        methods: ['POST'],
-        requirements: ['printerDeviceId' => '[0-9A-Fa-f]{8}-[0-9A-Fa-f]{4}-[0-9A-Fa-f]{4}-[0-9A-Fa-f]{4}-[0-9A-Fa-f]{12}'],
+        methods: ['POST']
     )]
     public function __invoke(string $printerDeviceId): JsonResponse
     {

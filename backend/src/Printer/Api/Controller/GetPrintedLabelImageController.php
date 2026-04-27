@@ -20,10 +20,6 @@ final class GetPrintedLabelImageController extends AbstractController
         path: '/api/printer_devices/{printerDeviceId}/printed_labels/{printedLabelId}.png',
         name: 'api_printer_device_printed_label_image',
         methods: ['GET'],
-        requirements: [
-            'printerDeviceId' => '[0-9A-Fa-f]{8}-[0-9A-Fa-f]{4}-[0-9A-Fa-f]{4}-[0-9A-Fa-f]{4}-[0-9A-Fa-f]{12}',
-            'printedLabelId' => '[0-9A-Fa-f]{8}-[0-9A-Fa-f]{4}-[0-9A-Fa-f]{4}-[0-9A-Fa-f]{4}-[0-9A-Fa-f]{12}',
-        ],
     )]
     public function __invoke(string $printerDeviceId, string $printedLabelId): Response
     {

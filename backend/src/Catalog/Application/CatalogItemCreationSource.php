@@ -8,5 +8,5 @@ enum CatalogItemCreationSource: string
 {
     case Manual = 'manual';
     case Picnic = 'picnic';
-    case Barcode = 'barcode';
+    case Fddb = 'fddb';
 }

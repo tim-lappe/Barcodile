@@ -11,19 +11,14 @@ final readonly class PatchScannerDeviceAutomationsRequest
 {
     public function __construct(
         #[Assert\NotNull]
-        #[SerializedName('automationAddInventoryOnBarcodeScan')]
-        public bool $addOnBarcodeScan,
+        #[SerializedName('automationAddInventoryOnEanScan')]
+        public bool $addOnEan,
         #[Assert\NotNull]
-        #[SerializedName('automationCreateCatalogItemIfMissingForBarcode')]
-        public bool $createIfMissingBarcode,
+        #[SerializedName('automationCreateCatalogItemIfMissingForEan')]
+        public bool $createIfMissingEan,
         #[Assert\NotNull]
         #[SerializedName('automationRemoveInventoryOnPublicCodeScan')]
         public bool $remOnPublic,
-        #[Assert\NotNull]
-        #[SerializedName('automationPrintInventoryLabelOnBarcodeScan')]
-        public bool $printLabelOnBarcodeScan,
-        #[SerializedName('automationPrinterDeviceId')]
-        public ?string $printerDeviceId = null,
     ) {
     }
 }

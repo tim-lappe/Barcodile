@@ -20,10 +20,6 @@ final class PostPrintedLabelResendController extends AbstractController
     #[Route(
         path: '/api/printer_devices/{printerDeviceId}/printed_labels/{printedLabelId}/resend',
         methods: ['POST'],
-        requirements: [
-            'printerDeviceId' => '[0-9A-Fa-f]{8}-[0-9A-Fa-f]{4}-[0-9A-Fa-f]{4}-[0-9A-Fa-f]{4}-[0-9A-Fa-f]{12}',
-            'printedLabelId' => '[0-9A-Fa-f]{8}-[0-9A-Fa-f]{4}-[0-9A-Fa-f]{4}-[0-9A-Fa-f]{4}-[0-9A-Fa-f]{12}',
-        ],
     )]
     public function __invoke(string $printerDeviceId, string $printedLabelId): JsonResponse
     {
