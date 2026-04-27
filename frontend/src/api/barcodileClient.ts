@@ -1,7 +1,5 @@
 import type {
 	ActivityListDto,
-	BarcodeCatalogProductHintDto,
-	BarcodeLookupProviderDto,
 	CartProviderIndexEntryDto,
 	CartStockAutomationRuleDto,
 	CartStockAutomationRuleId,
@@ -223,11 +221,9 @@ export async function fetchScannerDevice(
 export async function patchScannerDeviceAutomations(
 	id: ScannerDeviceId,
 	body: {
-		automationAddInventoryOnBarcodeScan: boolean;
-		automationCreateCatalogItemIfMissingForBarcode: boolean;
+		automationAddInventoryOnEanScan: boolean;
+		automationCreateCatalogItemIfMissingForEan: boolean;
 		automationRemoveInventoryOnPublicCodeScan: boolean;
-		automationPrintInventoryLabelOnBarcodeScan: boolean;
-		automationPrinterDeviceId: PrinterDeviceId | null;
 	},
 ): Promise<ScannerDeviceDto> {
 	const res = await fetch(scannerDeviceIri(id), {
@@ -277,21 +273,6 @@ export async function deleteScannerDevice(id: ScannerDeviceId): Promise<void> {
 	if (!res.ok) {
 		throw new Error(await readErrorMessage(res));
 	}
-}
-
-export async function postScannerDeviceSimulateInput(
-	id: ScannerDeviceId,
-	body: { text: string },
-): Promise<ScannerDeviceDto> {
-	const res = await fetch(`${scannerDeviceIri(id)}/simulate_input`, {
-		method: "POST",
-		headers: JSON_HEADERS,
-		body: JSON.stringify(body),
-	});
-	if (!res.ok) {
-		throw new Error(await readErrorMessage(res));
-	}
-	return (await res.json()) as ScannerDeviceDto;
 }
 
 export function printerDeviceIri(id: PrinterDeviceId): string {
@@ -515,7 +496,7 @@ export async function createCatalogItem(input: {
 	barcode?: { code: string; type: string };
 	catalogItemAttributes?: CatalogItemAttributeWriteRow[];
 	linkedPicnicProductId?: string | null;
-	creationSource?: "manual" | "picnic" | "barcode";
+	creationSource?: "manual" | "picnic" | "fddb";
 }): Promise<CatalogItemDto> {
 	const body: Record<string, unknown> = {
 		name: input.name,
@@ -832,97 +813,6 @@ export async function fetchPicnicCatalogProductSummary(
 		throw new Error(await readErrorMessage(res));
 	}
 	return (await res.json()) as PicnicCatalogProductSummaryDto;
-}
-
-export async function fetchBarcodeCatalogProductHint(
-	barcode: string,
-): Promise<BarcodeCatalogProductHintDto> {
-	const q = new URLSearchParams();
-	q.set("barcode", barcode.trim());
-	const res = await fetch(
-		`/api/catalog_items/barcode_product_hints?${q.toString()}`,
-		{ headers: { Accept: "application/json" } },
-	);
-	if (!res.ok) {
-		throw new Error(await readErrorMessage(res));
-	}
-	return (await res.json()) as BarcodeCatalogProductHintDto;
-}
-
-const BARCODE_LOOKUP_PROVIDERS_API = "/api/settings/barcode-lookup-providers";
-
-export async function fetchBarcodeLookupProviders(): Promise<
-	BarcodeLookupProviderDto[]
-> {
-	const res = await fetch(BARCODE_LOOKUP_PROVIDERS_API, {
-		headers: { Accept: "application/json" },
-	});
-	if (!res.ok) {
-		throw new Error(await readErrorMessage(res));
-	}
-	const body: unknown = await res.json();
-	return readJsonArray<BarcodeLookupProviderDto>(body);
-}
-
-export async function postBarcodeLookupProvider(input: {
-	label: string;
-	apiKey: string;
-	kind?: string;
-	enabled?: boolean;
-	sortOrder?: number | null;
-}): Promise<BarcodeLookupProviderDto> {
-	const body: Record<string, unknown> = {
-		label: input.label,
-		apiKey: input.apiKey,
-	};
-	if (input.kind !== undefined) {
-		body.kind = input.kind;
-	}
-	if (input.enabled !== undefined) {
-		body.enabled = input.enabled;
-	}
-	if (input.sortOrder !== undefined && input.sortOrder !== null) {
-		body.sortOrder = input.sortOrder;
-	}
-	const res = await fetch(BARCODE_LOOKUP_PROVIDERS_API, {
-		method: "POST",
-		headers: JSON_HEADERS,
-		body: JSON.stringify(body),
-	});
-	if (!res.ok) {
-		throw new Error(await readErrorMessage(res));
-	}
-	return (await res.json()) as BarcodeLookupProviderDto;
-}
-
-export async function patchBarcodeLookupProvider(
-	id: BarcodeLookupProviderDto["id"],
-	patch: Record<string, unknown>,
-): Promise<BarcodeLookupProviderDto> {
-	const res = await fetch(
-		`${BARCODE_LOOKUP_PROVIDERS_API}/${encodeURIComponent(id)}`,
-		{
-			method: "PATCH",
-			headers: MERGE_PATCH_HEADERS,
-			body: JSON.stringify(patch),
-		},
-	);
-	if (!res.ok) {
-		throw new Error(await readErrorMessage(res));
-	}
-	return (await res.json()) as BarcodeLookupProviderDto;
-}
-
-export async function deleteBarcodeLookupProvider(
-	id: BarcodeLookupProviderDto["id"],
-): Promise<void> {
-	const res = await fetch(
-		`${BARCODE_LOOKUP_PROVIDERS_API}/${encodeURIComponent(id)}`,
-		{ method: "DELETE" },
-	);
-	if (!res.ok) {
-		throw new Error(await readErrorMessage(res));
-	}
 }
 
 const SHOPPING_CARTS_PROVIDERS_API = "/api/shopping_carts/providers";

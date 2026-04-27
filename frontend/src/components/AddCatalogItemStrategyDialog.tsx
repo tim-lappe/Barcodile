@@ -1,6 +1,6 @@
 import type { SvgIconComponent } from "@mui/icons-material";
 import DrawOutlinedIcon from "@mui/icons-material/DrawOutlined";
-import QrCode2OutlinedIcon from "@mui/icons-material/QrCode2Outlined";
+import MenuBookOutlinedIcon from "@mui/icons-material/MenuBookOutlined";
 import ShoppingBagOutlinedIcon from "@mui/icons-material/ShoppingBagOutlined";
 import {
 	Box,
@@ -21,7 +21,7 @@ import {
 const TILE_ICONS: Record<CatalogItemCreationSourceId, SvgIconComponent> = {
 	manual: DrawOutlinedIcon,
 	picnic: ShoppingBagOutlinedIcon,
-	barcode: QrCode2OutlinedIcon,
+	fddb: MenuBookOutlinedIcon,
 };
 
 export type AddCatalogItemStrategyDialogProps = {
