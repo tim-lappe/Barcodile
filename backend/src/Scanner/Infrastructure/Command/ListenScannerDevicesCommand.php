@@ -24,6 +24,8 @@ use Symfony\Component\Console\Style\SymfonyStyle;
 )]
 final class ListenScannerDevicesCommand extends Command
 {
+    private const int DEVICE_CONFIGURATION_POLL_SECONDS = 5;
+
     public function __construct(
         private readonly ScannerDeviceRepository $deviceRepository,
         private readonly ScannerInputReceiver $scannerInputReceiver,
@@ -35,12 +37,7 @@ final class ListenScannerDevicesCommand extends Command
     protected function execute(InputInterface $input, OutputInterface $output): int
     {
         $style = new SymfonyStyle($input, $output);
-        $devices = $this->deviceRepository->findAllOrderedByName();
-        if ([] === $devices) {
-            $style->warning('No scanner devices configured.');
-
-            return Command::SUCCESS;
-        }
+        $devices = $this->waitForConfiguredDevices($style);
 
         $state = $this->openEvdevStreams($style, $devices);
         if (null === $state) {
@@ -52,6 +49,24 @@ final class ListenScannerDevicesCommand extends Command
         $this->closeEvdevStreams($state);
 
         return Command::SUCCESS;
+    }
+
+    /**
+     * @return list<ScannerDevice>
+     */
+    private function waitForConfiguredDevices(SymfonyStyle $style): array
+    {
+        while (true) {
+            $devices = $this->deviceRepository->findAllOrderedByName();
+            if ([] !== $devices) {
+                return $devices;
+            }
+            $style->warning(\sprintf(
+                'No scanner devices configured. Checking again in %d seconds.',
+                self::DEVICE_CONFIGURATION_POLL_SECONDS,
+            ));
+            sleep(self::DEVICE_CONFIGURATION_POLL_SECONDS);
+        }
     }
 
     /**

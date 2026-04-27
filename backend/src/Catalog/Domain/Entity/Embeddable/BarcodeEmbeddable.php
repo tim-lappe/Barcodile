@@ -22,9 +22,13 @@ final class BarcodeEmbeddable
         $this->type = $barcode->getType();
     }
 
-    public function toValue(): Barcode
+    public function toValue(): ?Barcode
     {
-        $code = $this->code ?? '';
+        if (null === $this->code || '' === trim($this->code)) {
+            return null;
+        }
+
+        $code = $this->code;
         $type = $this->type ?? 'EAN';
 
         return new Barcode($code, $type);
