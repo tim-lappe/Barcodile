@@ -12,7 +12,7 @@ final readonly class TestLabelPrintSettings implements LabelPrintSettings
 {
     public const LABEL_SIZE = 'logger';
     public const LABEL_WIDTH_MM = 62;
-    public const LABEL_HEIGHT_MM = 29;
+    public const LABEL_HEIGHT_MM = 21;
 
     private function __construct(
         public string $labelSize,

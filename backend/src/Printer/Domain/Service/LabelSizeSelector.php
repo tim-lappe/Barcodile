@@ -11,9 +11,9 @@ use App\SharedKernel\Domain\Label\LabelSize;
 final readonly class LabelSizeSelector
 {
     private const QR_CODE_MINIMUM_WIDTH_MM = 62;
-    private const QR_CODE_MINIMUM_HEIGHT_MM = 29;
+    private const QR_CODE_MINIMUM_HEIGHT_MM = 21;
     private const TEXT_MINIMUM_WIDTH_MM = 29;
-    private const TEXT_MINIMUM_HEIGHT_MM = 29;
+    private const TEXT_MINIMUM_HEIGHT_MM = 21;
 
     /**
      * @param list<LabelSize> $availableSizes

@@ -18,7 +18,7 @@ final readonly class BrotherQlPrintSettings implements LabelPrintSettings
         '52x29', '62x29', '62x100', '102x51', '102x152',
         'd12', 'd24', 'd58',
     ];
-    private const CONTINUOUS_LABEL_LENGTH_MM = 29;
+    private const CONTINUOUS_LABEL_LENGTH_MM = 21;
     private const DIE_CUT_LABEL_SIZE_PATTERN = '/^(?<width>\d+)x(?<height>\d+)$/';
     private const ROUND_LABEL_SIZE_PATTERN = '/^d(?<diameter>\d+)$/';
 

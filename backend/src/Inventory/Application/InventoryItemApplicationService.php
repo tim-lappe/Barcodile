@@ -53,7 +53,7 @@ final readonly class InventoryItemApplicationService
     {
         return $this->labelImageGenerator->generate(
             LabelContent::qrCode($this->findInventoryItem($inventoryItemId)->getPublicCode()->value()),
-            new LabelSize(62, 29),
+            new LabelSize(62, 21),
         );
     }
 

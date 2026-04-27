@@ -65,4 +65,9 @@ final class ScannerDeviceRepository extends ServiceEntityRepository
     {
         $this->getEntityManager()->flush();
     }
+
+    public function refresh(ScannerDevice $scannerDevice): void
+    {
+        $this->getEntityManager()->refresh($scannerDevice);
+    }
 }

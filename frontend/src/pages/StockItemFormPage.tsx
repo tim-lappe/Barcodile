@@ -403,7 +403,7 @@ export function StockItemFormPage() {
 										sx={{
 											display: "block",
 											width: "100%",
-											aspectRatio: "2 / 1",
+											aspectRatio: "3 / 1",
 											objectFit: "contain",
 										}}
 									/>
