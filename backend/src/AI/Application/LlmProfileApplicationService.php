@@ -17,6 +17,7 @@ use App\SharedKernel\Domain\Id\LlmProfileId;
 use App\SharedKernel\Infrastructure\Security\AppSecretStringCipher;
 use Symfony\Component\HttpKernel\Exception\BadRequestHttpException;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
+use ValueError;
 
 final readonly class LlmProfileApplicationService
 {
@@ -216,7 +217,7 @@ final readonly class LlmProfileApplicationService
         $trimmed = trim($raw);
         try {
             return LlmProfileKind::from($trimmed);
-        } catch (\ValueError) {
+        } catch (ValueError) {
             throw new BadRequestHttpException('Invalid kind; expected openai or openai_compatible.');
         }
     }
