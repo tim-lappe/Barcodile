@@ -1,0 +1,16 @@
+---
+description: Doctrine migration workflow for schema changes
+alwaysApply: true
+---
+
+# Doctrine Migrations
+
+- Never write Doctrine migrations manually.
+- Always generate migrations with Doctrine's diff command after changing the schema mapping.
+- Only care about schema migrations. Do not add data migration logic while the project is still in development.
+
+Use the backend's Doctrine migration command, for example:
+
+```shell
+php bin/console doctrine:migrations:diff
+```
