@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace App\Scanner\Api\Controller;
 
-use App\Scanner\Api\Dto\PostScannerDeviceRequest;
+use App\Scanner\Application\Dto\PostScannerDeviceRequest;
 use App\Scanner\Application\ScannerDeviceApplicationService;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;

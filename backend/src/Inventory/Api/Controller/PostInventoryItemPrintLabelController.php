@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace App\Inventory\Api\Controller;
 
-use App\Inventory\Api\Dto\PrintInventoryItemLabelRequest;
-use App\Inventory\Api\Dto\PrintInventoryItemLabelResponse;
+use App\Inventory\Application\Dto\PrintInventoryItemLabelRequest;
+use App\Inventory\Application\Dto\PrintInventoryItemLabelResponse;
 use App\Inventory\Application\InventoryItemApplicationService;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;

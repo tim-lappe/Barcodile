@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace App\Picnic\Api\Controller;
 
-use App\Picnic\Api\Dto\PostPicnicRequestTwoFactorCodeRequest;
+use App\Picnic\Application\Dto\PostPicnicRequestTwoFactorCodeRequest;
 use App\Picnic\Application\PicnicIntegrationApplicationService;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;

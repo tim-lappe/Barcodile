@@ -1,0 +1,28 @@
+<?php
+
+declare(strict_types=1);
+
+namespace App\Catalog\Application\Dto;
+
+use Symfony\Component\Serializer\Attribute\SerializedName;
+
+final readonly class CatalogItemResponse
+{
+    /**
+     * @param list<CatalogItemAttributeResponse> $itemAttributes
+     */
+    public function __construct(
+        #[SerializedName('id')]
+        public string $resourceId,
+        public string $name,
+        public ?string $imageFileName,
+        public ?VolumeResponse $volume,
+        public ?WeightResponse $weight,
+        public ?BarcodeResponse $barcode,
+        #[SerializedName('catalogItemAttributes')]
+        public array $itemAttributes,
+        #[SerializedName('linkedPicnicProductId')]
+        public ?string $picnicProductLink,
+    ) {
+    }
+}

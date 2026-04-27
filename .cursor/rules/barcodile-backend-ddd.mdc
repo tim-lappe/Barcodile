@@ -5,29 +5,38 @@ alwaysApply: true
 
 ## Layers
 
-- **Application** (`Application/`): Routes, controllers, validation, session, Symfony-specific wiring (e.g. argument resolvers). Symfony dependencies are allowed here.
-- **Domain** (`Domain/`): Core business logic, as free of framework code as practical. The typical dependency is ORM/Doctrine; avoid pulling in additional framework libraries.
-- **Infrastructure** (`Infrastructure/`): Implementations of domain interfaces and technical details (persistence adapters, HTTP clients, external APIs).
+- **Api** (`Api/`): Inbound HTTP adapters, mostly controllers. They call Application services and may use Symfony HTTP/routing/validation concerns, but must not depend on Infrastructure.
+- **Application** (`Application/`): Use-case orchestration, read models/view helpers, and public request/response/query DTOs under `Application/Dto/`. Symfony dependencies are allowed when they support application-level concerns, but Application must not depend on Infrastructure.
+- **Domain** (`Domain/`): Core business logic, entities, repositories, value objects, domain services, events, ports, and cross-domain adapters. Keep it as free of framework code as practical. The typical dependency is ORM/Doctrine mapping support; avoid pulling in additional framework libraries.
+- **Infrastructure** (`Infrastructure/`): Implementations of domain/application ports and technical details such as Doctrine custom types, listeners, serializer denormalizers, console commands, HTTP clients, external APIs, printers, scanners, and ciphers.
+- **SharedKernel** (`SharedKernel/`): Shared types that are deliberately reused across bounded contexts. Keep it small and apply the same layer names inside it where needed (`SharedKernel/Domain`, `SharedKernel/Application`, `SharedKernel/Infrastructure`).
 
 ## Dependency direction
 
-- Only **Application → Domain ← Infrastructure**. Do not make Domain or Infrastructure depend on Application details; no reversed edges between layers.
+- Within a bounded context, dependencies flow through **Api → Application → Domain ← Infrastructure**.
+- **Application, Domain, and Infrastructure must not depend on Api**.
+- **Application and Api must not depend on Infrastructure**.
+- **Domain must not depend on Api, Application, or Infrastructure**.
 
 ## Bounded contexts / domains
 
 - Each domain owns **its own entities**.
 - **No cross-context database joins** and **no Doctrine collections** across domain boundaries. Reference other contexts only via **IDs** (value objects / typed IDs), not as linked entity graphs.
-- Cross-domain collaboration happens **only through ports and adapters** (`Port/`, `Adapter/` within the relevant domains). **No other direct dependencies** between domains.
+- Cross-domain collaboration happens through explicit domain contracts:
+  - Expose callable contracts from `Domain/Port/` or `Domain/Facade/`.
+  - Put implementations of another context's ports under the implementing context's `Domain/Adapter/`.
+  - Outside `Domain/Adapter/`, a domain must not directly depend on another domain's internals.
 
 ## Identifiers
 
 - **No auto-increment integer IDs** as the primary-key model. Use **dedicated UUID value types** with matching **Doctrine custom types**.
-- Shared ID / base types live under **Domain Shared** and may be used by every domain.
+- Shared ID / base types live under **SharedKernel/Domain** and may be used by every domain.
 
 ## API and frontend
 
 - **Never** serialize domain objects or pass them straight to the frontend.
-- The Application **always** maps to and from **its own request/response DTOs**. **No `mixed`**, **no loose associative arrays** as the public API shape; everything is explicitly typed.
+- Controllers and Application services map to and from **Application DTOs**. API request, response, and query objects live under the owning context's `Application/Dto/`, not `Api/Dto/`.
+- **No `mixed`**, **no loose associative arrays** as the public API shape; everything is explicitly typed.
 
 ## Modeling
 

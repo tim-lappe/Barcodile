@@ -4,12 +4,12 @@ declare(strict_types=1);
 
 namespace App\Picnic\Application;
 
-use App\Picnic\Api\Dto\PatchPicnicSettingsRequest;
-use App\Picnic\Api\Dto\PicnicCatalogProductSummaryResponse;
-use App\Picnic\Api\Dto\PicnicCatalogSearchHitResponse;
-use App\Picnic\Api\Dto\PicnicIntegrationSettingsResponse;
-use App\Picnic\Api\Dto\PostPicnicLoginRequest;
-use App\Picnic\Api\Dto\PostPicnicRequestTwoFactorCodeRequest;
+use App\Picnic\Application\Dto\PatchPicnicSettingsRequest;
+use App\Picnic\Application\Dto\PicnicCatalogProductSummaryResponse;
+use App\Picnic\Application\Dto\PicnicCatalogSearchHitResponse;
+use App\Picnic\Application\Dto\PicnicIntegrationSettingsResponse;
+use App\Picnic\Application\Dto\PostPicnicLoginRequest;
+use App\Picnic\Application\Dto\PostPicnicRequestTwoFactorCodeRequest;
 use App\Picnic\Domain\Entity\PicnicCatalogItemProductLink;
 use App\Picnic\Domain\Entity\PicnicIntegrationSettings;
 use App\Picnic\Domain\Port\PicnicAnonymousAuthenticationPort;

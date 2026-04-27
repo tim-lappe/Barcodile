@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace App\Inventory\Api\Controller;
 
-use App\Inventory\Api\Dto\PostLocationRequest;
+use App\Inventory\Application\Dto\PostLocationRequest;
 use App\Inventory\Application\LocationApplicationService;
 use App\SharedKernel\Application\ApiIri;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;

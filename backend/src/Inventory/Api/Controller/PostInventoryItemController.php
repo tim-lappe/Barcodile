@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace App\Inventory\Api\Controller;
 
-use App\Inventory\Api\Dto\PostInventoryItemRequest;
+use App\Inventory\Application\Dto\PostInventoryItemRequest;
 use App\Inventory\Application\InventoryItemApplicationService;
 use App\SharedKernel\Application\ApiIri;
 use DateTimeImmutable;

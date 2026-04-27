@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace App\Infrastructure\Serializer;
 
-use App\Picnic\Api\Dto\PatchPicnicSettingsRequest;
+use App\Picnic\Application\Dto\PatchPicnicSettingsRequest;
 use Symfony\Component\HttpKernel\Exception\BadRequestHttpException;
 use Symfony\Component\Serializer\Exception\NotNormalizableValueException;
 use Symfony\Component\Serializer\Normalizer\DenormalizerInterface;

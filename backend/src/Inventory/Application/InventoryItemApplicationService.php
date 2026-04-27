@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace App\Inventory\Application;
 
 use App\Catalog\Application\CatalogItemApplicationService;
-use App\Inventory\Api\Dto\InventoryItemResponse;
+use App\Inventory\Application\Dto\InventoryItemResponse;
 use App\Inventory\Domain\Entity\InventoryItem;
 use App\Inventory\Domain\Entity\Location;
 use App\Inventory\Domain\Repository\InventoryItemRepository;

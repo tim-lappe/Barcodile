@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace App\Inventory\Api\Controller;
 
-use App\Inventory\Api\Dto\PostCartStockAutomationRuleRequest;
 use App\Inventory\Application\CartStockRuleApplicationService;
+use App\Inventory\Application\Dto\PostCartStockAutomationRuleRequest;
 use App\SharedKernel\Application\ApiIri;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;

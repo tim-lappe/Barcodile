@@ -4,12 +4,12 @@ declare(strict_types=1);
 
 namespace App\Catalog\Application;
 
-use App\Catalog\Api\Dto\CatalogItemAttributeRowInput;
-use App\Catalog\Api\Dto\CatalogItemImageGetResult;
-use App\Catalog\Api\Dto\CatalogItemResponse;
-use App\Catalog\Api\Dto\PatchCatalogItemRequest;
-use App\Catalog\Api\Dto\PicnicCatalogProductHintResponse;
-use App\Catalog\Api\Dto\PostCatalogItemRequest;
+use App\Catalog\Application\Dto\CatalogItemAttributeRowInput;
+use App\Catalog\Application\Dto\CatalogItemImageGetResult;
+use App\Catalog\Application\Dto\CatalogItemResponse;
+use App\Catalog\Application\Dto\PatchCatalogItemRequest;
+use App\Catalog\Application\Dto\PicnicCatalogProductHintResponse;
+use App\Catalog\Application\Dto\PostCatalogItemRequest;
 use App\Catalog\Domain\CatalogImageContentType;
 use App\Catalog\Domain\Entity\CatalogItem;
 use App\Catalog\Domain\Entity\CatalogItemAttribute;

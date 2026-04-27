@@ -4,9 +4,9 @@ declare(strict_types=1);
 
 namespace App\Scanner\Application;
 
-use App\Scanner\Api\Dto\InputDeviceOptionResponse;
-use App\Scanner\Api\Dto\PatchScannerDeviceAutomationsRequest;
-use App\Scanner\Api\Dto\ScannerDeviceResponse;
+use App\Scanner\Application\Dto\InputDeviceOptionResponse;
+use App\Scanner\Application\Dto\PatchScannerDeviceAutomationsRequest;
+use App\Scanner\Application\Dto\ScannerDeviceResponse;
 use App\Scanner\Domain\Entity\ScannerDevice;
 use App\Scanner\Domain\Port\InputDeviceListingPort;
 use App\Scanner\Domain\Repository\ScannerDeviceRepository;

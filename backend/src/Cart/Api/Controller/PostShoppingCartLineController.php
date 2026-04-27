@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace App\Cart\Api\Controller;
 
-use App\Cart\Api\Dto\PostShoppingCartLineRequest;
+use App\Cart\Application\Dto\PostShoppingCartLineRequest;
 use App\Cart\Application\ShoppingCartApplicationService;
 use App\SharedKernel\Application\ApiIri;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;

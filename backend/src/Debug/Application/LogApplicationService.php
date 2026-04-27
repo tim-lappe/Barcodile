@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace App\Debug\Application;
 
-use App\Debug\Api\Dto\LogEntryResponse;
-use App\Debug\Api\Dto\LogListResponse;
+use App\Debug\Application\Dto\LogEntryResponse;
+use App\Debug\Application\Dto\LogListResponse;
 use SplFileObject;
 
 final readonly class LogApplicationService

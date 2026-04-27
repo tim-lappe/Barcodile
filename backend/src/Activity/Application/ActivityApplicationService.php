@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace App\Activity\Application;
 
-use App\Activity\Api\Dto\ActivityListResponse;
-use App\Activity\Api\Dto\PersistedDomainEventItemResponse;
+use App\Activity\Application\Dto\ActivityListResponse;
+use App\Activity\Application\Dto\PersistedDomainEventItemResponse;
 use App\SharedKernel\Domain\Entity\PersistedDomainEvent;
 use App\SharedKernel\Domain\Repository\PersistedDomainEventRepository;
 

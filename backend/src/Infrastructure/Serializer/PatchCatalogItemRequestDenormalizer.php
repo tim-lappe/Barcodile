@@ -4,12 +4,12 @@ declare(strict_types=1);
 
 namespace App\Infrastructure\Serializer;
 
-use App\Catalog\Api\Dto\CatalogBarcodeInput;
-use App\Catalog\Api\Dto\CatalogItemAttributeRowInput;
-use App\Catalog\Api\Dto\CatalogVolumeInput;
-use App\Catalog\Api\Dto\CatalogWeightInput;
-use App\Catalog\Api\Dto\PatchCatalogItemRelationsPatch;
-use App\Catalog\Api\Dto\PatchCatalogItemRequest;
+use App\Catalog\Application\Dto\CatalogBarcodeInput;
+use App\Catalog\Application\Dto\CatalogItemAttributeRowInput;
+use App\Catalog\Application\Dto\CatalogVolumeInput;
+use App\Catalog\Application\Dto\CatalogWeightInput;
+use App\Catalog\Application\Dto\PatchCatalogItemRelationsPatch;
+use App\Catalog\Application\Dto\PatchCatalogItemRequest;
 use Symfony\Component\HttpKernel\Exception\BadRequestHttpException;
 use Symfony\Component\Serializer\Exception\NotNormalizableValueException;
 use Symfony\Component\Serializer\Normalizer\DenormalizerInterface;

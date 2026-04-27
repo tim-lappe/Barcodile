@@ -92,6 +92,7 @@
             "@phparkitect",
             "@cs-fixer"
         ],
+        "fix": "@qa:fix",
         "qa:fix": [
             "@cs-fixer:fix"
         ]

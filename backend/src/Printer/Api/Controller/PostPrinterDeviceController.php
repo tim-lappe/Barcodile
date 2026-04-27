@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace App\Printer\Api\Controller;
 
-use App\Printer\Api\Dto\PostPrinterDeviceRequest;
+use App\Printer\Application\Dto\PostPrinterDeviceRequest;
 use App\Printer\Application\PrinterDeviceApplicationService;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;

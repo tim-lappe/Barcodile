@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace App\Inventory\Application;
 
-use App\Inventory\Api\Dto\LocationResponse;
+use App\Inventory\Application\Dto\LocationResponse;
 use App\Inventory\Domain\Entity\Location;
 use App\Inventory\Domain\Repository\LocationRepository;
 use App\SharedKernel\Domain\Id\LocationId;

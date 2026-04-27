@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace App\Inventory\Api\Controller;
 
-use App\Inventory\Api\Dto\PatchCartStockAutomationRuleRequest;
 use App\Inventory\Application\CartStockRuleApplicationService;
+use App\Inventory\Application\Dto\PatchCartStockAutomationRuleRequest;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpKernel\Attribute\MapRequestPayload;

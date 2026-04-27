@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace App\Inventory\Application;
 
-use App\Inventory\Api\Dto\LocationResponse;
+use App\Inventory\Application\Dto\LocationResponse;
 use App\SharedKernel\Application\ApiIri;
 
 final readonly class LocationResponseMapper

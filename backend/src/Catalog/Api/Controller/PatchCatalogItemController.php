@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace App\Catalog\Api\Controller;
 
-use App\Catalog\Api\Dto\PatchCatalogItemRequest;
 use App\Catalog\Application\CatalogItemApplicationService;
+use App\Catalog\Application\Dto\PatchCatalogItemRequest;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpKernel\Attribute\MapRequestPayload;

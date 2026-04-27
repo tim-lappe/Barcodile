@@ -26,6 +26,10 @@ return static function (Config $config): void {
         static fn (string $contextName): string => 'App\\'.$contextName,
         $contextNames
     );
+    $apiNamespaces = array_map(
+        static fn (string $contextNamespace): string => $contextNamespace.'\Api',
+        $contextNamespaces
+    );
 
     $rules = [];
 
@@ -99,6 +103,15 @@ return static function (Config $config): void {
                 array_merge([$contextNamespace.'\Infrastructure'], $otherInfrastructureNamespaces)
             ))
             ->because('API adapters may call Application services but must not depend on Infrastructure');
+
+        $rules[] = Rule::allClasses()
+            ->that(new ResideInOneOfTheseNamespaces(
+                $contextNamespace.'\Application',
+                $domainNamespace,
+                $contextNamespace.'\Infrastructure'
+            ))
+            ->should(new NotDependsOnTheseNamespaces($apiNamespaces))
+            ->because('Application, Domain, and Infrastructure layers must not depend on API adapters');
 
         $rules[] = Rule::allClasses()
             ->that(new ResideInOneOfTheseNamespaces($adapterNamespace))

@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace App\Infrastructure\Serializer;
 
-use App\Inventory\Api\Dto\PostCartStockAutomationRuleRequest;
+use App\Inventory\Application\Dto\PostCartStockAutomationRuleRequest;
 use App\SharedKernel\Application\HttpJsonField;
 use Symfony\Component\HttpKernel\Exception\BadRequestHttpException;
 use Symfony\Component\Serializer\Exception\NotNormalizableValueException;

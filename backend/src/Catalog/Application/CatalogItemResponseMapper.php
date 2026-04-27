@@ -4,11 +4,11 @@ declare(strict_types=1);
 
 namespace App\Catalog\Application;
 
-use App\Catalog\Api\Dto\BarcodeResponse;
-use App\Catalog\Api\Dto\CatalogItemAttributeResponse;
-use App\Catalog\Api\Dto\CatalogItemResponse;
-use App\Catalog\Api\Dto\VolumeResponse;
-use App\Catalog\Api\Dto\WeightResponse;
+use App\Catalog\Application\Dto\BarcodeResponse;
+use App\Catalog\Application\Dto\CatalogItemAttributeResponse;
+use App\Catalog\Application\Dto\CatalogItemResponse;
+use App\Catalog\Application\Dto\VolumeResponse;
+use App\Catalog\Application\Dto\WeightResponse;
 
 final readonly class CatalogItemResponseMapper
 {

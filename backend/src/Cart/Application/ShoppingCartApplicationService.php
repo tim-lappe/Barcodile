@@ -4,9 +4,9 @@ declare(strict_types=1);
 
 namespace App\Cart\Application;
 
-use App\Cart\Api\Dto\CartProviderIndexEntryResponse;
-use App\Cart\Api\Dto\ShoppingCartLineResponse;
-use App\Cart\Api\Dto\ShoppingCartResponse;
+use App\Cart\Application\Dto\CartProviderIndexEntryResponse;
+use App\Cart\Application\Dto\ShoppingCartLineResponse;
+use App\Cart\Application\Dto\ShoppingCartResponse;
 use App\Cart\Domain\Entity\ShoppingCart;
 use App\Cart\Domain\Entity\ShoppingCartLine;
 use App\Cart\Domain\Port\CartInterface;

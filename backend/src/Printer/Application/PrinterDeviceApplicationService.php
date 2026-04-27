@@ -4,10 +4,10 @@ declare(strict_types=1);
 
 namespace App\Printer\Application;
 
-use App\Printer\Api\Dto\DiscoveredPrinterOptionResponse;
-use App\Printer\Api\Dto\PostPrinterDeviceRequest;
-use App\Printer\Api\Dto\PrinterDeviceResponse;
-use App\Printer\Api\Dto\PrinterDriverListItemResponse;
+use App\Printer\Application\Dto\DiscoveredPrinterOptionResponse;
+use App\Printer\Application\Dto\PostPrinterDeviceRequest;
+use App\Printer\Application\Dto\PrinterDeviceResponse;
+use App\Printer\Application\Dto\PrinterDriverListItemResponse;
 use App\Printer\Domain\Dto\ColorModePrintSettingOption;
 use App\Printer\Domain\Dto\LabelPrinterConnection;
 use App\Printer\Domain\Dto\LabelPrintSettingOptions;

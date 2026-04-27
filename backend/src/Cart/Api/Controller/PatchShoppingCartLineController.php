@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace App\Cart\Api\Controller;
 
-use App\Cart\Api\Dto\PatchShoppingCartLineRequest;
+use App\Cart\Application\Dto\PatchShoppingCartLineRequest;
 use App\Cart\Application\ShoppingCartApplicationService;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Response;

@@ -6,8 +6,8 @@ namespace App\Inventory\Application;
 
 use App\Cart\Application\ShoppingCartApplicationService;
 use App\Catalog\Application\CatalogItemApplicationService;
-use App\Inventory\Api\Dto\CartStockAutomationRuleResponse;
-use App\Inventory\Api\Dto\PatchCartStockAutomationRuleRequest;
+use App\Inventory\Application\Dto\CartStockAutomationRuleResponse;
+use App\Inventory\Application\Dto\PatchCartStockAutomationRuleRequest;
 use App\Inventory\Domain\Entity\CartStockAutomationRule;
 use App\Inventory\Domain\Repository\CartStockAutomationRuleRepository;
 use App\SharedKernel\Application\ApiIri;
