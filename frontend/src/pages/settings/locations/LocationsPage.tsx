@@ -21,8 +21,8 @@ import {
 } from "@mui/material";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { Link as RouterLink } from "react-router-dom";
-import { deleteLocation, fetchLocations } from "../api/barcodileClient";
-import { type LocationDto, parentIdOf } from "../domain/barcodile";
+import { deleteLocation, fetchLocations } from "../../../api/barcodileClient";
+import { type LocationDto, parentIdOf } from "../../../domain/barcodile";
 
 const paperSx = {
 	p: { xs: 2.5, sm: 3.5 },
@@ -62,9 +62,9 @@ export function LocationsPage() {
 	function parentName(row: LocationDto): string {
 		const pid = parentIdOf(row);
 		if (pid == null) {
-			return "—";
+			return "-";
 		}
-		return byId.get(pid)?.name ?? "—";
+		return byId.get(pid)?.name ?? "-";
 	}
 
 	async function confirmDelete() {
@@ -103,7 +103,7 @@ export function LocationsPage() {
 					variant="contained"
 					startIcon={<AddIcon />}
 					component={RouterLink}
-					to="/locations/new"
+					to="/settings/locations/new"
 				>
 					Add location
 				</Button>
@@ -122,7 +122,7 @@ export function LocationsPage() {
 				</Alert>
 			)}
 			{loading ? (
-				<Typography color="text.secondary">Loading…</Typography>
+				<Typography color="text.secondary">Loading...</Typography>
 			) : (
 				<TableContainer
 					sx={{
@@ -153,7 +153,7 @@ export function LocationsPage() {
 											aria-label={`Edit ${row.name}`}
 											size="small"
 											component={RouterLink}
-											to={`/locations/${row.id}/edit`}
+											to={`/settings/locations/${row.id}/edit`}
 										>
 											<EditOutlinedIcon fontSize="small" />
 										</IconButton>
@@ -193,8 +193,8 @@ export function LocationsPage() {
 				<DialogContent>
 					<Typography variant="body2">
 						Delete <strong>{deleteTarget?.name}</strong>? Inventory lines at
-						this location are unlinked; sub-locations become top-level (parent
-						cleared).
+						this location are unlinked; sub-locations become top-level and lose
+						their parent link.
 					</Typography>
 				</DialogContent>
 				<DialogActions sx={{ px: 3, pb: 2 }}>
@@ -207,7 +207,7 @@ export function LocationsPage() {
 						onClick={() => void confirmDelete()}
 						disabled={deleting}
 					>
-						{deleting ? "Deleting…" : "Delete"}
+						{deleting ? "Deleting..." : "Delete"}
 					</Button>
 				</DialogActions>
 			</Dialog>

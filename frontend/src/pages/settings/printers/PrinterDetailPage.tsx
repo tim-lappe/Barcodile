@@ -13,8 +13,8 @@ import { Link as RouterLink, useParams } from "react-router-dom";
 import {
 	fetchPrinterDevice,
 	postPrinterTestPrint,
-} from "../api/barcodileClient";
-import type { PrinterDeviceDto } from "../domain/barcodile";
+} from "../../../api/barcodileClient";
+import type { PrinterDeviceDto } from "../../../domain/barcodile";
 
 const paperSx = {
 	p: { xs: 2.5, sm: 3.5 },
@@ -81,7 +81,7 @@ export function PrinterDetailPage() {
 		<Paper elevation={0} sx={paperSx}>
 			<Button
 				component={RouterLink}
-				to="/printers"
+				to="/settings/printers"
 				startIcon={<ArrowBackIcon />}
 				sx={{ mb: 2 }}
 			>
@@ -90,7 +90,7 @@ export function PrinterDetailPage() {
 			{loading ? (
 				<Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
 					<CircularProgress size={28} />
-					<Typography color="text.secondary">Loading…</Typography>
+					<Typography color="text.secondary">Loading...</Typography>
 				</Box>
 			) : error && !device ? (
 				<Alert severity="error">{error}</Alert>
@@ -174,7 +174,7 @@ export function PrinterDetailPage() {
 						onClick={() => void onTestPrint()}
 						disabled={printing}
 					>
-						{printing ? "Printing…" : "Print test label"}
+						{printing ? "Printing..." : "Print test label"}
 					</Button>
 				</>
 			) : null}

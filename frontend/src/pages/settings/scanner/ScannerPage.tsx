@@ -31,11 +31,11 @@ import {
 	fetchScannerDeviceInputOptions,
 	fetchScannerDevices,
 	postScannerDevice,
-} from "../api/barcodileClient";
+} from "../../../api/barcodileClient";
 import type {
 	InputDeviceOptionDto,
 	ScannerDeviceDto,
-} from "../domain/barcodile";
+} from "../../../domain/barcodile";
 
 const paperSx = {
 	p: { xs: 2.5, sm: 3.5 },
@@ -46,7 +46,7 @@ const paperSx = {
 	mx: "auto",
 } as const;
 
-export function DevicesPage() {
+export function ScannerPage() {
 	const [rows, setRows] = useState<ScannerDeviceDto[]>([]);
 	const [loading, setLoading] = useState(true);
 	const [listError, setListError] = useState<string | null>(null);
@@ -155,14 +155,14 @@ export function DevicesPage() {
 				}}
 			>
 				<Typography variant="h5" sx={{ fontWeight: 700 }}>
-					Devices
+					Scanner
 				</Typography>
 				<Button
 					variant="contained"
 					startIcon={<AddIcon />}
 					onClick={() => void openAdd()}
 				>
-					Add device
+					Add scanner
 				</Button>
 			</Box>
 			<Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
@@ -180,7 +180,7 @@ export function DevicesPage() {
 				</Alert>
 			)}
 			{loading ? (
-				<Typography color="text.secondary">Loading…</Typography>
+				<Typography color="text.secondary">Loading...</Typography>
 			) : (
 				<TableContainer
 					sx={{
@@ -193,7 +193,9 @@ export function DevicesPage() {
 						<TableHead>
 							<TableRow>
 								<TableCell sx={{ fontWeight: 700 }}>Name</TableCell>
-								<TableCell sx={{ fontWeight: 700 }}>Device identifier</TableCell>
+								<TableCell sx={{ fontWeight: 700 }}>
+									Device identifier
+								</TableCell>
 								<TableCell align="right" sx={{ fontWeight: 700, width: 120 }}>
 									Actions
 								</TableCell>
@@ -204,7 +206,7 @@ export function DevicesPage() {
 								<TableRow key={row.id} hover>
 									<TableCell>
 										<RouterLink
-											to={`/devices/${row.id}`}
+											to={`/settings/scanner/${row.id}`}
 											style={{
 												color: "inherit",
 												fontWeight: 600,
@@ -240,7 +242,7 @@ export function DevicesPage() {
 								<TableRow>
 									<TableCell colSpan={3}>
 										<Typography variant="body2" color="text.secondary">
-											No devices yet.
+											No scanners yet.
 										</Typography>
 									</TableCell>
 								</TableRow>
@@ -259,7 +261,7 @@ export function DevicesPage() {
 				fullWidth
 				maxWidth="sm"
 			>
-				<DialogTitle>Add scanner device</DialogTitle>
+				<DialogTitle>Add scanner</DialogTitle>
 				<DialogContent>
 					{addError && (
 						<Alert severity="error" sx={{ mb: 2 }}>
@@ -267,7 +269,7 @@ export function DevicesPage() {
 						</Alert>
 					)}
 					{optionsLoading ? (
-						<Typography color="text.secondary">Loading devices…</Typography>
+						<Typography color="text.secondary">Loading devices...</Typography>
 					) : (
 						<>
 							{options.length === 0 && (
@@ -286,7 +288,10 @@ export function DevicesPage() {
 									disabled={options.length === 0}
 								>
 									{options.map((o) => (
-										<MenuItem key={o.deviceIdentifier} value={o.deviceIdentifier}>
+										<MenuItem
+											key={o.deviceIdentifier}
+											value={o.deviceIdentifier}
+										>
 											{o.label}
 										</MenuItem>
 									))}
@@ -312,7 +317,7 @@ export function DevicesPage() {
 						onClick={() => void submitAdd()}
 						disabled={saving || optionsLoading || options.length === 0}
 					>
-						{saving ? "Saving…" : "Save"}
+						{saving ? "Saving..." : "Save"}
 					</Button>
 				</DialogActions>
 			</Dialog>
@@ -324,7 +329,7 @@ export function DevicesPage() {
 					paper: { sx: { borderRadius: 2 } },
 				}}
 			>
-				<DialogTitle>Delete device</DialogTitle>
+				<DialogTitle>Delete scanner</DialogTitle>
 				<DialogContent>
 					<Typography variant="body2">
 						Remove <strong>{deleteTarget?.name}</strong> from the list?
@@ -340,7 +345,7 @@ export function DevicesPage() {
 						onClick={() => void confirmDelete()}
 						disabled={deleting}
 					>
-						{deleting ? "Deleting…" : "Delete"}
+						{deleting ? "Deleting..." : "Delete"}
 					</Button>
 				</DialogActions>
 			</Dialog>

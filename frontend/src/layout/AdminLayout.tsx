@@ -1,7 +1,7 @@
+import HistoryOutlinedIcon from "@mui/icons-material/HistoryOutlined";
 import LoginIcon from "@mui/icons-material/Login";
 import LogoutIcon from "@mui/icons-material/Logout";
 import PersonOutlinedIcon from "@mui/icons-material/PersonOutlined";
-import HistoryOutlinedIcon from "@mui/icons-material/HistoryOutlined";
 import SettingsOutlinedIcon from "@mui/icons-material/SettingsOutlined";
 import {
 	AppBar,
@@ -20,31 +20,21 @@ import {
 import { type ReactNode, useState } from "react";
 import { Link as RouterLink, useLocation, useNavigate } from "react-router-dom";
 
-export type AdminNavKey =
-	| "dashboard"
-	| "catalogItems"
-	| "locations"
-	| "stock"
-	| "carts"
-	| "devices"
-	| "printers";
+export type AdminNavKey = "dashboard" | "catalogItems" | "stock" | "carts";
 
 const NAV_ITEMS: { key: AdminNavKey; label: string }[] = [
 	{ key: "dashboard", label: "Dashboard" },
 	{ key: "catalogItems", label: "Catalog items" },
-	{ key: "locations", label: "Locations" },
 	{ key: "stock", label: "Inventory" },
 	{ key: "carts", label: "Carts" },
-	{ key: "devices", label: "Devices" },
-	{ key: "printers", label: "Printers" },
 ];
 
-function navKeyFromPath(pathname: string): AdminNavKey {
+function navKeyFromPath(pathname: string): AdminNavKey | null {
+	if (pathname === "/") {
+		return "dashboard";
+	}
 	if (pathname.startsWith("/catalog-items")) {
 		return "catalogItems";
-	}
-	if (pathname.startsWith("/locations")) {
-		return "locations";
 	}
 	if (pathname.startsWith("/inventory")) {
 		return "stock";
@@ -52,13 +42,7 @@ function navKeyFromPath(pathname: string): AdminNavKey {
 	if (pathname.startsWith("/carts")) {
 		return "carts";
 	}
-	if (pathname.startsWith("/devices")) {
-		return "devices";
-	}
-	if (pathname.startsWith("/printers")) {
-		return "printers";
-	}
-	return "dashboard";
+	return null;
 }
 
 type AdminLayoutProps = {
@@ -69,21 +53,18 @@ export function AdminLayout({ children }: AdminLayoutProps) {
 	const navigate = useNavigate();
 	const { pathname } = useLocation();
 	const activeNav = navKeyFromPath(pathname);
-	const activityLinkActive = pathname === "/activity" || pathname.startsWith("/activity/");
+	const activityLinkActive =
+		pathname === "/activity" || pathname.startsWith("/activity/");
+	const settingsLinkActive =
+		pathname === "/settings" || pathname.startsWith("/settings/");
 
 	function goNav(key: AdminNavKey) {
 		if (key === "dashboard") {
 			navigate("/");
 		} else if (key === "catalogItems") {
 			navigate("/catalog-items");
-		} else if (key === "locations") {
-			navigate("/locations");
 		} else if (key === "carts") {
 			navigate("/carts");
-		} else if (key === "devices") {
-			navigate("/devices");
-		} else if (key === "printers") {
-			navigate("/printers");
 		} else {
 			navigate("/inventory");
 		}
@@ -226,7 +207,19 @@ export function AdminLayout({ children }: AdminLayoutProps) {
 							size="medium"
 							component={RouterLink}
 							to="/settings"
-							sx={{ color: "rgba(255,255,255,0.85)" }}
+							sx={{
+								color: settingsLinkActive
+									? "common.white"
+									: "rgba(255,255,255,0.85)",
+								bgcolor: settingsLinkActive
+									? "rgba(255,255,255,0.12)"
+									: "transparent",
+								"&:hover": {
+									bgcolor: settingsLinkActive
+										? "rgba(255,255,255,0.16)"
+										: "rgba(255,255,255,0.08)",
+								},
+							}}
 							aria-label="Settings"
 						>
 							<SettingsOutlinedIcon />

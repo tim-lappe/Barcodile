@@ -32,12 +32,12 @@ import {
 	fetchPrinterDiscoveryOptions,
 	fetchPrinterDrivers,
 	postPrinterDevice,
-} from "../api/barcodileClient";
+} from "../../../api/barcodileClient";
 import type {
 	DiscoveredPrinterOptionDto,
 	PrinterDeviceDto,
 	PrinterDriverDto,
-} from "../domain/barcodile";
+} from "../../../domain/barcodile";
 
 const paperSx = {
 	p: { xs: 2.5, sm: 3.5 },
@@ -356,7 +356,7 @@ export function PrintersPage() {
 				</Alert>
 			)}
 			{loading ? (
-				<Typography color="text.secondary">Loading…</Typography>
+				<Typography color="text.secondary">Loading...</Typography>
 			) : (
 				<TableContainer
 					sx={{
@@ -382,7 +382,7 @@ export function PrintersPage() {
 								<TableRow key={row.id} hover>
 									<TableCell>
 										<RouterLink
-											to={`/printers/${row.id}`}
+											to={`/settings/printers/${row.id}`}
 											style={{
 												color: "inherit",
 												fontWeight: 600,
@@ -474,7 +474,7 @@ export function PrintersPage() {
 					)}
 					{optionsLoading ? (
 						<Typography color="text.secondary">
-							Discovering printers…
+							Discovering printers...
 						</Typography>
 					) : (
 						<>
@@ -558,7 +558,7 @@ export function PrintersPage() {
 						onClick={() => void submitAdd()}
 						disabled={saving || optionsLoading || !canSave}
 					>
-						{saving ? "Saving…" : "Save"}
+						{saving ? "Saving..." : "Save"}
 					</Button>
 				</DialogActions>
 			</Dialog>
@@ -586,7 +586,7 @@ export function PrintersPage() {
 						onClick={() => void confirmDelete()}
 						disabled={deleting}
 					>
-						{deleting ? "Deleting…" : "Delete"}
+						{deleting ? "Deleting..." : "Delete"}
 					</Button>
 				</DialogActions>
 			</Dialog>

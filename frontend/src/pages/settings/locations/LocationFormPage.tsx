@@ -22,13 +22,13 @@ import {
 	fetchLocation,
 	fetchLocations,
 	updateLocation,
-} from "../api/barcodileClient";
+} from "../../../api/barcodileClient";
 import {
 	forbiddenParentIdsForEdit,
 	type LocationDto,
 	type LocationId,
 	parentIdOf,
-} from "../domain/barcodile";
+} from "../../../domain/barcodile";
 
 const shellSx = {
 	maxWidth: 920,
@@ -123,7 +123,7 @@ export function LocationFormPage() {
 			} else {
 				await createLocation({ name, parentId: parentId ?? undefined });
 			}
-			navigate("/locations");
+			navigate("/settings/locations");
 		} catch (e) {
 			setFormError(e instanceof Error ? e.message : "Save failed");
 		} finally {
@@ -134,7 +134,7 @@ export function LocationFormPage() {
 	if (loading) {
 		return (
 			<Box sx={shellSx}>
-				<Typography color="text.secondary">Loading…</Typography>
+				<Typography color="text.secondary">Loading...</Typography>
 			</Box>
 		);
 	}
@@ -147,7 +147,7 @@ export function LocationFormPage() {
 				</Alert>
 				<Button
 					component={RouterLink}
-					to="/locations"
+					to="/settings/locations"
 					startIcon={<ArrowBackIcon />}
 				>
 					Back to locations
@@ -161,7 +161,7 @@ export function LocationFormPage() {
 			<Breadcrumbs sx={{ mb: 2 }} aria-label="Breadcrumb">
 				<Link
 					component={RouterLink}
-					to="/locations"
+					to="/settings/locations"
 					underline="hover"
 					color="inherit"
 					variant="body2"
@@ -176,7 +176,7 @@ export function LocationFormPage() {
 			<Box sx={{ display: "flex", alignItems: "flex-start", gap: 1.5, mb: 2 }}>
 				<IconButton
 					component={RouterLink}
-					to="/locations"
+					to="/settings/locations"
 					aria-label="Back to locations"
 					sx={{ mt: 0.25 }}
 				>
@@ -250,9 +250,13 @@ export function LocationFormPage() {
 					</FormControl>
 					<Box sx={{ display: "flex", gap: 1.5, flexWrap: "wrap", pt: 1 }}>
 						<Button type="submit" variant="contained" disabled={saving}>
-							{saving ? "Saving…" : "Save"}
+							{saving ? "Saving..." : "Save"}
 						</Button>
-						<Button component={RouterLink} to="/locations" disabled={saving}>
+						<Button
+							component={RouterLink}
+							to="/settings/locations"
+							disabled={saving}
+						>
 							Cancel
 						</Button>
 					</Box>

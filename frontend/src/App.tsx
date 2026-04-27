@@ -5,22 +5,22 @@ import { readJsonArray } from "./api/collection";
 import type { CatalogItemDto, InventoryItemDto } from "./domain/barcodile";
 import { AdminLayout } from "./layout/AdminLayout";
 import { SettingsLayout } from "./layout/SettingsLayout";
+import { ActivityPage } from "./pages/ActivityPage";
 import { CatalogItemFormPage } from "./pages/CatalogItemFormPage";
 import { CatalogItemsPage } from "./pages/CatalogItemsPage";
 import { DashboardPage } from "./pages/DashboardPage";
-import { ActivityPage } from "./pages/ActivityPage";
-import { DeviceDetailPage } from "./pages/DeviceDetailPage";
-import { DevicesPage } from "./pages/DevicesPage";
-import { PrinterDetailPage } from "./pages/PrinterDetailPage";
-import { PrintersPage } from "./pages/PrintersPage";
-import { LocationFormPage } from "./pages/LocationFormPage";
-import { LocationsPage } from "./pages/LocationsPage";
 import { ShoppingCartDetailPage } from "./pages/ShoppingCartDetailPage";
 import { ShoppingCartNewPage } from "./pages/ShoppingCartNewPage";
 import { ShoppingCartsPage } from "./pages/ShoppingCartsPage";
 import { StockItemFormPage } from "./pages/StockItemFormPage";
 import { StockPage } from "./pages/StockPage";
+import { LocationFormPage } from "./pages/settings/locations/LocationFormPage";
+import { LocationsPage } from "./pages/settings/locations/LocationsPage";
 import { PicnicSettingsPage } from "./pages/settings/PicnicSettingsPage";
+import { PrinterDetailPage } from "./pages/settings/printers/PrinterDetailPage";
+import { PrintersPage } from "./pages/settings/printers/PrintersPage";
+import { ScannerDetailPage } from "./pages/settings/scanner/ScannerDetailPage";
+import { ScannerPage } from "./pages/settings/scanner/ScannerPage";
 import { PicnicConnectionProvider } from "./picnic/PicnicConnectionProvider";
 
 function CatalogItemFormRoute() {
@@ -76,10 +76,45 @@ export default function App() {
 			<AdminLayout>
 				<Routes>
 					<Route path="/settings/*" element={<SettingsLayout />}>
-						<Route index element={<Navigate to="picnic" replace />} />
+						<Route index element={<Navigate to="scanner" replace />} />
+						<Route path="scanner" element={<ScannerPage />} />
+						<Route path="scanner/:id" element={<ScannerDetailPage />} />
+						<Route path="printers" element={<PrintersPage />} />
+						<Route path="printers/:id" element={<PrinterDetailPage />} />
+						<Route path="locations" element={<LocationsPage />} />
+						<Route path="locations/new" element={<LocationFormPage />} />
+						<Route path="locations/:id/edit" element={<LocationFormPage />} />
 						<Route path="picnic" element={<PicnicSettingsPage />} />
 					</Route>
 					<Route path="/picnic/*" element={<Navigate to="/carts" replace />} />
+					<Route
+						path="/locations"
+						element={<Navigate to="/settings/locations" replace />}
+					/>
+					<Route
+						path="/locations/new"
+						element={<Navigate to="/settings/locations/new" replace />}
+					/>
+					<Route
+						path="/locations/:id/edit"
+						element={<NavigateLocationEditToSettings />}
+					/>
+					<Route
+						path="/devices"
+						element={<Navigate to="/settings/scanner" replace />}
+					/>
+					<Route
+						path="/devices/:id"
+						element={<NavigateScannerDetailToSettings />}
+					/>
+					<Route
+						path="/printers"
+						element={<Navigate to="/settings/printers" replace />}
+					/>
+					<Route
+						path="/printers/:id"
+						element={<NavigatePrinterDetailToSettings />}
+					/>
 					<Route
 						path="/"
 						element={
@@ -97,22 +132,30 @@ export default function App() {
 						path="/catalog-items/:id/edit"
 						element={<CatalogItemFormRoute />}
 					/>
-					<Route path="/locations" element={<LocationsPage />} />
-					<Route path="/locations/new" element={<LocationFormPage />} />
-					<Route path="/locations/:id/edit" element={<LocationFormPage />} />
 					<Route path="/inventory" element={<StockPage />} />
 					<Route path="/inventory/new" element={<StockItemFormPage />} />
 					<Route path="/inventory/:id/edit" element={<StockItemFormPage />} />
 					<Route path="/carts" element={<ShoppingCartsPage />} />
 					<Route path="/carts/new" element={<ShoppingCartNewPage />} />
 					<Route path="/carts/:id" element={<ShoppingCartDetailPage />} />
-					<Route path="/devices" element={<DevicesPage />} />
-					<Route path="/devices/:id" element={<DeviceDetailPage />} />
-					<Route path="/printers" element={<PrintersPage />} />
-					<Route path="/printers/:id" element={<PrinterDetailPage />} />
 					<Route path="/activity" element={<ActivityPage />} />
 				</Routes>
 			</AdminLayout>
 		</PicnicConnectionProvider>
 	);
+}
+
+function NavigateScannerDetailToSettings() {
+	const { id } = useParams();
+	return <Navigate to={`/settings/scanner/${id ?? ""}`} replace />;
+}
+
+function NavigatePrinterDetailToSettings() {
+	const { id } = useParams();
+	return <Navigate to={`/settings/printers/${id ?? ""}`} replace />;
+}
+
+function NavigateLocationEditToSettings() {
+	const { id } = useParams();
+	return <Navigate to={`/settings/locations/${id ?? ""}/edit`} replace />;
 }

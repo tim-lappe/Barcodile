@@ -18,8 +18,8 @@ import { Link as RouterLink, useParams } from "react-router-dom";
 import {
 	fetchScannerDevice,
 	patchScannerDeviceAutomations,
-} from "../api/barcodileClient";
-import type { ScannerDeviceDto } from "../domain/barcodile";
+} from "../../../api/barcodileClient";
+import type { ScannerDeviceDto } from "../../../domain/barcodile";
 
 const paperSx = {
 	p: { xs: 2.5, sm: 3.5 },
@@ -30,7 +30,25 @@ const paperSx = {
 	mx: "auto",
 } as const;
 
-export function DeviceDetailPage() {
+type ScanRow = {
+	code: string;
+	key: string;
+};
+
+function latestScanRows(codes: string[]): ScanRow[] {
+	const seen = new Map<string, number>();
+	return codes
+		.slice()
+		.reverse()
+		.slice(0, 50)
+		.map((code) => {
+			const occurrence = (seen.get(code) ?? 0) + 1;
+			seen.set(code, occurrence);
+			return { code, key: `${code}-${occurrence}` };
+		});
+}
+
+export function ScannerDetailPage() {
 	const { id } = useParams<{ id: string }>();
 	const [device, setDevice] = useState<ScannerDeviceDto | null>(null);
 	const [loading, setLoading] = useState(true);
@@ -39,7 +57,7 @@ export function DeviceDetailPage() {
 
 	const load = useCallback(async () => {
 		if (!id) {
-			setError("Missing device id.");
+			setError("Missing scanner id.");
 			setLoading(false);
 			return;
 		}
@@ -118,23 +136,22 @@ export function DeviceDetailPage() {
 		});
 	}
 
-	const latestScans =
-		device?.lastScannedCodes.slice().reverse().slice(0, 50) ?? [];
+	const latestScans = latestScanRows(device?.lastScannedCodes ?? []);
 
 	return (
 		<Paper elevation={0} sx={paperSx}>
 			<Button
 				component={RouterLink}
-				to="/devices"
+				to="/settings/scanner"
 				startIcon={<ArrowBackIcon />}
 				sx={{ mb: 2 }}
 			>
-				Devices
+				Scanner
 			</Button>
 			{loading ? (
 				<Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
 					<CircularProgress size={28} />
-					<Typography color="text.secondary">Loading…</Typography>
+					<Typography color="text.secondary">Loading...</Typography>
 				</Box>
 			) : error && !device ? (
 				<Alert severity="error">{error}</Alert>
@@ -155,7 +172,7 @@ export function DeviceDetailPage() {
 						</Typography>
 						{saving && (
 							<Typography variant="body2" color="text.secondary">
-								Saving…
+								Saving...
 							</Typography>
 						)}
 					</Box>
@@ -171,7 +188,11 @@ export function DeviceDetailPage() {
 						{device.deviceIdentifier}
 					</Typography>
 					{error && (
-						<Alert severity="error" sx={{ mb: 2 }} onClose={() => setError(null)}>
+						<Alert
+							severity="error"
+							sx={{ mb: 2 }}
+							onClose={() => setError(null)}
+						>
 							{error}
 						</Alert>
 					)}
@@ -179,9 +200,9 @@ export function DeviceDetailPage() {
 						Automations
 					</Typography>
 					<Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-						When this device scans a code, optional actions run after the scan is
-						stored. Inventory public codes are numeric labels printed for each
-						stock row.
+						When this scanner reads a code, optional actions run after the scan
+						is stored. Inventory public codes are numeric labels printed for
+						each stock row.
 					</Typography>
 					<FormControlLabel
 						control={
@@ -199,9 +220,7 @@ export function DeviceDetailPage() {
 								<Switch
 									checked={device.automationCreateCatalogItemIfMissingForEan}
 									onChange={(_, c) => setCreateCatalogIfMissing(c)}
-									disabled={
-										saving || !device.automationAddInventoryOnEanScan
-									}
+									disabled={saving || !device.automationAddInventoryOnEanScan}
 								/>
 							}
 							label="Create catalog item if none exists for that EAN"
@@ -223,7 +242,7 @@ export function DeviceDetailPage() {
 					</Typography>
 					{latestScans.length === 0 ? (
 						<Typography variant="body2" color="text.secondary">
-							No scans recorded yet for this device.
+							No scans recorded yet for this scanner.
 						</Typography>
 					) : (
 						<List
@@ -236,8 +255,8 @@ export function DeviceDetailPage() {
 								overflow: "auto",
 							}}
 						>
-							{latestScans.map((code, i) => (
-								<ListItem key={`${code}-${i}`} disablePadding>
+							{latestScans.map((scan) => (
+								<ListItem key={scan.key} disablePadding>
 									<ListItemText
 										slotProps={{
 											primary: {
@@ -247,7 +266,7 @@ export function DeviceDetailPage() {
 												},
 											},
 										}}
-										primary={code}
+										primary={scan.code}
 									/>
 								</ListItem>
 							))}
