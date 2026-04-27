@@ -29,6 +29,8 @@ doctrine:
                 class: App\Printer\Infrastructure\Doctrine\PrintedLabelIdType
             persisted_domain_event_id:
                 class: App\SharedKernel\Infrastructure\Doctrine\PersistedDomainEventIdType
+            barcode_lookup_provider_id:
+                class: App\Catalog\Infrastructure\Doctrine\BarcodeLookupProviderIdType
 
         profiling_collect_backtrace: '%kernel.debug%'
     orm:

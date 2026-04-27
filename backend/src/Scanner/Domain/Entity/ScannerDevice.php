@@ -7,6 +7,7 @@ namespace App\Scanner\Domain\Entity;
 use App\Scanner\Domain\Events\CodeScanned;
 use App\Scanner\Domain\Repository\ScannerDeviceRepository;
 use App\SharedKernel\Domain\DomainEventRecorder;
+use App\SharedKernel\Domain\Id\PrinterDeviceId;
 use App\SharedKernel\Domain\Id\ScannerDeviceId;
 use App\SharedKernel\Domain\RecordsDomainEvents;
 use Doctrine\ORM\Mapping as ORM;
@@ -35,14 +36,20 @@ class ScannerDevice implements RecordsDomainEvents
     #[ORM\Column(type: 'json', nullable: true)]
     private ?array $lastScannedCodes = null;
 
-    #[ORM\Column(name: 'automation_add_inventory_on_ean_scan', options: ['default' => false])]
-    private bool $addInvOnEan = false;
+    #[ORM\Column(name: 'automation_add_inventory_on_barcode_scan', options: ['default' => false])]
+    private bool $addInvOnBarcodeScan = false;
 
-    #[ORM\Column(name: 'automation_create_catalog_item_if_missing_for_ean', options: ['default' => false])]
-    private bool $createItemIfEan = false;
+    #[ORM\Column(name: 'automation_create_catalog_item_if_missing_for_barcode', options: ['default' => false])]
+    private bool $createItemIfBarcodeMissing = false;
 
     #[ORM\Column(name: 'automation_remove_inventory_on_public_code_scan', options: ['default' => false])]
     private bool $remInvOnPublic = false;
+
+    #[ORM\Column(name: 'automation_print_inventory_label_on_barcode_scan', options: ['default' => false])]
+    private bool $printLabelOnBarcodeScan = false;
+
+    #[ORM\Column(name: 'automation_printer_device_id', type: 'printer_device_id', nullable: true)]
+    private ?PrinterDeviceId $printerDeviceId = null;
 
     public function __construct()
     {
@@ -97,29 +104,31 @@ class ScannerDevice implements RecordsDomainEvents
         $this->recordDomainEvent(new CodeScanned($this->scannerDeviceId, $text));
     }
 
-    public function isAutomationAddInventoryOnEanScan(): bool
+    public function isAutomationAddInventoryOnBarcodeScan(): bool
     {
-        return $this->addInvOnEan;
+        return $this->addInvOnBarcodeScan;
     }
 
-    public function changeAutomationAddInventoryOnEanScan(bool $enabled): static
+    public function changeAutomationAddInventoryOnBarcodeScan(bool $enabled): static
     {
-        $this->addInvOnEan = $enabled;
+        $this->addInvOnBarcodeScan = $enabled;
         if (!$enabled) {
-            $this->createItemIfEan = false;
+            $this->createItemIfBarcodeMissing = false;
+            $this->printLabelOnBarcodeScan = false;
+            $this->printerDeviceId = null;
         }
 
         return $this;
     }
 
-    public function isAutomationCreateCatalogItemIfMissingForEan(): bool
+    public function isAutomationCreateCatalogItemIfMissingForBarcode(): bool
     {
-        return $this->createItemIfEan;
+        return $this->createItemIfBarcodeMissing;
     }
 
-    public function changeAutomationCreateCatalogItemIfMissingForEan(bool $enabled): static
+    public function changeAutomationCreateCatalogItemIfMissingForBarcode(bool $enabled): static
     {
-        $this->createItemIfEan = $enabled;
+        $this->createItemIfBarcodeMissing = $enabled;
 
         return $this;
     }
@@ -132,6 +141,33 @@ class ScannerDevice implements RecordsDomainEvents
     public function changeAutomationRemoveInventoryOnPublicCodeScan(bool $enabled): static
     {
         $this->remInvOnPublic = $enabled;
+
+        return $this;
+    }
+
+    public function isAutomationPrintInventoryLabelOnBarcodeScan(): bool
+    {
+        return $this->printLabelOnBarcodeScan;
+    }
+
+    public function changeAutomationPrintInventoryLabelOnBarcodeScan(bool $enabled): static
+    {
+        $this->printLabelOnBarcodeScan = $enabled;
+        if (!$enabled) {
+            $this->printerDeviceId = null;
+        }
+
+        return $this;
+    }
+
+    public function getAutomationPrinterDeviceId(): ?PrinterDeviceId
+    {
+        return $this->printerDeviceId;
+    }
+
+    public function changeAutomationPrinterDeviceId(?PrinterDeviceId $printerDeviceId): static
+    {
+        $this->printerDeviceId = $printerDeviceId;
 
         return $this;
     }

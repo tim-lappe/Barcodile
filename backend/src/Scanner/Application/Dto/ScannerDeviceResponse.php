@@ -17,12 +17,16 @@ final readonly class ScannerDeviceResponse
         public string $deviceIdentifier,
         public string $name,
         public array $lastScannedCodes,
-        #[SerializedName('automationAddInventoryOnEanScan')]
-        public bool $addOnEan,
-        #[SerializedName('automationCreateCatalogItemIfMissingForEan')]
-        public bool $createIfMissingEan,
+        #[SerializedName('automationAddInventoryOnBarcodeScan')]
+        public bool $addOnBarcodeScan,
+        #[SerializedName('automationCreateCatalogItemIfMissingForBarcode')]
+        public bool $createIfMissingBarcode,
         #[SerializedName('automationRemoveInventoryOnPublicCodeScan')]
         public bool $remOnPublic,
+        #[SerializedName('automationPrintInventoryLabelOnBarcodeScan')]
+        public bool $printLabelOnBarcodeScan,
+        #[SerializedName('automationPrinterDeviceId')]
+        public ?string $printerDeviceId,
     ) {
     }
 }

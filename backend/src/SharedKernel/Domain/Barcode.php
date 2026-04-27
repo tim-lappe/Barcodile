@@ -9,6 +9,8 @@ use Symfony\Component\Serializer\Attribute\Groups;
 
 final readonly class Barcode
 {
+    public const string DEFAULT_SYMBOLOGY = 'Barcode';
+
     private string $code;
 
     private string $type;
@@ -48,7 +50,12 @@ final readonly class Barcode
 
     private function normalizedType(string $type): string
     {
-        return '' !== trim($type) ? trim($type) : 'EAN';
+        $t = trim($type);
+        if ('' === $t || 0 === strcasecmp($t, 'ean')) {
+            return self::DEFAULT_SYMBOLOGY;
+        }
+
+        return $t;
     }
 
     private function assertValidTypeLength(string $normalizedType): void

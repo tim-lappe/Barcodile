@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Catalog\Application;
 
+use App\Catalog\Application\Dto\CatalogBarcodeInput;
 use App\Catalog\Application\Dto\CatalogItemAttributeRowInput;
 use App\Catalog\Application\Dto\CatalogItemImageGetResult;
 use App\Catalog\Application\Dto\CatalogItemResponse;
@@ -39,6 +40,7 @@ final readonly class CatalogItemApplicationService
     public function __construct(
         private CatalogItemRepository $catalogItemRepo,
         private PicnicIntegrationApplicationService $picnic,
+        private BarcodeProductLookupApplicationService $barcodeProductLookup,
         private EntityManagerInterface $entityManager,
         private CatalogItemResponseMapper $responseMapper,
     ) {
@@ -85,6 +87,8 @@ final readonly class CatalogItemApplicationService
 
     public function createCatalogItem(PostCatalogItemRequest $request): CatalogItemResponse
     {
+        $this->assertBarcodeInputWhenPresent($request->barcode);
+
         return $this->createCatalogItemFromValues(
             $request->name,
             $request->volume?->amount,
@@ -116,7 +120,10 @@ final readonly class CatalogItemApplicationService
         ?string $picnicProductId,
         string $creationSource,
     ): CatalogItemResponse {
-        $trimmedName = $this->resolveCreateName($name, $picnicProductId, $creationSource);
+        if (null !== $barcodeCode && '' === trim($barcodeCode)) {
+            throw new BadRequestHttpException('Barcode code must not be empty when a barcode is supplied.');
+        }
+        $trimmedName = $this->resolveCreateName($name, $picnicProductId, $barcodeCode, $creationSource);
         $item = new CatalogItem();
         $item->changeName($trimmedName);
         $item->changeVolume($this->volumeInputToDomain($volumeAmount, $volumeUnit));
@@ -135,6 +142,9 @@ final readonly class CatalogItemApplicationService
      */
     public function updateCatalogItem(string $catalogItemId, PatchCatalogItemRequest $request): void
     {
+        if ($request->barcodeSpecified && null !== $request->barcode) {
+            $this->assertBarcodeInputWhenPresent($request->barcode);
+        }
         $item = $this->mustFind(CatalogItemId::fromString($catalogItemId));
         if ($request->nameSpecified && null !== $request->name) {
             $item->changeName($request->name);
@@ -246,30 +256,51 @@ final readonly class CatalogItemApplicationService
     /**
      * @SuppressWarnings("PHPMD.CyclomaticComplexity")
      */
-    private function resolveCreateName(string $name, ?string $picnicProductId, string $creationSource): string
+    private function resolveCreateName(string $name, ?string $picnicProductId, ?string $barcodeCode, string $creationSource): string
     {
         $trimmed = trim($name);
-        if ('picnic' !== $creationSource) {
-            if ('' === $trimmed) {
+        if ('picnic' === $creationSource) {
+            $productId = null === $picnicProductId ? '' : trim($picnicProductId);
+            if ('' === $productId) {
+                throw new BadRequestHttpException('Picnic product id is required for this creation mode.');
+            }
+            if ('' !== $trimmed) {
+                return $trimmed;
+            }
+            $summary = $this->picnic->catalogProductSummary($productId);
+            $resolved = trim($summary->name);
+            if ('' === $resolved) {
                 throw new BadRequestHttpException('Field name must be a non-empty string.');
             }
 
-            return $trimmed;
+            return $resolved;
         }
-        $productId = null === $picnicProductId ? '' : trim($picnicProductId);
-        if ('' === $productId) {
-            throw new BadRequestHttpException('Picnic product id is required for this creation mode.');
+        if ('barcode' === $creationSource) {
+            if ('' !== $trimmed) {
+                return $trimmed;
+            }
+            $code = null === $barcodeCode ? '' : trim($barcodeCode);
+            if ('' === $code) {
+                throw new BadRequestHttpException('Barcode code is required for this creation mode when name is omitted.');
+            }
+
+            return $this->barcodeProductLookup->resolvePrimaryNameForBarcode($code);
         }
-        if ('' !== $trimmed) {
-            return $trimmed;
-        }
-        $summary = $this->picnic->catalogProductSummary($productId);
-        $resolved = trim($summary->name);
-        if ('' === $resolved) {
+        if ('' === $trimmed) {
             throw new BadRequestHttpException('Field name must be a non-empty string.');
         }
 
-        return $resolved;
+        return $trimmed;
+    }
+
+    private function assertBarcodeInputWhenPresent(?CatalogBarcodeInput $barcode): void
+    {
+        if (null === $barcode) {
+            return;
+        }
+        if ('' === trim($barcode->code)) {
+            throw new BadRequestHttpException('Barcode code must not be empty when a barcode is supplied.');
+        }
     }
 
     private function volumeInputToDomain(?string $amount, ?string $unit): ?Volume

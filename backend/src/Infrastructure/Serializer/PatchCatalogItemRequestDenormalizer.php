@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Infrastructure\Serializer;
 
 use App\Catalog\Application\Dto\CatalogBarcodeInput;
+use App\SharedKernel\Domain\Barcode;
 use App\Catalog\Application\Dto\CatalogItemAttributeRowInput;
 use App\Catalog\Application\Dto\CatalogVolumeInput;
 use App\Catalog\Application\Dto\CatalogWeightInput;
@@ -191,9 +192,12 @@ final class PatchCatalogItemRequestDenormalizer implements DenormalizerInterface
         if (!\is_string($code)) {
             throw new BadRequestHttpException('Barcode code must be a string.');
         }
-        $typeRaw = $raw['type'] ?? 'EAN';
+        if ('' === trim($code)) {
+            throw new BadRequestHttpException('Barcode code must not be empty when a barcode object is supplied.');
+        }
+        $typeRaw = $raw['type'] ?? Barcode::DEFAULT_SYMBOLOGY;
 
-        return new CatalogBarcodeInput($code, \is_string($typeRaw) ? $typeRaw : 'EAN');
+        return new CatalogBarcodeInput($code, \is_string($typeRaw) ? $typeRaw : Barcode::DEFAULT_SYMBOLOGY);
     }
 
     /**

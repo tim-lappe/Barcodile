@@ -15,6 +15,8 @@ final readonly class AppSecretStringCipher
 
     public const HKDF_INFO_PENDING_LOGIN = 'barcodile.picnic.pending_login';
 
+    public const HKDF_INFO_BARCODE_LOOKUP_API_KEY = 'barcodile.barcode_lookup.api_key';
+
     private const CIPHER = 'aes-256-gcm';
 
     private const IV_LENGTH = 12;

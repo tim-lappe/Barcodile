@@ -9,6 +9,7 @@ use App\Catalog\Application\Dto\CatalogItemAttributeResponse;
 use App\Catalog\Application\Dto\CatalogItemResponse;
 use App\Catalog\Application\Dto\VolumeResponse;
 use App\Catalog\Application\Dto\WeightResponse;
+use App\SharedKernel\Domain\Barcode;
 
 final readonly class CatalogItemResponseMapper
 {
@@ -55,7 +56,12 @@ final readonly class CatalogItemResponseMapper
             return null;
         }
 
-        return new BarcodeResponse($item->barcodeCode, $item->barcodeType);
+        $type = $item->barcodeType;
+        if (0 === strcasecmp($type, 'ean')) {
+            $type = Barcode::DEFAULT_SYMBOLOGY;
+        }
+
+        return new BarcodeResponse($item->barcodeCode, $type);
     }
 
     /**

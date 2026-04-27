@@ -58,13 +58,15 @@ final class CatalogItemRepository extends ServiceEntityRepository
         $this->getEntityManager()->flush();
     }
 
-    public function findOneByBarcodeCodeAndTypeCaseInsensitive(string $code, string $type): ?CatalogItem
+    public function findOneByBarcodeCodeCaseInsensitive(string $code): ?CatalogItem
     {
+        $trimmed = trim($code);
+        if ('' === $trimmed) {
+            return null;
+        }
         $result = $this->createQueryBuilder('c')
-            ->andWhere('c.barcode.code = :code')
-            ->andWhere('LOWER(c.barcode.type) = LOWER(:type)')
-            ->setParameter('code', $code)
-            ->setParameter('type', $type)
+            ->andWhere('LOWER(c.barcode.code) = LOWER(:code)')
+            ->setParameter('code', $trimmed)
             ->setMaxResults(1)
             ->getQuery()
             ->getOneOrNullResult();

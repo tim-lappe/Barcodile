@@ -25,7 +25,7 @@ final class BarcodeEmbeddable
     public function toValue(): Barcode
     {
         $code = $this->code ?? '';
-        $type = $this->type ?? 'EAN';
+        $type = $this->type ?? Barcode::DEFAULT_SYMBOLOGY;
 
         return new Barcode($code, $type);
     }

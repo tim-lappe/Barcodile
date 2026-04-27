@@ -36,6 +36,14 @@ services:
     App\Scanner\Domain\Input\ScanLineKeyAccumulatorFactory:
         alias: App\Scanner\Infrastructure\EvdevScanLineKeyAccumulatorFactory
 
+    App\Catalog\Application\BarcodeProductLookupApplicationService:
+        arguments:
+            $drivers: !tagged_iterator app.barcode_lookup_driver
+
+    App\Catalog\Infrastructure\BarcodeLookup\BarcodeLookupComV3Driver:
+        tags:
+            - { name: app.barcode_lookup_driver }
+
     App\SharedKernel\Domain\Label\LabelImageGenerator:
         alias: App\Inventory\Infrastructure\PythonInventoryLabelImageGenerator
 
