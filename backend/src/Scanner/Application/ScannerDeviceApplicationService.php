@@ -10,6 +10,7 @@ use App\Scanner\Application\Dto\ScannerDeviceResponse;
 use App\Scanner\Domain\Entity\ScannerDevice;
 use App\Scanner\Domain\Port\InputDeviceListingPort;
 use App\Scanner\Domain\Repository\ScannerDeviceRepository;
+use App\SharedKernel\Domain\Id\PrinterDeviceId;
 use App\SharedKernel\Domain\Id\ScannerDeviceId;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 
@@ -73,6 +74,15 @@ final readonly class ScannerDeviceApplicationService
             $device->changeAutomationCreateCatalogItemIfMissingForEan($request->createIfMissingEan);
         }
         $device->changeAutomationRemoveInventoryOnPublicCodeScan($request->remOnPublic);
+        if ($device->isAutomationAddInventoryOnEanScan() && $request->printLabelAfterEan) {
+            $device->changeAutomationPrintLabelAfterEanAddInventory(true);
+            $pid = '' === trim($request->labelPrinterDeviceId ?? '') ? null : $request->labelPrinterDeviceId;
+            $device->changeAutomationLabelPrinterDeviceId(
+                null === $pid ? null : PrinterDeviceId::fromString($pid),
+            );
+        } else {
+            $device->changeAutomationPrintLabelAfterEanAddInventory(false);
+        }
         $this->scannerDevices->save($device);
 
         return $this->map($this->mapDevice($device));
@@ -88,6 +98,8 @@ final readonly class ScannerDeviceApplicationService
             addOnEan: $device->addOnEan,
             createIfMissingEan: $device->createIfMissingEan,
             remOnPublic: $device->remOnPublic,
+            printLabelAfterEan: $device->printLabelAfterEan,
+            labelPrinterDeviceId: $device->labelPrinterDeviceId,
         );
     }
 
@@ -116,6 +128,8 @@ final readonly class ScannerDeviceApplicationService
 
     private function mapDevice(ScannerDevice $device): ScannerDeviceView
     {
+        $printerId = $device->getAutomationLabelPrinterDeviceId();
+
         return new ScannerDeviceView(
             (string) $device->getId(),
             $device->getDeviceIdentifier(),
@@ -124,6 +138,8 @@ final readonly class ScannerDeviceApplicationService
             $device->isAutomationAddInventoryOnEanScan(),
             $device->isAutomationCreateCatalogItemIfMissingForEan(),
             $device->isAutomationRemoveInventoryOnPublicCodeScan(),
+            $device->isAutomationPrintLabelAfterEanAddInventory(),
+            null === $printerId ? null : (string) $printerId,
         );
     }
 }

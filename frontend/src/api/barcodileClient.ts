@@ -226,6 +226,8 @@ export async function patchScannerDeviceAutomations(
 		automationAddInventoryOnEanScan: boolean;
 		automationCreateCatalogItemIfMissingForEan: boolean;
 		automationRemoveInventoryOnPublicCodeScan: boolean;
+		automationPrintLabelAfterEanAddInventory: boolean;
+		automationLabelPrinterDeviceId: string | null;
 	},
 ): Promise<ScannerDeviceDto> {
 	const res = await fetch(scannerDeviceIri(id), {

@@ -71,6 +71,8 @@ export type ScannerDeviceDto = {
 	automationAddInventoryOnEanScan: boolean;
 	automationCreateCatalogItemIfMissingForEan: boolean;
 	automationRemoveInventoryOnPublicCodeScan: boolean;
+	automationPrintLabelAfterEanAddInventory: boolean;
+	automationLabelPrinterDeviceId: string | null;
 };
 
 export type InputDeviceOptionDto = {

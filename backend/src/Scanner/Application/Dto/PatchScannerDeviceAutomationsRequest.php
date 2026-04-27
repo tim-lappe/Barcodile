@@ -19,6 +19,11 @@ final readonly class PatchScannerDeviceAutomationsRequest
         #[Assert\NotNull]
         #[SerializedName('automationRemoveInventoryOnPublicCodeScan')]
         public bool $remOnPublic,
+        #[Assert\NotNull]
+        #[SerializedName('automationPrintLabelAfterEanAddInventory')]
+        public bool $printLabelAfterEan,
+        #[SerializedName('automationLabelPrinterDeviceId')]
+        public ?string $labelPrinterDeviceId = null,
     ) {
     }
 }

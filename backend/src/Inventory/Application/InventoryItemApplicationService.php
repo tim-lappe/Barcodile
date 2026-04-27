@@ -69,7 +69,7 @@ final readonly class InventoryItemApplicationService
         string $catalogItemId,
         ?string $locationId,
         ?DateTimeInterface $expirationDate,
-    ): void {
+    ): string {
         $this->catalog->ensureCatalogItemExists($catalogItemId);
         $item = new InventoryItem();
         $item->assignPublicCode($this->inventoryItemRepo->allocateNextPublicCode());
@@ -77,6 +77,8 @@ final readonly class InventoryItemApplicationService
         $item->changeLocation(null === $locationId ? null : $this->locationRepositoryFind(LocationId::fromString($locationId)));
         $item->changeExpirationDate($expirationDate);
         $this->inventoryItemRepo->save($item);
+
+        return (string) $item->getId();
     }
 
     public function updateInventoryItem(

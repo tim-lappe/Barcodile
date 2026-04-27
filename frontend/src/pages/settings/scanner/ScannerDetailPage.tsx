@@ -5,21 +5,30 @@ import {
 	Button,
 	CircularProgress,
 	Divider,
+	FormControl,
 	FormControlLabel,
+	InputLabel,
 	List,
 	ListItem,
 	ListItemText,
+	MenuItem,
 	Paper,
+	Select,
 	Switch,
 	Typography,
 } from "@mui/material";
 import { useCallback, useEffect, useState } from "react";
 import { Link as RouterLink, useParams } from "react-router-dom";
 import {
+	fetchPrinterDevices,
 	fetchScannerDevice,
 	patchScannerDeviceAutomations,
 } from "../../../api/barcodileClient";
-import type { ScannerDeviceDto } from "../../../domain/barcodile";
+import type {
+	PrinterDeviceDto,
+	PrinterDeviceId,
+	ScannerDeviceDto,
+} from "../../../domain/barcodile";
 
 const paperSx = {
 	p: { xs: 2.5, sm: 3.5 },
@@ -50,6 +59,7 @@ function latestScanRows(codes: string[]): ScanRow[] {
 
 export function ScannerDetailPage() {
 	const { id } = useParams<{ id: string }>();
+	const [printers, setPrinters] = useState<PrinterDeviceDto[]>([]);
 	const [device, setDevice] = useState<ScannerDeviceDto | null>(null);
 	const [loading, setLoading] = useState(true);
 	const [error, setError] = useState<string | null>(null);
@@ -64,11 +74,18 @@ export function ScannerDetailPage() {
 		setError(null);
 		setLoading(true);
 		try {
-			const d = await fetchScannerDevice(id);
+			const [d, printerRows] = await Promise.all([
+				fetchScannerDevice(id),
+				fetchPrinterDevices(),
+			]);
 			setDevice(d);
+			setPrinters(
+				printerRows.sort((a, b) => a.name.localeCompare(b.name)),
+			);
 		} catch (e) {
 			setError(e instanceof Error ? e.message : "Request failed");
 			setDevice(null);
+			setPrinters([]);
 		} finally {
 			setLoading(false);
 		}
@@ -82,6 +99,8 @@ export function ScannerDetailPage() {
 		automationAddInventoryOnEanScan: boolean;
 		automationCreateCatalogItemIfMissingForEan: boolean;
 		automationRemoveInventoryOnPublicCodeScan: boolean;
+		automationPrintLabelAfterEanAddInventory: boolean;
+		automationLabelPrinterDeviceId: string | null;
 	}) {
 		if (!id) {
 			return;
@@ -109,6 +128,12 @@ export function ScannerDetailPage() {
 				: false,
 			automationRemoveInventoryOnPublicCodeScan:
 				device.automationRemoveInventoryOnPublicCodeScan,
+			automationPrintLabelAfterEanAddInventory: checked
+				? device.automationPrintLabelAfterEanAddInventory
+				: false,
+			automationLabelPrinterDeviceId: checked
+				? device.automationLabelPrinterDeviceId
+				: null,
 		});
 	}
 
@@ -121,6 +146,44 @@ export function ScannerDetailPage() {
 			automationCreateCatalogItemIfMissingForEan: checked,
 			automationRemoveInventoryOnPublicCodeScan:
 				device.automationRemoveInventoryOnPublicCodeScan,
+			automationPrintLabelAfterEanAddInventory:
+				device.automationPrintLabelAfterEanAddInventory,
+			automationLabelPrinterDeviceId: device.automationLabelPrinterDeviceId,
+		});
+	}
+
+	function setPrintLabelAfterEan(checked: boolean) {
+		if (!device) {
+			return;
+		}
+		void persistAutomations({
+			automationAddInventoryOnEanScan: device.automationAddInventoryOnEanScan,
+			automationCreateCatalogItemIfMissingForEan:
+				device.automationCreateCatalogItemIfMissingForEan,
+			automationRemoveInventoryOnPublicCodeScan:
+				device.automationRemoveInventoryOnPublicCodeScan,
+			automationPrintLabelAfterEanAddInventory: checked,
+			automationLabelPrinterDeviceId: checked
+				? device.automationLabelPrinterDeviceId
+				: null,
+		});
+	}
+
+	function setLabelPrinterId(value: PrinterDeviceId | "") {
+		if (!device) {
+			return;
+		}
+		const automationLabelPrinterDeviceId =
+			value === "" ? null : value;
+		void persistAutomations({
+			automationAddInventoryOnEanScan: device.automationAddInventoryOnEanScan,
+			automationCreateCatalogItemIfMissingForEan:
+				device.automationCreateCatalogItemIfMissingForEan,
+			automationRemoveInventoryOnPublicCodeScan:
+				device.automationRemoveInventoryOnPublicCodeScan,
+			automationPrintLabelAfterEanAddInventory:
+				device.automationPrintLabelAfterEanAddInventory,
+			automationLabelPrinterDeviceId,
 		});
 	}
 
@@ -133,6 +196,9 @@ export function ScannerDetailPage() {
 			automationCreateCatalogItemIfMissingForEan:
 				device.automationCreateCatalogItemIfMissingForEan,
 			automationRemoveInventoryOnPublicCodeScan: checked,
+			automationPrintLabelAfterEanAddInventory:
+				device.automationPrintLabelAfterEanAddInventory,
+			automationLabelPrinterDeviceId: device.automationLabelPrinterDeviceId,
 		});
 	}
 
@@ -225,6 +291,52 @@ export function ScannerDetailPage() {
 							}
 							label="Create catalog item if none exists for that EAN"
 						/>
+					</Box>
+					<Box sx={{ pl: { xs: 0, sm: 4 }, mt: 0, mb: 2 }}>
+						<FormControlLabel
+							control={
+								<Switch
+									checked={device.automationPrintLabelAfterEanAddInventory}
+									onChange={(_, c) => setPrintLabelAfterEan(c)}
+									disabled={saving || !device.automationAddInventoryOnEanScan}
+								/>
+							}
+							label="Print label for the new row immediately after the scan"
+						/>
+						<FormControl
+							size="small"
+							sx={{ display: "block", mt: 1.5, maxWidth: 420 }}
+							disabled={
+								saving ||
+								!device.automationAddInventoryOnEanScan ||
+								!device.automationPrintLabelAfterEanAddInventory
+							}
+						>
+							<InputLabel id="scanner-automation-label-printer">
+								Label printer
+							</InputLabel>
+							<Select
+								labelId="scanner-automation-label-printer"
+								label="Label printer"
+								value={device.automationLabelPrinterDeviceId ?? ""}
+								onChange={(e) =>
+									setLabelPrinterId(e.target.value as PrinterDeviceId | "")
+								}
+							>
+								<MenuItem value="">
+									<em>
+										{printers.length === 0
+											? "No label printers"
+											: "Choose a printer"}
+									</em>
+								</MenuItem>
+								{printers.map((p) => (
+									<MenuItem key={p.id} value={p.id}>
+										{p.name}
+									</MenuItem>
+								))}
+							</Select>
+						</FormControl>
 					</Box>
 					<FormControlLabel
 						control={

@@ -17,6 +17,8 @@ final readonly class ScannerDeviceView
         public bool $addOnEan,
         public bool $createIfMissingEan,
         public bool $remOnPublic,
+        public bool $printLabelAfterEan,
+        public ?string $labelPrinterDeviceId,
     ) {
     }
 }

@@ -7,6 +7,7 @@ namespace App\Scanner\Domain\Entity;
 use App\Scanner\Domain\Events\CodeScanned;
 use App\Scanner\Domain\Repository\ScannerDeviceRepository;
 use App\SharedKernel\Domain\DomainEventRecorder;
+use App\SharedKernel\Domain\Id\PrinterDeviceId;
 use App\SharedKernel\Domain\Id\ScannerDeviceId;
 use App\SharedKernel\Domain\RecordsDomainEvents;
 use Doctrine\ORM\Mapping as ORM;
@@ -43,6 +44,12 @@ class ScannerDevice implements RecordsDomainEvents
 
     #[ORM\Column(name: 'automation_remove_inventory_on_public_code_scan', options: ['default' => false])]
     private bool $remInvOnPublic = false;
+
+    #[ORM\Column(name: 'automation_print_label_after_ean_add_inventory', options: ['default' => false])]
+    private bool $printLabelAfterEanAdd = false;
+
+    #[ORM\Column(name: 'automation_label_printer_device_id', type: 'printer_device_id', nullable: true)]
+    private ?PrinterDeviceId $automationLabelPrinterDeviceId = null;
 
     public function __construct()
     {
@@ -107,6 +114,8 @@ class ScannerDevice implements RecordsDomainEvents
         $this->addInvOnEan = $enabled;
         if (!$enabled) {
             $this->createItemIfEan = false;
+            $this->printLabelAfterEanAdd = false;
+            $this->automationLabelPrinterDeviceId = null;
         }
 
         return $this;
@@ -132,6 +141,33 @@ class ScannerDevice implements RecordsDomainEvents
     public function changeAutomationRemoveInventoryOnPublicCodeScan(bool $enabled): static
     {
         $this->remInvOnPublic = $enabled;
+
+        return $this;
+    }
+
+    public function isAutomationPrintLabelAfterEanAddInventory(): bool
+    {
+        return $this->printLabelAfterEanAdd;
+    }
+
+    public function changeAutomationPrintLabelAfterEanAddInventory(bool $enabled): static
+    {
+        $this->printLabelAfterEanAdd = $enabled;
+        if (!$enabled) {
+            $this->automationLabelPrinterDeviceId = null;
+        }
+
+        return $this;
+    }
+
+    public function getAutomationLabelPrinterDeviceId(): ?PrinterDeviceId
+    {
+        return $this->automationLabelPrinterDeviceId;
+    }
+
+    public function changeAutomationLabelPrinterDeviceId(?PrinterDeviceId $printerDeviceId): static
+    {
+        $this->automationLabelPrinterDeviceId = $printerDeviceId;
 
         return $this;
     }

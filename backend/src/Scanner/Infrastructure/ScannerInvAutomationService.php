@@ -44,7 +44,13 @@ final readonly class ScannerInvAutomationService
         if (null === $catalogItemId) {
             return;
         }
-        $this->inventoryItems->createInventoryItem($catalogItemId, null, null);
+        $newInventoryId = $this->inventoryItems->createInventoryItem($catalogItemId, null, null);
+        if ($device->isAutomationPrintLabelAfterEanAddInventory()) {
+            $printerId = $device->getAutomationLabelPrinterDeviceId();
+            if (null !== $printerId) {
+                $this->inventoryItems->printInventoryItemLabel($newInventoryId, (string) $printerId);
+            }
+        }
     }
 
     private function findOrCreateEanCatalogItemId(ScannerDevice $device, string $text): ?string

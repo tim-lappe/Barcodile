@@ -23,6 +23,10 @@ final readonly class ScannerDeviceResponse
         public bool $createIfMissingEan,
         #[SerializedName('automationRemoveInventoryOnPublicCodeScan')]
         public bool $remOnPublic,
+        #[SerializedName('automationPrintLabelAfterEanAddInventory')]
+        public bool $printLabelAfterEan,
+        #[SerializedName('automationLabelPrinterDeviceId')]
+        public ?string $labelPrinterDeviceId,
     ) {
     }
 }

@@ -34,6 +34,6 @@ final class PostInventoryItemController extends AbstractController
         }
         $this->inventoryItemSvc->createInventoryItem($catalogId, $locationId, $expiration);
 
-        return new Response('', Response::HTTP_NO_CONTENT);
+        return new Response(null, Response::HTTP_NO_CONTENT);
     }
 }
