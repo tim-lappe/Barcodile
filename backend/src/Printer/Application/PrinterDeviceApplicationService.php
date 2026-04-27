@@ -17,17 +17,29 @@ use App\Printer\Domain\Entity\PrinterDevice;
 use App\Printer\Domain\Exception\LabelPrintJobFailedException;
 use App\Printer\Domain\Repository\PrinterDeviceRepository;
 use App\Printer\Domain\Service\LabelPrinterDriverRegistry;
+use App\Printer\Domain\Service\LabelSizeSelector;
+use App\Printer\Domain\Service\PrintedLabelRecorder;
 use App\SharedKernel\Domain\Id\PrinterDeviceId;
+use App\SharedKernel\Domain\Label\Label;
+use App\SharedKernel\Domain\Label\LabelContent;
+use App\SharedKernel\Domain\Label\LabelImageGenerator;
+use App\SharedKernel\Domain\Label\LabelSize;
 use Psr\Log\LoggerInterface;
 use Symfony\Component\HttpKernel\Exception\BadRequestHttpException;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 
 final readonly class PrinterDeviceApplicationService
 {
+    private const TEST_LABEL_TEXT = 'Barcodile test label';
+    private const PRINT_SOURCE_TEST = 'test';
+
     public function __construct(
         private PrinterDeviceRepository $deviceRepository,
         private LabelPrinterDriverRegistry $driverRegistry,
+        private LabelSizeSelector $labelSizeSelector,
+        private LabelImageGenerator $labelImageGenerator,
         private LoggerInterface $logger,
+        private PrintedLabelRecorder $labelRecorder,
     ) {
     }
 
@@ -111,40 +123,24 @@ final readonly class PrinterDeviceApplicationService
     {
         $device = $this->mustFind($printerDeviceId);
         $driver = $this->driverRegistry->get($device->getDriverCode());
-        $this->logTestPrintRequest($device);
-
-        try {
-            $driver->printTestLabel(
-                $driver->createConnection($device->getConnection()),
-                $driver->createPrintSettings($device->getPrintSettings()),
-            );
-        } catch (LabelPrintJobFailedException $e) {
-            $this->logTestPrintFailure($device, $e);
-            throw new BadRequestHttpException($e->getMessage(), $e);
-        }
-        $this->logger->info('Printer test label finished.', [
-            'printerDeviceId' => (string) $device->getId(),
-            'driverCode' => $device->getDriverCode(),
-        ]);
-    }
-
-    public function printLabelImage(string $printerDeviceId, string $pngBytes): void
-    {
-        $device = $this->mustFind($printerDeviceId);
-        $driver = $this->driverRegistry->get($device->getDriverCode());
-        $this->logLabelImagePrintRequest($device, $pngBytes);
+        $content = LabelContent::text(self::TEST_LABEL_TEXT);
+        $label = new Label($content, $this->labelSizeSelector->select($content, $this->availableLabelSizes($driver->printSettingOptions())));
+        $pngBytes = $this->labelImageGenerator->generate($label->content(), $label->size());
+        $this->logTestPrintRequest($device, $label, $pngBytes);
 
         try {
             $driver->printLabelImage(
                 $driver->createConnection($device->getConnection()),
                 $driver->createPrintSettings($device->getPrintSettings()),
+                $label->size(),
                 $pngBytes,
             );
         } catch (LabelPrintJobFailedException $e) {
-            $this->logLabelImagePrintFailure($device, $e);
+            $this->logTestPrintFailure($device, $e);
             throw new BadRequestHttpException($e->getMessage(), $e);
         }
-        $this->logger->info('Printer label image finished.', [
+        $this->labelRecorder->record($device, $label->size(), $pngBytes, self::PRINT_SOURCE_TEST);
+        $this->logger->info('Printer test label finished.', [
             'printerDeviceId' => (string) $device->getId(),
             'driverCode' => $device->getDriverCode(),
         ]);
@@ -244,6 +240,17 @@ final readonly class PrinterDeviceApplicationService
     }
 
     /**
+     * @return list<LabelSize>
+     */
+    private function availableLabelSizes(LabelPrintSettingOptions $options): array
+    {
+        return array_map(
+            static fn (LabelSizePrintSettingOption $option): LabelSize => $option->size,
+            $options->labelSizes,
+        );
+    }
+
+    /**
      * @return array<string, mixed>
      */
     private function mapSuggestedConnection(?LabelPrinterConnection $connection): array
@@ -267,13 +274,16 @@ final readonly class PrinterDeviceApplicationService
         return $settings->printSettingsData();
     }
 
-    private function logTestPrintRequest(PrinterDevice $device): void
+    private function logTestPrintRequest(PrinterDevice $device, Label $label, string $pngBytes): void
     {
         $this->logger->info('Printer test label requested.', [
             'printerDeviceId' => (string) $device->getId(),
             'driverCode' => $device->getDriverCode(),
             'connection' => $device->getConnection(),
             'printSettings' => $device->getPrintSettings(),
+            'labelWidthMillimeters' => $label->size()->widthMillimeters(),
+            'labelHeightMillimeters' => $label->size()->heightMillimeters(),
+            'imageBytes' => \strlen($pngBytes),
         ]);
     }
 
@@ -282,28 +292,6 @@ final readonly class PrinterDeviceApplicationService
         LabelPrintJobFailedException $failure,
     ): void {
         $this->logger->error('Printer test label failed.', [
-            'printerDeviceId' => (string) $device->getId(),
-            'driverCode' => $device->getDriverCode(),
-            'error' => $failure->getMessage(),
-        ]);
-    }
-
-    private function logLabelImagePrintRequest(PrinterDevice $device, string $pngBytes): void
-    {
-        $this->logger->info('Printer label image requested.', [
-            'printerDeviceId' => (string) $device->getId(),
-            'driverCode' => $device->getDriverCode(),
-            'connection' => $device->getConnection(),
-            'printSettings' => $device->getPrintSettings(),
-            'imageBytes' => \strlen($pngBytes),
-        ]);
-    }
-
-    private function logLabelImagePrintFailure(
-        PrinterDevice $device,
-        LabelPrintJobFailedException $failure,
-    ): void {
-        $this->logger->error('Printer label image failed.', [
             'printerDeviceId' => (string) $device->getId(),
             'driverCode' => $device->getDriverCode(),
             'error' => $failure->getMessage(),

@@ -10,6 +10,7 @@ use App\Printer\Domain\Dto\LabelPrintSettings;
 use App\Printer\Domain\ValueObject\DiscoveredPrinterOption;
 use App\Printer\Domain\ValueObject\PrinterDriverCode;
 use App\Printer\Domain\ValueObject\PrinterDriverDisplayLabel;
+use App\SharedKernel\Domain\Label\LabelSize;
 
 interface LabelPrinterDriver
 {
@@ -36,7 +37,10 @@ interface LabelPrinterDriver
      */
     public function createPrintSettings(array $printSettings): LabelPrintSettings;
 
-    public function printTestLabel(LabelPrinterConnection $connection, LabelPrintSettings $printSettings): void;
-
-    public function printLabelImage(LabelPrinterConnection $connection, LabelPrintSettings $printSettings, string $pngBytes): void;
+    public function printLabelImage(
+        LabelPrinterConnection $connection,
+        LabelPrintSettings $printSettings,
+        LabelSize $labelSize,
+        string $pngBytes,
+    ): void;
 }

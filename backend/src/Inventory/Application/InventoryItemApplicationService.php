@@ -8,13 +8,15 @@ use App\Catalog\Application\CatalogItemApplicationService;
 use App\Inventory\Application\Dto\InventoryItemResponse;
 use App\Inventory\Domain\Entity\InventoryItem;
 use App\Inventory\Domain\Entity\Location;
+use App\Inventory\Domain\Port\LabelPrinter;
 use App\Inventory\Domain\Repository\InventoryItemRepository;
 use App\Inventory\Domain\Repository\LocationRepository;
-use App\Inventory\Domain\Service\InventoryLabelImageGenerator;
-use App\Printer\Application\PrinterDeviceApplicationService;
 use App\SharedKernel\Domain\Id\CatalogItemId;
 use App\SharedKernel\Domain\Id\InventoryItemId;
 use App\SharedKernel\Domain\Id\LocationId;
+use App\SharedKernel\Domain\Label\LabelContent;
+use App\SharedKernel\Domain\Label\LabelImageGenerator;
+use App\SharedKernel\Domain\Label\LabelSize;
 use DateTimeInterface;
 use LogicException;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
@@ -25,8 +27,8 @@ final readonly class InventoryItemApplicationService
         private InventoryItemRepository $inventoryItemRepo,
         private LocationRepository $locationRepository,
         private CatalogItemApplicationService $catalog,
-        private InventoryLabelImageGenerator $labelImageGenerator,
-        private PrinterDeviceApplicationService $printerDevices,
+        private LabelImageGenerator $labelImageGenerator,
+        private LabelPrinter $labelPrinter,
         private LocationResponseMapper $locMapper,
     ) {
     }
@@ -49,12 +51,18 @@ final readonly class InventoryItemApplicationService
 
     public function getInventoryItemLabelImage(string $inventoryItemId): string
     {
-        return $this->labelImageGenerator->generate($this->findInventoryItem($inventoryItemId)->getPublicCode());
+        return $this->labelImageGenerator->generate(
+            LabelContent::qrCode($this->findInventoryItem($inventoryItemId)->getPublicCode()->value()),
+            new LabelSize(62, 29),
+        );
     }
 
     public function printInventoryItemLabel(string $inventoryItemId, string $printerDeviceId): void
     {
-        $this->printerDevices->printLabelImage($printerDeviceId, $this->getInventoryItemLabelImage($inventoryItemId));
+        $this->labelPrinter->print(
+            LabelContent::qrCode($this->findInventoryItem($inventoryItemId)->getPublicCode()->value()),
+            $printerDeviceId,
+        );
     }
 
     public function createInventoryItem(

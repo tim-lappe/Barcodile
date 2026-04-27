@@ -6,10 +6,13 @@ namespace App\Printer\Infrastructure\Test;
 
 use App\Printer\Domain\Dto\LabelPrintSettings;
 use App\Printer\Domain\Exception\LabelPrintJobFailedException;
+use App\SharedKernel\Domain\Label\LabelSize;
 
 final readonly class TestLabelPrintSettings implements LabelPrintSettings
 {
     public const LABEL_SIZE = 'logger';
+    public const LABEL_WIDTH_MM = 62;
+    public const LABEL_HEIGHT_MM = 29;
 
     private function __construct(
         public string $labelSize,
@@ -26,6 +29,11 @@ final readonly class TestLabelPrintSettings implements LabelPrintSettings
     public static function defaults(): self
     {
         return new self(self::LABEL_SIZE, false);
+    }
+
+    public static function labelSize(): LabelSize
+    {
+        return new LabelSize(self::LABEL_WIDTH_MM, self::LABEL_HEIGHT_MM);
     }
 
     /**

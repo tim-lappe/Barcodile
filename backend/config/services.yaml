@@ -36,8 +36,11 @@ services:
     App\Scanner\Domain\Input\ScanLineKeyAccumulatorFactory:
         alias: App\Scanner\Infrastructure\EvdevScanLineKeyAccumulatorFactory
 
-    App\Inventory\Domain\Facade\InventoryLabelImageGenerator:
+    App\SharedKernel\Domain\Label\LabelImageGenerator:
         alias: App\Inventory\Infrastructure\PythonInventoryLabelImageGenerator
+
+    App\Inventory\Domain\Port\LabelPrinter:
+        alias: App\Printer\Domain\Adapter\InventoryLabelPrinter
 
     App\Picnic\Infrastructure\PicnicAnonymousAuthenticationAdapter:
         arguments:

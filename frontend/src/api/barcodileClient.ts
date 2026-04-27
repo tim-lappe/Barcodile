@@ -20,6 +20,8 @@ import type {
 	PicnicIntegrationSettingsDto,
 	PicnicLoginResponse,
 	PicnicRequestTwoFactorCodeResponse,
+	PrintedLabelDto,
+	PrintedLabelId,
 	PrinterDeviceDto,
 	PrinterDeviceId,
 	PrinterDriverDto,
@@ -362,6 +364,37 @@ export async function postPrinterTestPrint(
 		headers: JSON_HEADERS,
 		body: JSON.stringify({}),
 	});
+	if (!res.ok) {
+		throw new Error(await readErrorMessage(res));
+	}
+	return (await res.json()) as { status: string };
+}
+
+export async function fetchPrinterPrintedLabels(
+	id: PrinterDeviceId,
+): Promise<PrintedLabelDto[]> {
+	const res = await fetch(`${printerDeviceIri(id)}/printed_labels`, {
+		headers: { Accept: "application/json" },
+	});
+	if (!res.ok) {
+		throw new Error(await readErrorMessage(res));
+	}
+	const data: unknown = await res.json();
+	return readJsonArray<PrintedLabelDto>(data);
+}
+
+export async function postPrinterPrintedLabelResend(
+	printerDeviceId: PrinterDeviceId,
+	printedLabelId: PrintedLabelId,
+): Promise<{ status: string }> {
+	const res = await fetch(
+		`${printerDeviceIri(printerDeviceId)}/printed_labels/${printedLabelId}/resend`,
+		{
+			method: "POST",
+			headers: JSON_HEADERS,
+			body: JSON.stringify({}),
+		},
+	);
 	if (!res.ok) {
 		throw new Error(await readErrorMessage(res));
 	}

@@ -13,6 +13,7 @@ use App\Printer\Domain\Exception\LabelPrintJobFailedException;
 use App\Printer\Domain\Port\LabelPrinterDriver;
 use App\Printer\Domain\ValueObject\PrinterDriverCode;
 use App\Printer\Domain\ValueObject\PrinterDriverDisplayLabel;
+use App\SharedKernel\Domain\Label\LabelSize;
 use JsonException;
 use Psr\Log\LoggerInterface;
 use Symfony\Component\Process\Process;
@@ -74,41 +75,28 @@ final class BrotherQlLabelPrinterDriver implements LabelPrinterDriver
         return BrotherQlPrintSettings::fromArray($printSettings);
     }
 
-    public function printTestLabel(LabelPrinterConnection $connection, LabelPrintSettings $printSettings): void
-    {
-        $brotherQlConnection = $this->brotherQlConnection($connection);
-        $settings = $this->brotherQlPrintSettings($printSettings);
-        $this->logger->info('Brother QL test label print started.', [
-            'model' => $brotherQlConnection->model,
-            'backend' => $brotherQlConnection->backend,
-            'printerIdentifier' => $brotherQlConnection->printerIdentifier,
-            'labelSize' => $settings->labelSize,
-            'red' => $settings->red,
-        ]);
-        $payload = json_encode([
-            'connection' => $brotherQlConnection->connectionData(),
-            'printSettings' => $settings->printSettingsData(),
-        ], \JSON_THROW_ON_ERROR);
-        $this->runPythonScript('print_test.py', $payload);
-    }
-
     public function printLabelImage(
         LabelPrinterConnection $connection,
         LabelPrintSettings $printSettings,
+        LabelSize $labelSize,
         string $pngBytes,
     ): void {
         $brotherQlConnection = $this->brotherQlConnection($connection);
         $settings = $this->brotherQlPrintSettings($printSettings);
+        $selectedLabelCode = BrotherQlPrintSettings::labelCodeFor($labelSize);
         $this->logger->info('Brother QL label image print started.', [
             'model' => $brotherQlConnection->model,
             'backend' => $brotherQlConnection->backend,
             'printerIdentifier' => $brotherQlConnection->printerIdentifier,
-            'labelSize' => $settings->labelSize,
+            'labelSize' => $selectedLabelCode,
             'imageBytes' => \strlen($pngBytes),
         ]);
         $payload = json_encode([
             'connection' => $brotherQlConnection->connectionData(),
-            'printSettings' => $settings->printSettingsData(),
+            'printSettings' => [
+                'labelSize' => $selectedLabelCode,
+                'red' => $settings->red,
+            ],
             'imageBase64' => base64_encode($pngBytes),
         ], \JSON_THROW_ON_ERROR);
         $this->runPythonScript('print_label_image.py', $payload);
@@ -213,7 +201,7 @@ final class BrotherQlLabelPrinterDriver implements LabelPrinterDriver
     {
         $out = [];
         foreach (BrotherQlPrintSettings::allowedLabelSizes() as $size) {
-            $out[] = new LabelSizePrintSettingOption($size, $this->labelSizeLabel($size));
+            $out[] = new LabelSizePrintSettingOption($size, $this->labelSizeLabel($size), BrotherQlPrintSettings::toLabelSize($size));
         }
 
         return $out;

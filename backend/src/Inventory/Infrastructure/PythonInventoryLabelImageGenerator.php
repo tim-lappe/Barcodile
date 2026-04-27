@@ -4,22 +4,26 @@ declare(strict_types=1);
 
 namespace App\Inventory\Infrastructure;
 
-use App\Inventory\Domain\Service\InventoryLabelImageGenerator;
-use App\Inventory\Domain\ValueObject\InventoryItemCode;
+use App\SharedKernel\Domain\Label\LabelContent;
+use App\SharedKernel\Domain\Label\LabelImageGenerator;
+use App\SharedKernel\Domain\Label\LabelSize;
 use RuntimeException;
 use Symfony\Component\Process\Process;
 
-final readonly class PythonInventoryLabelImageGenerator implements InventoryLabelImageGenerator
+final readonly class PythonInventoryLabelImageGenerator implements LabelImageGenerator
 {
     public function __construct(
         private string $projectDir,
     ) {
     }
 
-    public function generate(InventoryItemCode $publicCode): string
+    public function generate(LabelContent $content, LabelSize $size): string
     {
         $payload = json_encode([
-            'publicCode' => $publicCode->value(),
+            'contentType' => $content->type(),
+            'contentValue' => $content->value(),
+            'widthMillimeters' => $size->widthMillimeters(),
+            'heightMillimeters' => $size->heightMillimeters(),
             'logoPath' => $this->logoPath(),
         ], \JSON_THROW_ON_ERROR);
         $process = new Process(['python3', $this->scriptPath()]);

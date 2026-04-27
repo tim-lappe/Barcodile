@@ -88,6 +88,19 @@ export type PrinterDeviceDto = {
 	name: string;
 };
 
+export type PrintedLabelId = string;
+
+export type PrintedLabelDto = {
+	id: PrintedLabelId;
+	printerDeviceId: PrinterDeviceId;
+	driverCode: string;
+	labelWidthMillimeters: number;
+	labelHeightMillimeters: number;
+	source: string;
+	createdAt: string;
+	imageUrl: string;
+};
+
 export type PrinterLabelSizeOptionDto = {
 	value: string;
 	label: string;

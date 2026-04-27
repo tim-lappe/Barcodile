@@ -25,6 +25,8 @@ doctrine:
                 class: App\Scanner\Infrastructure\Doctrine\ScannerDeviceIdType
             printer_device_id:
                 class: App\Printer\Infrastructure\Doctrine\PrinterDeviceIdType
+            printed_label_id:
+                class: App\Printer\Infrastructure\Doctrine\PrintedLabelIdType
             persisted_domain_event_id:
                 class: App\SharedKernel\Infrastructure\Doctrine\PersistedDomainEventIdType
 

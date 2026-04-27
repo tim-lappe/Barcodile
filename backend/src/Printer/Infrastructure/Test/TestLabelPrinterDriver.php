@@ -14,6 +14,7 @@ use App\Printer\Domain\Port\LabelPrinterDriver;
 use App\Printer\Domain\ValueObject\DiscoveredPrinterOption;
 use App\Printer\Domain\ValueObject\PrinterDriverCode;
 use App\Printer\Domain\ValueObject\PrinterDriverDisplayLabel;
+use App\SharedKernel\Domain\Label\LabelSize;
 use Psr\Log\LoggerInterface;
 
 final readonly class TestLabelPrinterDriver implements LabelPrinterDriver
@@ -44,7 +45,7 @@ final readonly class TestLabelPrinterDriver implements LabelPrinterDriver
     {
         return new LabelPrintSettingOptions(
             [
-                new LabelSizePrintSettingOption(TestLabelPrintSettings::LABEL_SIZE, 'Logger test label'),
+                new LabelSizePrintSettingOption(TestLabelPrintSettings::LABEL_SIZE, 'Logger test label', TestLabelPrintSettings::labelSize()),
             ],
             [
                 new ColorModePrintSettingOption('black', 'Black only', false),
@@ -74,20 +75,10 @@ final readonly class TestLabelPrinterDriver implements LabelPrinterDriver
         return TestLabelPrintSettings::fromArray($printSettings);
     }
 
-    public function printTestLabel(LabelPrinterConnection $connection, LabelPrintSettings $printSettings): void
-    {
-        $testConnection = $this->testConnection($connection);
-        $testPrintSettings = $this->testPrintSettings($printSettings);
-        $this->logger->info('Test printer received a test label print request.', [
-            'driverCode' => self::DRIVER_CODE,
-            'connection' => $testConnection->connectionData(),
-            'printSettings' => $testPrintSettings->printSettingsData(),
-        ]);
-    }
-
     public function printLabelImage(
         LabelPrinterConnection $connection,
         LabelPrintSettings $printSettings,
+        LabelSize $labelSize,
         string $pngBytes,
     ): void {
         $testConnection = $this->testConnection($connection);
@@ -96,6 +87,8 @@ final readonly class TestLabelPrinterDriver implements LabelPrinterDriver
             'driverCode' => self::DRIVER_CODE,
             'connection' => $testConnection->connectionData(),
             'printSettings' => $testPrintSettings->printSettingsData(),
+            'labelWidthMillimeters' => $labelSize->widthMillimeters(),
+            'labelHeightMillimeters' => $labelSize->heightMillimeters(),
             'imageBytes' => \strlen($pngBytes),
         ]);
     }
