@@ -2,6 +2,7 @@ import ArticleOutlinedIcon from "@mui/icons-material/ArticleOutlined";
 import PlaceOutlinedIcon from "@mui/icons-material/PlaceOutlined";
 import PrintOutlinedIcon from "@mui/icons-material/PrintOutlined";
 import QrCodeScannerOutlinedIcon from "@mui/icons-material/QrCodeScannerOutlined";
+import PsychologyOutlinedIcon from "@mui/icons-material/PsychologyOutlined";
 import ShoppingBagOutlinedIcon from "@mui/icons-material/ShoppingBagOutlined";
 import {
 	Box,
@@ -59,6 +60,11 @@ const SETTINGS_MENU_SECTIONS: { title: string; items: SettingsMenuItem[] }[] = [
 				label: "Picnic",
 				to: "/settings/picnic",
 				icon: <ShoppingBagOutlinedIcon fontSize="small" />,
+			},
+			{
+				label: "LLM models",
+				to: "/settings/llm",
+				icon: <PsychologyOutlinedIcon fontSize="small" />,
 			},
 		],
 	},

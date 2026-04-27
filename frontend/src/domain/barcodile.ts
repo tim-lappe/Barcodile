@@ -287,6 +287,26 @@ export type PicnicIntegrationSettingsDto = {
 	hasStoredAuthSession: boolean;
 };
 
+export type LlmProfileId = string;
+
+export type LlmProfileKind = "openai" | "openai_compatible";
+
+export type LlmProfileDto = {
+	id: LlmProfileId;
+	kind: LlmProfileKind;
+	label: string;
+	model: string;
+	baseUrl: string | null;
+	enabled: boolean;
+	sortOrder: number;
+	hasStoredApiKey: boolean;
+};
+
+export type LlmProfileTestResultDto = {
+	ok: boolean;
+	preview: string;
+};
+
 export type PicnicCatalogSearchHitDto = {
 	id: string;
 	name: string;

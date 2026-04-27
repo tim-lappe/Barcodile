@@ -15,6 +15,8 @@ import type {
 	LocationDto,
 	LocationId,
 	LogListDto,
+	LlmProfileDto,
+	LlmProfileTestResultDto,
 	PicnicCatalogProductSummaryDto,
 	PicnicCatalogSearchHitDto,
 	PicnicIntegrationSettingsDto,
@@ -1072,4 +1074,78 @@ export async function fetchDebugLogs(input?: {
 		throw new Error(await readErrorMessage(res));
 	}
 	return (await res.json()) as LogListDto;
+}
+
+const LLM_PROFILES_API = "/api/settings/llm-profiles";
+
+export async function fetchLlmProfiles(): Promise<LlmProfileDto[]> {
+	const res = await fetch(LLM_PROFILES_API, {
+		headers: { Accept: "application/json" },
+	});
+	if (!res.ok) {
+		throw new Error(await readErrorMessage(res));
+	}
+	const body: unknown = await res.json();
+	return readJsonArray<LlmProfileDto>(body);
+}
+
+export async function postLlmProfile(body: {
+	kind: LlmProfileDto["kind"];
+	label: string;
+	model: string;
+	apiKey: string;
+	baseUrl?: string | null;
+	enabled?: boolean;
+	sortOrder?: number;
+}): Promise<LlmProfileDto> {
+	const res = await fetch(LLM_PROFILES_API, {
+		method: "POST",
+		headers: JSON_HEADERS,
+		body: JSON.stringify(body),
+	});
+	if (!res.ok) {
+		throw new Error(await readErrorMessage(res));
+	}
+	return (await res.json()) as LlmProfileDto;
+}
+
+export async function patchLlmProfile(
+	id: LlmProfileDto["id"],
+	patch: Record<string, unknown>,
+): Promise<LlmProfileDto> {
+	const res = await fetch(`${LLM_PROFILES_API}/${encodeURIComponent(id)}`, {
+		method: "PATCH",
+		headers: MERGE_PATCH_HEADERS,
+		body: JSON.stringify(patch),
+	});
+	if (!res.ok) {
+		throw new Error(await readErrorMessage(res));
+	}
+	return (await res.json()) as LlmProfileDto;
+}
+
+export async function deleteLlmProfile(id: LlmProfileDto["id"]): Promise<void> {
+	const res = await fetch(`${LLM_PROFILES_API}/${encodeURIComponent(id)}`, {
+		method: "DELETE",
+	});
+	if (!res.ok) {
+		throw new Error(await readErrorMessage(res));
+	}
+}
+
+export async function postLlmProfileTest(
+	id: LlmProfileDto["id"],
+): Promise<LlmProfileTestResultDto> {
+	const res = await fetch(
+		`${LLM_PROFILES_API}/${encodeURIComponent(id)}/test`,
+		{
+			method: "POST",
+			headers: JSON_HEADERS,
+			body: "{}",
+		},
+	);
+	if (!res.ok) {
+		throw new Error(await readErrorMessage(res));
+	}
+	return (await res.json()) as LlmProfileTestResultDto;
 }
