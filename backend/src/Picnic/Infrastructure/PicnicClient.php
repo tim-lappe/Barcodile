@@ -1,0 +1,66 @@
+<?php
+
+declare(strict_types=1);
+
+namespace App\Picnic\Infrastructure;
+
+use App\Picnic\Infrastructure\Domains\App\AppService;
+use App\Picnic\Infrastructure\Domains\Auth\AuthService;
+use App\Picnic\Infrastructure\Domains\Cart\CartService;
+use App\Picnic\Infrastructure\Domains\Catalog\CatalogService;
+use App\Picnic\Infrastructure\Domains\Consent\ConsentService;
+use App\Picnic\Infrastructure\Domains\Content\ContentService;
+use App\Picnic\Infrastructure\Domains\CustomerService\CustomerServiceService;
+use App\Picnic\Infrastructure\Domains\Delivery\DeliveryService;
+use App\Picnic\Infrastructure\Domains\Payment\PaymentService;
+use App\Picnic\Infrastructure\Domains\Recipe\RecipeService;
+use App\Picnic\Infrastructure\Domains\User\UserService;
+use App\Picnic\Infrastructure\Domains\UserOnboarding\UserOnboardingService;
+use Symfony\Contracts\HttpClient\HttpClientInterface;
+
+final class PicnicClient extends PicnicHttpClient
+{
+    public readonly AppService $app;
+
+    public readonly AuthService $auth;
+
+    public readonly UserService $user;
+
+    public readonly CatalogService $catalog;
+
+    public readonly CartService $cart;
+
+    public readonly DeliveryService $delivery;
+
+    public readonly PaymentService $payment;
+
+    public readonly ConsentService $consent;
+
+    public readonly CustomerServiceService $customerService;
+
+    public readonly ContentService $content;
+
+    public readonly UserOnboardingService $userOnboarding;
+
+    public readonly RecipeService $recipe;
+
+    public function __construct(
+        HttpClientInterface $httpClient,
+        PicnicApiConfig $config,
+        PicnicAuthState $authState,
+    ) {
+        parent::__construct($httpClient, $config, $authState);
+        $this->app = new AppService($this);
+        $this->auth = new AuthService($this, $authState);
+        $this->user = new UserService($this);
+        $this->catalog = new CatalogService($this);
+        $this->cart = new CartService($this);
+        $this->delivery = new DeliveryService($this);
+        $this->payment = new PaymentService($this);
+        $this->consent = new ConsentService($this);
+        $this->customerService = new CustomerServiceService($this);
+        $this->content = new ContentService($this);
+        $this->userOnboarding = new UserOnboardingService($this);
+        $this->recipe = new RecipeService($this);
+    }
+}

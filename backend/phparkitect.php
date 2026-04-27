@@ -8,23 +8,23 @@ use Arkitect\Expression\ForClasses\NotDependsOnTheseNamespaces;
 use Arkitect\Expression\ForClasses\NotImplement;
 use Arkitect\Expression\ForClasses\NotResideInTheseNamespaces;
 use Arkitect\Expression\ForClasses\ResideInOneOfTheseNamespaces;
-use Arkitect\RuleBuilders\Architecture\Architecture;
 use Arkitect\Rules\Rule;
 
 return static function (Config $config): void {
     $classSet = ClassSet::fromDir(__DIR__.'/src');
-    $domainNames = array_values(
+    $contextNames = array_values(
         array_filter(
             array_map(
                 static fn (string $path): string => basename($path),
-                glob(__DIR__.'/src/Domain/*', \GLOB_ONLYDIR) ?: []
+                glob(__DIR__.'/src/*', \GLOB_ONLYDIR) ?: []
             ),
-            static fn (string $domainName): bool => 'Shared' !== $domainName
+            static fn (string $contextName): bool => 'SharedKernel' !== $contextName
+                && is_dir(__DIR__.'/src/'.$contextName.'/Domain')
         )
     );
-    $domainNamespaces = array_map(
-        static fn (string $domainName): string => 'App\Domain\\'.$domainName,
-        $domainNames
+    $contextNamespaces = array_map(
+        static fn (string $contextName): string => 'App\\'.$contextName,
+        $contextNames
     );
 
     $rules = [];
@@ -34,37 +34,33 @@ return static function (Config $config): void {
         ->should(new NotImplement('JsonSerializable'))
         ->because('API responses must use explicit serializers or mapped DTOs, not JsonSerializable');
 
-    $rules = array_merge(
-        $rules,
-        iterator_to_array(
-            Architecture::withComponents()
-                ->component('Application')->definedBy('App\Application')
-                ->component('Domain')->definedBy('App\Domain')
-                ->component('Infrastructure')->definedBy('App\Infrastructure')
-                ->where('Application')->mayDependOnComponents('Domain')
-                ->where('Domain')->shouldNotDependOnAnyComponent()
-                ->where('Infrastructure')->mayDependOnComponents('Domain', 'Application')
-                ->rules('Application may depend on Domain but not on Infrastructure; Domain must not depend on Application or Infrastructure; Infrastructure may depend on Domain and Application')
-        )
-    );
-
-    $rules[] = Rule::allClasses()
-        ->that(new ResideInOneOfTheseNamespaces('App\Application'))
-        ->should(new NotDependsOnTheseNamespaces(
-            ['App\Domain'],
-            ['App\Domain\*\Facade\*']
-        ))
-        ->because('Application may call Domain only through domain Facades');
-
-    foreach ($domainNames as $domainName) {
-        $domainNamespace = 'App\Domain\\'.$domainName;
+    foreach ($contextNames as $contextName) {
+        $contextNamespace = 'App\\'.$contextName;
+        $domainNamespace = $contextNamespace.'\Domain';
         $adapterNamespace = $domainNamespace.'\Adapter';
-        $otherDomainNamespaces = array_values(
+        $otherContextNamespaces = array_values(
             array_filter(
-                $domainNamespaces,
-                static fn (string $candidateNamespace): bool => $candidateNamespace !== $domainNamespace
+                $contextNamespaces,
+                static fn (string $candidateNamespace): bool => $candidateNamespace !== $contextNamespace
             )
         );
+        $otherDomainNamespaces = array_map(
+            static fn (string $otherContextNamespace): string => $otherContextNamespace.'\Domain',
+            $otherContextNamespaces
+        );
+        $otherApplicationNamespaces = array_map(
+            static fn (string $otherContextNamespace): string => $otherContextNamespace.'\Application',
+            $otherContextNamespaces
+        );
+        $otherInfrastructureNamespaces = array_map(
+            static fn (string $otherContextNamespace): string => $otherContextNamespace.'\Infrastructure',
+            $otherContextNamespaces
+        );
+        $ownNonDomainNamespaces = [
+            $contextNamespace.'\Api',
+            $contextNamespace.'\Application',
+            $contextNamespace.'\Infrastructure',
+        ];
         $otherDomainFacadeNamespaces = array_map(
             static fn (string $otherDomainNamespace): string => $otherDomainNamespace.'\Facade\*',
             $otherDomainNamespaces
@@ -74,9 +70,12 @@ return static function (Config $config): void {
             $otherDomainNamespaces
         );
 
-        if ([] === $otherDomainNamespaces) {
-            continue;
-        }
+        $rules[] = Rule::allClasses()
+            ->that(new ResideInOneOfTheseNamespaces($domainNamespace))
+            ->should(new NotDependsOnTheseNamespaces(
+                array_merge($ownNonDomainNamespaces, $otherApplicationNamespaces, $otherInfrastructureNamespaces)
+            ))
+            ->because('Context Domain code must not depend on API, Application, or Infrastructure layers');
 
         $rules[] = Rule::allClasses()
             ->that(new ResideInOneOfTheseNamespaces($domainNamespace))
@@ -86,6 +85,20 @@ return static function (Config $config): void {
                 $otherDomainFacadeNamespaces
             ))
             ->because('Domains may call other domains only through their Facades');
+
+        $rules[] = Rule::allClasses()
+            ->that(new ResideInOneOfTheseNamespaces($contextNamespace.'\Application'))
+            ->should(new NotDependsOnTheseNamespaces(
+                array_merge([$contextNamespace.'\Infrastructure'], $otherInfrastructureNamespaces)
+            ))
+            ->because('Application services may orchestrate contexts but must not depend on Infrastructure');
+
+        $rules[] = Rule::allClasses()
+            ->that(new ResideInOneOfTheseNamespaces($contextNamespace.'\Api'))
+            ->should(new NotDependsOnTheseNamespaces(
+                array_merge([$contextNamespace.'\Infrastructure'], $otherInfrastructureNamespaces)
+            ))
+            ->because('API adapters may call Application services but must not depend on Infrastructure');
 
         $rules[] = Rule::allClasses()
             ->that(new ResideInOneOfTheseNamespaces($adapterNamespace))

@@ -12,7 +12,7 @@ services:
     _instanceof:
         Symfony\Bundle\FrameworkBundle\Controller\AbstractController:
             tags: ['controller.service_arguments']
-        App\Domain\Printer\Port\LabelPrinterDriver:
+        App\Printer\Domain\Port\LabelPrinterDriver:
             tags: ['barcodile.label_printer_driver']
 
     App\:
@@ -20,84 +20,78 @@ services:
         exclude:
             - '../src/Kernel.php'
             - '../src/**/Dto/'
-            - '../src/Application/'
 
-    App\Application\:
-        resource: '../src/Application/'
-        exclude:
-            - '../src/Application/**/Dto/'
+    App\Picnic\Domain\Port\PicnicCredentialCipherPort:
+        alias: App\Picnic\Infrastructure\PicnicCredentialCipherAdapter
 
-    App\Domain\Picnic\Port\PicnicCredentialCipherPort:
-        alias: App\Infrastructure\Picnic\PicnicCredentialCipherAdapter
+    App\Picnic\Domain\Port\PicnicPendingLoginTokenPort:
+        alias: App\Picnic\Infrastructure\PicnicPendingLoginTokenCodec
 
-    App\Domain\Picnic\Port\PicnicPendingLoginTokenPort:
-        alias: App\Infrastructure\Picnic\PicnicPendingLoginTokenCodec
+    App\Picnic\Domain\Port\PicnicAnonymousAuthenticationPort:
+        alias: App\Picnic\Infrastructure\PicnicAnonymousAuthenticationAdapter
 
-    App\Domain\Picnic\Port\PicnicAnonymousAuthenticationPort:
-        alias: App\Infrastructure\Picnic\PicnicAnonymousAuthenticationAdapter
+    App\Picnic\Domain\Port\PicnicCatalogSearchPort:
+        alias: App\Picnic\Infrastructure\PicnicCatalogSearchAdapter
 
-    App\Domain\Picnic\Port\PicnicCatalogSearchPort:
-        alias: App\Infrastructure\Picnic\PicnicCatalogSearchAdapter
+    App\Scanner\Domain\Input\ScanLineKeyAccumulatorFactory:
+        alias: App\Scanner\Infrastructure\EvdevScanLineKeyAccumulatorFactory
 
-    App\Domain\Scanner\Input\ScanLineKeyAccumulatorFactory:
-        alias: App\Infrastructure\Scanner\EvdevScanLineKeyAccumulatorFactory
+    App\Inventory\Domain\Facade\InventoryLabelImageGenerator:
+        alias: App\Inventory\Infrastructure\PythonInventoryLabelImageGenerator
 
-    App\Domain\Inventory\Facade\InventoryLabelImageGenerator:
-        alias: App\Infrastructure\Inventory\PythonInventoryLabelImageGenerator
-
-    App\Infrastructure\Picnic\PicnicAnonymousAuthenticationAdapter:
+    App\Picnic\Infrastructure\PicnicAnonymousAuthenticationAdapter:
         arguments:
             $picnicApiVersion: '%env(string:PICNIC_API_VERSION)%'
 
-    App\Infrastructure\Shared\Security\AppSecretStringCipher:
+    App\SharedKernel\Infrastructure\Security\AppSecretStringCipher:
         arguments:
             $appSecret: '%kernel.secret%'
 
-    App\Domain\Cart\Port\CartProviderRegistry:
+    App\Cart\Domain\Port\CartProviderRegistry:
         arguments:
             $providers:
-                barcodile: '@App\Infrastructure\Cart\Integration\InternalCartProvider'
-                picnic: '@App\Domain\Picnic\Adapter\Cart\PicnicCartProvider'
+                barcodile: '@App\Cart\Infrastructure\Integration\InternalCartProvider'
+                picnic: '@App\Picnic\Domain\Adapter\Cart\PicnicCartProvider'
 
-    App\Infrastructure\Picnic\PicnicApiConfigFactory:
+    App\Picnic\Infrastructure\PicnicApiConfigFactory:
         arguments:
             $defaultCountry: '%env(string:PICNIC_COUNTRY)%'
             $defaultApiVersion: '%env(string:PICNIC_API_VERSION)%'
             $defaultAuthKey: '%env(string:PICNIC_AUTH_KEY)%'
             $defaultUrl: '%env(string:PICNIC_URL)%'
 
-    App\Infrastructure\Picnic\PicnicApiConfig:
-        factory: [ '@App\Infrastructure\Picnic\PicnicApiConfigFactory', 'create' ]
+    App\Picnic\Infrastructure\PicnicApiConfig:
+        factory: [ '@App\Picnic\Infrastructure\PicnicApiConfigFactory', 'create' ]
         shared: false
 
-    App\Infrastructure\Picnic\PicnicAuthState:
+    App\Picnic\Infrastructure\PicnicAuthState:
         shared: false
 
-    App\Infrastructure\Picnic\PicnicClient:
+    App\Picnic\Infrastructure\PicnicClient:
         shared: false
 
-    App\Application\Debug\LogApplicationService:
+    App\Debug\Application\LogApplicationService:
         arguments:
             $logsDir: '%kernel.logs_dir%'
             $environment: '%kernel.environment%'
 
-    App\Domain\Picnic\Port\PicnicCartSessionPort:
-        alias: App\Infrastructure\Picnic\PicnicCartSessionAdapter
+    App\Picnic\Domain\Port\PicnicCartSessionPort:
+        alias: App\Picnic\Infrastructure\PicnicCartSessionAdapter
 
-    App\Domain\Picnic\Port\PicnicCatalogProductLookupPort:
-        alias: App\Infrastructure\Picnic\PicnicCatalogProductLookupAdapter
+    App\Picnic\Domain\Port\PicnicCatalogProductLookupPort:
+        alias: App\Picnic\Infrastructure\PicnicCatalogProductLookupAdapter
 
-    App\Infrastructure\Scanner\LinuxInputDeviceByIdListingAdapter:
+    App\Scanner\Infrastructure\LinuxInputDeviceByIdListingAdapter:
         arguments:
             $environment: '%kernel.environment%'
 
-    App\Domain\Scanner\Port\InputDeviceListingPort:
-        alias: App\Infrastructure\Scanner\LinuxInputDeviceByIdListingAdapter
+    App\Scanner\Domain\Port\InputDeviceListingPort:
+        alias: App\Scanner\Infrastructure\LinuxInputDeviceByIdListingAdapter
 
-    App\Infrastructure\Printer\BrotherQl\BrotherQlLabelPrinterDriver:
+    App\Printer\Infrastructure\BrotherQl\BrotherQlLabelPrinterDriver:
         arguments:
             $projectDir: '%kernel.project_dir%'
 
-    App\Infrastructure\Inventory\PythonInventoryLabelImageGenerator:
+    App\Inventory\Infrastructure\PythonInventoryLabelImageGenerator:
         arguments:
             $projectDir: '%kernel.project_dir%'

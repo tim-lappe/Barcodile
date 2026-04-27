@@ -7,6 +7,34 @@
 # To list all registered routes, run the following command:
 #   bin/console debug:router
 
-controllers:
-    resource: ../src/Application/
+activity_controllers:
+    resource: ../src/Activity/Api/Controller/
+    type: attribute
+
+cart_controllers:
+    resource: ../src/Cart/Api/Controller/
+    type: attribute
+
+catalog_controllers:
+    resource: ../src/Catalog/Api/Controller/
+    type: attribute
+
+debug_controllers:
+    resource: ../src/Debug/Api/Controller/
+    type: attribute
+
+inventory_controllers:
+    resource: ../src/Inventory/Api/Controller/
+    type: attribute
+
+picnic_controllers:
+    resource: ../src/Picnic/Api/Controller/
+    type: attribute
+
+printer_controllers:
+    resource: ../src/Printer/Api/Controller/
+    type: attribute
+
+scanner_controllers:
+    resource: ../src/Scanner/Api/Controller/
     type: attribute

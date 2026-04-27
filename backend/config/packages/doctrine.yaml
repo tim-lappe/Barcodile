@@ -4,27 +4,27 @@ doctrine:
         server_version: '16.0.0'
         types:
             catalog_item_id:
-                class: App\Infrastructure\Catalog\Doctrine\CatalogItemIdType
+                class: App\Catalog\Infrastructure\Doctrine\CatalogItemIdType
             catalog_item_attribute_id:
-                class: App\Infrastructure\Catalog\Doctrine\CatalogItemAttributeIdType
+                class: App\Catalog\Infrastructure\Doctrine\CatalogItemAttributeIdType
             shopping_cart_id:
-                class: App\Infrastructure\Cart\Doctrine\ShoppingCartIdType
+                class: App\Cart\Infrastructure\Doctrine\ShoppingCartIdType
             shopping_cart_line_id:
-                class: App\Infrastructure\Cart\Doctrine\ShoppingCartLineIdType
+                class: App\Cart\Infrastructure\Doctrine\ShoppingCartLineIdType
             inventory_item_id:
-                class: App\Infrastructure\Inventory\Doctrine\InventoryItemIdType
+                class: App\Inventory\Infrastructure\Doctrine\InventoryItemIdType
             cart_stock_automation_rule_id:
-                class: App\Infrastructure\Inventory\Doctrine\CartStockAutomationRuleIdType
+                class: App\Inventory\Infrastructure\Doctrine\CartStockAutomationRuleIdType
             location_id:
-                class: App\Infrastructure\Inventory\Doctrine\LocationIdType
+                class: App\Inventory\Infrastructure\Doctrine\LocationIdType
             picnic_integration_settings_id:
-                class: App\Infrastructure\Picnic\Doctrine\PicnicIntegrationSettingsIdType
+                class: App\Picnic\Infrastructure\Doctrine\PicnicIntegrationSettingsIdType
             scanner_device_id:
-                class: App\Infrastructure\Scanner\Doctrine\ScannerDeviceIdType
+                class: App\Scanner\Infrastructure\Doctrine\ScannerDeviceIdType
             printer_device_id:
-                class: App\Infrastructure\Printer\Doctrine\PrinterDeviceIdType
+                class: App\Printer\Infrastructure\Doctrine\PrinterDeviceIdType
             persisted_domain_event_id:
-                class: App\Infrastructure\Shared\Doctrine\PersistedDomainEventIdType
+                class: App\SharedKernel\Infrastructure\Doctrine\PersistedDomainEventIdType
 
         profiling_collect_backtrace: '%kernel.debug%'
     orm:
@@ -37,44 +37,44 @@ doctrine:
             Catalog:
                 type: attribute
                 is_bundle: false
-                dir: '%kernel.project_dir%/src/Domain/Catalog/Entity'
-                prefix: 'App\Domain\Catalog\Entity'
+                dir: '%kernel.project_dir%/src/Catalog/Domain/Entity'
+                prefix: 'App\Catalog\Domain\Entity'
                 alias: Catalog
             Inventory:
                 type: attribute
                 is_bundle: false
-                dir: '%kernel.project_dir%/src/Domain/Inventory/Entity'
-                prefix: 'App\Domain\Inventory\Entity'
+                dir: '%kernel.project_dir%/src/Inventory/Domain/Entity'
+                prefix: 'App\Inventory\Domain\Entity'
                 alias: Inventory
             Picnic:
                 type: attribute
                 is_bundle: false
-                dir: '%kernel.project_dir%/src/Domain/Picnic/Entity'
-                prefix: 'App\Domain\Picnic\Entity'
+                dir: '%kernel.project_dir%/src/Picnic/Domain/Entity'
+                prefix: 'App\Picnic\Domain\Entity'
                 alias: Picnic
             Cart:
                 type: attribute
                 is_bundle: false
-                dir: '%kernel.project_dir%/src/Domain/Cart/Entity'
-                prefix: 'App\Domain\Cart\Entity'
+                dir: '%kernel.project_dir%/src/Cart/Domain/Entity'
+                prefix: 'App\Cart\Domain\Entity'
                 alias: Cart
             Scanner:
                 type: attribute
                 is_bundle: false
-                dir: '%kernel.project_dir%/src/Domain/Scanner/Entity'
-                prefix: 'App\Domain\Scanner\Entity'
+                dir: '%kernel.project_dir%/src/Scanner/Domain/Entity'
+                prefix: 'App\Scanner\Domain\Entity'
                 alias: Scanner
             Printer:
                 type: attribute
                 is_bundle: false
-                dir: '%kernel.project_dir%/src/Domain/Printer/Entity'
-                prefix: 'App\Domain\Printer\Entity'
+                dir: '%kernel.project_dir%/src/Printer/Domain/Entity'
+                prefix: 'App\Printer\Domain\Entity'
                 alias: Printer
             Shared:
                 type: attribute
                 is_bundle: false
-                dir: '%kernel.project_dir%/src/Domain/Shared/Entity'
-                prefix: 'App\Domain\Shared\Entity'
+                dir: '%kernel.project_dir%/src/SharedKernel/Domain/Entity'
+                prefix: 'App\SharedKernel\Domain\Entity'
                 alias: Shared
 
 when@test:

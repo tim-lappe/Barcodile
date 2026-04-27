@@ -1,0 +1,42 @@
+<?php
+
+declare(strict_types=1);
+
+namespace App\Printer\Domain\ValueObject;
+
+use InvalidArgumentException;
+use Stringable;
+
+final readonly class PrinterDriverDisplayLabel implements Stringable
+{
+    private const MAX_LENGTH = 255;
+
+    private string $value;
+
+    public function __construct(string $value)
+    {
+        $normalized = trim($value);
+        if ('' === $normalized) {
+            throw new InvalidArgumentException('Printer driver display label must not be empty.');
+        }
+        if (self::MAX_LENGTH < \strlen($normalized)) {
+            throw new InvalidArgumentException('Printer driver display label exceeds maximum length.');
+        }
+        $this->value = $normalized;
+    }
+
+    public function value(): string
+    {
+        return $this->value;
+    }
+
+    public function equals(self $other): bool
+    {
+        return $this->value === $other->value;
+    }
+
+    public function __toString(): string
+    {
+        return $this->value;
+    }
+}
