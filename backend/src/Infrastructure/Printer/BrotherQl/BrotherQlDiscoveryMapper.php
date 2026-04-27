@@ -8,8 +8,6 @@ use App\Domain\Printer\ValueObject\DiscoveredPrinterOption;
 
 final class BrotherQlDiscoveryMapper
 {
-    private const DEFAULT_PRINT_SETTINGS = ['labelSize' => '62', 'red' => true];
-
     /**
      * @param list<mixed> $decoded
      *
@@ -43,7 +41,7 @@ final class BrotherQlDiscoveryMapper
             $ident,
             $label,
             $this->suggestedConnection($ident, $backend),
-            self::DEFAULT_PRINT_SETTINGS,
+            BrotherQlPrintSettings::defaults(),
         );
     }
 
@@ -77,15 +75,8 @@ final class BrotherQlDiscoveryMapper
         return '' !== $value ? $value : null;
     }
 
-    /**
-     * @return array<string, string>
-     */
-    private function suggestedConnection(string $printerIdentifier, string $backend): array
+    private function suggestedConnection(string $printerIdentifier, string $backend): BrotherQlPrinterConnection
     {
-        return [
-            'model' => 'QL-800',
-            'printerIdentifier' => $printerIdentifier,
-            'backend' => $backend,
-        ];
+        return BrotherQlPrinterConnection::discovered($printerIdentifier, $backend);
     }
 }

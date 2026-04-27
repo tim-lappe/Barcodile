@@ -21,7 +21,7 @@ final class LabelPrinterDriverRegistry
         iterable $drivers,
     ) {
         foreach ($drivers as $driver) {
-            $this->driversByCode[$driver->driverCode()] = $driver;
+            $this->driversByCode[$driver->driverCode()->value()] = $driver;
         }
     }
 

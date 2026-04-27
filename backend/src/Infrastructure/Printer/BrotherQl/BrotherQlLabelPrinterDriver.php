@@ -4,8 +4,15 @@ declare(strict_types=1);
 
 namespace App\Infrastructure\Printer\BrotherQl;
 
+use App\Domain\Printer\Dto\ColorModePrintSettingOption;
+use App\Domain\Printer\Dto\LabelPrinterConnection;
+use App\Domain\Printer\Dto\LabelPrintSettingOptions;
+use App\Domain\Printer\Dto\LabelPrintSettings;
+use App\Domain\Printer\Dto\LabelSizePrintSettingOption;
 use App\Domain\Printer\Exception\LabelPrintJobFailedException;
 use App\Domain\Printer\Port\LabelPrinterDriver;
+use App\Domain\Printer\ValueObject\PrinterDriverCode;
+use App\Domain\Printer\ValueObject\PrinterDriverDisplayLabel;
 use JsonException;
 use Psr\Log\LoggerInterface;
 use Symfony\Component\Process\Process;
@@ -13,13 +20,6 @@ use Symfony\Component\Process\Process;
 final class BrotherQlLabelPrinterDriver implements LabelPrinterDriver
 {
     private const DRIVER_CODE = 'brother_ql';
-    private const DEFAULT_PRINT_SETTINGS = ['labelSize' => '62', 'red' => true];
-    private const ALLOWED_LABEL_SIZES = [
-        '12', '29', '38', '50', '54', '62', '102',
-        '17x54', '17x87', '23x23', '29x42', '29x90', '39x48',
-        '52x29', '62x29', '62x100', '102x51', '102x152',
-        'd12', 'd24', 'd58',
-    ];
 
     public function __construct(
         private readonly string $projectDir,
@@ -29,30 +29,30 @@ final class BrotherQlLabelPrinterDriver implements LabelPrinterDriver
     ) {
     }
 
-    public function driverCode(): string
+    public function driverCode(): PrinterDriverCode
     {
-        return self::DRIVER_CODE;
+        return new PrinterDriverCode(self::DRIVER_CODE);
     }
 
-    public function displayLabel(): string
+    public function displayLabel(): PrinterDriverDisplayLabel
     {
-        return 'Brother QL (brother_ql)';
+        return new PrinterDriverDisplayLabel('Brother QL (brother_ql)');
     }
 
-    public function defaultPrintSettings(): array
+    public function defaultPrintSettings(): LabelPrintSettings
     {
-        return self::DEFAULT_PRINT_SETTINGS;
+        return BrotherQlPrintSettings::defaults();
     }
 
-    public function printSettingOptions(): array
+    public function printSettingOptions(): LabelPrintSettingOptions
     {
-        return [
-            'labelSizes' => $this->labelSizeOptions(),
-            'colorModes' => [
-                ['value' => 'black', 'label' => 'Black only', 'red' => false],
-                ['value' => 'red_black', 'label' => 'Red and black', 'red' => true],
+        return new LabelPrintSettingOptions(
+            $this->labelSizeOptions(),
+            [
+                new ColorModePrintSettingOption('black', 'Black only', false),
+                new ColorModePrintSettingOption('red_black', 'Red and black', true),
             ],
-        ];
+        );
     }
 
     public function discover(): array
@@ -62,57 +62,74 @@ final class BrotherQlLabelPrinterDriver implements LabelPrinterDriver
         return $this->discoveryMapper->mapRows($decoded);
     }
 
-    public function assertValidConnection(array $connection): void
+    public function createConnection(array $connection): LabelPrinterConnection
     {
         $this->connectionValidator->validate($connection);
+
+        return BrotherQlPrinterConnection::fromArray($connection);
     }
 
-    public function printTestLabel(array $connection, array $printSettings): void
+    public function createPrintSettings(array $printSettings): LabelPrintSettings
     {
-        $this->assertValidConnection($connection);
-        $this->assertValidPrintSettings($printSettings);
+        return BrotherQlPrintSettings::fromArray($printSettings);
+    }
+
+    public function printTestLabel(LabelPrinterConnection $connection, LabelPrintSettings $printSettings): void
+    {
+        $brotherQlConnection = $this->brotherQlConnection($connection);
+        $settings = $this->brotherQlPrintSettings($printSettings);
         $this->logger->info('Brother QL test label print started.', [
-            'model' => $connection['model'] ?? null,
-            'backend' => $connection['backend'] ?? null,
-            'printerIdentifier' => $connection['printerIdentifier'] ?? null,
-            'labelSize' => $printSettings['labelSize'] ?? null,
-            'red' => $printSettings['red'] ?? null,
+            'model' => $brotherQlConnection->model,
+            'backend' => $brotherQlConnection->backend,
+            'printerIdentifier' => $brotherQlConnection->printerIdentifier,
+            'labelSize' => $settings->labelSize,
+            'red' => $settings->red,
         ]);
         $payload = json_encode([
-            'connection' => $connection,
-            'printSettings' => $printSettings,
+            'connection' => $brotherQlConnection->toArray(),
+            'printSettings' => $settings->toArray(),
         ], \JSON_THROW_ON_ERROR);
         $this->runPythonScript('print_test.py', $payload);
     }
 
-    public function printLabelImage(array $connection, array $printSettings, string $pngBytes): void
-    {
-        $this->assertValidConnection($connection);
-        $this->assertValidPrintSettings($printSettings);
+    public function printLabelImage(
+        LabelPrinterConnection $connection,
+        LabelPrintSettings $printSettings,
+        string $pngBytes,
+    ): void {
+        $brotherQlConnection = $this->brotherQlConnection($connection);
+        $settings = $this->brotherQlPrintSettings($printSettings);
         $this->logger->info('Brother QL label image print started.', [
-            'model' => $connection['model'] ?? null,
-            'backend' => $connection['backend'] ?? null,
-            'printerIdentifier' => $connection['printerIdentifier'] ?? null,
-            'labelSize' => $printSettings['labelSize'] ?? null,
+            'model' => $brotherQlConnection->model,
+            'backend' => $brotherQlConnection->backend,
+            'printerIdentifier' => $brotherQlConnection->printerIdentifier,
+            'labelSize' => $settings->labelSize,
             'imageBytes' => \strlen($pngBytes),
         ]);
         $payload = json_encode([
-            'connection' => $connection,
-            'printSettings' => $printSettings,
+            'connection' => $brotherQlConnection->toArray(),
+            'printSettings' => $settings->toArray(),
             'imageBase64' => base64_encode($pngBytes),
         ], \JSON_THROW_ON_ERROR);
         $this->runPythonScript('print_label_image.py', $payload);
     }
 
-    public function assertValidPrintSettings(array $printSettings): void
+    private function brotherQlConnection(LabelPrinterConnection $connection): BrotherQlPrinterConnection
     {
-        $labelSize = $this->stringFrom($printSettings, 'labelSize');
-        if (!\in_array($labelSize, self::ALLOWED_LABEL_SIZES, true)) {
-            throw new LabelPrintJobFailedException('Unsupported Brother QL label size.');
+        if (!$connection instanceof BrotherQlPrinterConnection) {
+            throw new LabelPrintJobFailedException('Brother QL connection is required.');
         }
-        if (!isset($printSettings['red']) || !\is_bool($printSettings['red'])) {
-            throw new LabelPrintJobFailedException('Brother QL red mode must be true or false.');
+
+        return $connection;
+    }
+
+    private function brotherQlPrintSettings(LabelPrintSettings $printSettings): BrotherQlPrintSettings
+    {
+        if (!$printSettings instanceof BrotherQlPrintSettings) {
+            throw new LabelPrintJobFailedException('Brother QL print settings are required.');
         }
+
+        return $printSettings;
     }
 
     /**
@@ -190,13 +207,13 @@ final class BrotherQlLabelPrinterDriver implements LabelPrinterDriver
     }
 
     /**
-     * @return list<array{value: string, label: string}>
+     * @return list<LabelSizePrintSettingOption>
      */
     private function labelSizeOptions(): array
     {
         $out = [];
-        foreach (self::ALLOWED_LABEL_SIZES as $size) {
-            $out[] = ['value' => $size, 'label' => $this->labelSizeLabel($size)];
+        foreach (BrotherQlPrintSettings::allowedLabelSizes() as $size) {
+            $out[] = new LabelSizePrintSettingOption($size, $this->labelSizeLabel($size));
         }
 
         return $out;
@@ -210,19 +227,6 @@ final class BrotherQlLabelPrinterDriver implements LabelPrinterDriver
             '102x152' => '102 x 152 mm shipping label',
             default => $labelSize,
         };
-    }
-
-    /**
-     * @param array<string, mixed> $data
-     */
-    private function stringFrom(array $data, string $key): string
-    {
-        if (!isset($data[$key])) {
-            return '';
-        }
-        $raw = $data[$key];
-
-        return \is_string($raw) ? $raw : '';
     }
 
     private function trimOutput(string $output): string

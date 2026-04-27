@@ -4,17 +4,16 @@ declare(strict_types=1);
 
 namespace App\Domain\Printer\ValueObject;
 
+use App\Domain\Printer\Dto\LabelPrinterConnection;
+use App\Domain\Printer\Dto\LabelPrintSettings;
+
 final readonly class DiscoveredPrinterOption
 {
-    /**
-     * @param array<string, mixed> $suggestedConnection
-     * @param array<string, mixed> $suggestedSettings
-     */
     public function __construct(
         public string $deviceIdentifier,
         public string $label,
-        public array $suggestedConnection = [],
-        public array $suggestedSettings = [],
+        public ?LabelPrinterConnection $suggestedConnection = null,
+        public ?LabelPrintSettings $suggestedSettings = null,
     ) {
     }
 }

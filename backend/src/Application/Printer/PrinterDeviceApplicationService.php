@@ -46,10 +46,10 @@ final readonly class PrinterDeviceApplicationService
         $out = [];
         foreach ($this->driverRegistry->all() as $driver) {
             $out[] = new PrinterDriverListItemResponse(
-                $driver->driverCode(),
-                $driver->displayLabel(),
-                $driver->defaultPrintSettings(),
-                $driver->printSettingOptions(),
+                $driver->driverCode()->value(),
+                $driver->displayLabel()->value(),
+                $driver->defaultPrintSettings()->toArray(),
+                $driver->printSettingOptions()->toArray(),
             );
         }
 
@@ -67,8 +67,8 @@ final readonly class PrinterDeviceApplicationService
             $out[] = new DiscoveredPrinterOptionResponse(
                 $option->deviceIdentifier,
                 $option->label,
-                $option->suggestedConnection,
-                $option->suggestedSettings,
+                $option->suggestedConnection?->toArray() ?? [],
+                $option->suggestedSettings?->toArray() ?? [],
             );
         }
 
@@ -78,13 +78,13 @@ final readonly class PrinterDeviceApplicationService
     public function createPrinterDevice(PostPrinterDeviceRequest $request): PrinterDeviceResponse
     {
         $driver = $this->driverRegistry->get(trim($request->driverCode));
-        $driver->assertValidConnection($request->connection);
-        $driver->assertValidPrintSettings($request->printSettings);
+        $connection = $driver->createConnection($request->connection);
+        $printSettings = $driver->createPrintSettings($request->printSettings);
 
         $device = new PrinterDevice();
         $device->changeDriverCode(trim($request->driverCode));
-        $device->changeConnection($request->connection);
-        $device->changePrintSettings($request->printSettings);
+        $device->changeConnection($connection->toArray());
+        $device->changePrintSettings($printSettings->toArray());
         $device->changeName(trim($request->name));
         $this->deviceRepository->save($device);
         $this->logger->info('Printer device created.', [
@@ -127,7 +127,10 @@ final readonly class PrinterDeviceApplicationService
         $this->logTestPrintRequest($device);
 
         try {
-            $driver->printTestLabel($device->getConnection(), $device->getPrintSettings());
+            $driver->printTestLabel(
+                $driver->createConnection($device->getConnection()),
+                $driver->createPrintSettings($device->getPrintSettings()),
+            );
         } catch (LabelPrintJobFailedException $e) {
             $this->logTestPrintFailure($device, $e);
             throw new BadRequestHttpException($e->getMessage(), $e);
@@ -149,7 +152,11 @@ final readonly class PrinterDeviceApplicationService
         $this->logLabelImagePrintRequest($device, $pngBytes);
 
         try {
-            $driver->printLabelImage($device->getConnection(), $device->getPrintSettings(), $pngBytes);
+            $driver->printLabelImage(
+                $driver->createConnection($device->getConnection()),
+                $driver->createPrintSettings($device->getPrintSettings()),
+                $pngBytes,
+            );
         } catch (LabelPrintJobFailedException $e) {
             $this->logLabelImagePrintFailure($device, $e);
             throw new BadRequestHttpException($e->getMessage(), $e);
