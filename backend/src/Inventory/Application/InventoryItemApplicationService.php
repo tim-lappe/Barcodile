@@ -6,18 +6,28 @@ namespace App\Inventory\Application;
 
 use App\Catalog\Application\CatalogItemApplicationService;
 use App\Inventory\Api\Dto\InventoryItemResponse;
-use App\Inventory\Api\Dto\LocationResponse;
-use App\Inventory\Domain\Facade\InventoryFacade;
-use App\Inventory\Domain\Facade\InventoryItemView;
-use App\Inventory\Domain\Facade\LocationView;
-use App\SharedKernel\Application\ApiIri;
+use App\Inventory\Domain\Entity\InventoryItem;
+use App\Inventory\Domain\Entity\Location;
+use App\Inventory\Domain\Repository\InventoryItemRepository;
+use App\Inventory\Domain\Repository\LocationRepository;
+use App\Inventory\Domain\Service\InventoryLabelImageGenerator;
+use App\Printer\Application\PrinterDeviceApplicationService;
+use App\SharedKernel\Domain\Id\CatalogItemId;
+use App\SharedKernel\Domain\Id\InventoryItemId;
+use App\SharedKernel\Domain\Id\LocationId;
 use DateTimeInterface;
+use LogicException;
+use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 
 final readonly class InventoryItemApplicationService
 {
     public function __construct(
-        private InventoryFacade $inventory,
-        private CatalogItemApplicationService $catalogItems,
+        private InventoryItemRepository $inventoryItemRepo,
+        private LocationRepository $locationRepository,
+        private CatalogItemApplicationService $catalog,
+        private InventoryLabelImageGenerator $labelImageGenerator,
+        private PrinterDeviceApplicationService $printerDevices,
+        private LocationResponseMapper $locMapper,
     ) {
     }
 
@@ -26,22 +36,25 @@ final readonly class InventoryItemApplicationService
      */
     public function listInventoryItems(): array
     {
-        return array_map(fn (InventoryItemView $item): InventoryItemResponse => $this->map($item), $this->inventory->listInventoryItems());
+        return array_map(
+            fn (InventoryItemView $item): InventoryItemResponse => $this->toResponse($item),
+            array_map(fn (InventoryItem $item): InventoryItemView => $this->mapInventoryItem($item), $this->inventoryItemRepo->findAllOrderedById()),
+        );
     }
 
     public function getInventoryItem(string $inventoryItemId): InventoryItemResponse
     {
-        return $this->map($this->inventory->getInventoryItem($inventoryItemId));
+        return $this->toResponse($this->mapInventoryItem($this->findInventoryItem($inventoryItemId)));
     }
 
     public function getInventoryItemLabelImage(string $inventoryItemId): string
     {
-        return $this->inventory->getInventoryItemLabelImage($inventoryItemId);
+        return $this->labelImageGenerator->generate($this->findInventoryItem($inventoryItemId)->getPublicCode());
     }
 
     public function printInventoryItemLabel(string $inventoryItemId, string $printerDeviceId): void
     {
-        $this->inventory->printInventoryItemLabel($inventoryItemId, $printerDeviceId);
+        $this->printerDevices->printLabelImage($printerDeviceId, $this->getInventoryItemLabelImage($inventoryItemId));
     }
 
     public function createInventoryItem(
@@ -49,7 +62,13 @@ final readonly class InventoryItemApplicationService
         ?string $locationId,
         ?DateTimeInterface $expirationDate,
     ): void {
-        $this->inventory->createInventoryItem($catalogItemId, $locationId, $expirationDate);
+        $this->catalog->ensureCatalogItemExists($catalogItemId);
+        $item = new InventoryItem();
+        $item->assignPublicCode($this->inventoryItemRepo->allocateNextPublicCode());
+        $item->changeCatalogItemId(CatalogItemId::fromString($catalogItemId));
+        $item->changeLocation(null === $locationId ? null : $this->locationRepositoryFind(LocationId::fromString($locationId)));
+        $item->changeExpirationDate($expirationDate);
+        $this->inventoryItemRepo->save($item);
     }
 
     public function updateInventoryItem(
@@ -58,32 +77,78 @@ final readonly class InventoryItemApplicationService
         ?string $locationId,
         ?DateTimeInterface $expirationDate,
     ): void {
-        $this->inventory->updateInventoryItem($inventoryItemId, $catalogItemId, $locationId, $expirationDate);
+        $this->catalog->ensureCatalogItemExists($catalogItemId);
+        $item = $this->findInventoryItem($inventoryItemId);
+        $item->changeCatalogItemId(CatalogItemId::fromString($catalogItemId));
+        $item->changeLocation(null === $locationId ? null : $this->locationRepositoryFind(LocationId::fromString($locationId)));
+        $item->changeExpirationDate($expirationDate);
+        $this->inventoryItemRepo->save($item);
     }
 
     public function deleteInventoryItem(string $inventoryItemId): void
     {
-        $this->inventory->deleteInventoryItem($inventoryItemId);
+        $this->inventoryItemRepo->remove($this->findInventoryItem($inventoryItemId));
     }
 
-    private function map(InventoryItemView $item): InventoryItemResponse
+    private function toResponse(InventoryItemView $item): InventoryItemResponse
     {
         return new InventoryItemResponse(
             $item->resourceId,
             $item->publicCode,
-            $this->catalogItems->catalogItemResponse($item->catalogItem),
-            null === $item->location ? null : $this->locationResponse($item->location),
+            $this->catalog->getCatalogItem($item->catalogItemId),
+            null === $item->location ? null : $this->locMapper->fromView($item->location),
             $item->expirationDate,
             $item->createdAt,
         );
     }
 
-    private function locationResponse(LocationView $location): LocationResponse
+    private function findInventoryItem(string $inventoryItemId): InventoryItem
     {
-        return new LocationResponse(
-            $location->resourceId,
-            $location->name,
-            null === $location->parentId ? null : ApiIri::location($location->parentId),
+        $item = $this->inventoryItemRepo->find(InventoryItemId::fromString($inventoryItemId));
+        if (!$item instanceof InventoryItem) {
+            throw new NotFoundHttpException('Inventory item not found.');
+        }
+
+        return $item;
+    }
+
+    private function locationRepositoryFind(LocationId $locationId): Location
+    {
+        $location = $this->locationRepository->find($locationId);
+        if (!$location instanceof Location) {
+            throw new NotFoundHttpException('Location not found.');
+        }
+
+        return $location;
+    }
+
+    private function mapInventoryItem(InventoryItem $item): InventoryItemView
+    {
+        $catalogItemId = $item->getCatalogItemId();
+        if (null === $catalogItemId) {
+            throw new LogicException('Inventory item without catalog item.');
+        }
+        $location = $item->getLocation();
+        $exp = $item->getExpirationDate();
+
+        return new InventoryItemView(
+            (string) $item->getId(),
+            $item->getPublicCode(),
+            (string) $catalogItemId,
+            null === $location ? null : $this->mapLocation($location),
+            null === $exp ? null : $exp->format(DateTimeInterface::ATOM),
+            $item->getCreatedAt()->format(DateTimeInterface::ATOM),
+        );
+    }
+
+    private function mapLocation(Location $location): LocationView
+    {
+        $parent = $location->getParent();
+
+        return new LocationView(
+            (string) $location->getId(),
+            $location->getName(),
+            null === $parent ? null : (string) $parent->getId(),
         );
     }
 }

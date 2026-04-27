@@ -4,10 +4,7 @@ declare(strict_types=1);
 
 namespace App\Scanner\Infrastructure;
 
-use App\Catalog\Api\Dto\CatalogBarcodeInput;
-use App\Catalog\Api\Dto\PostCatalogItemRequest;
 use App\Catalog\Application\CatalogItemApplicationService;
-use App\Catalog\Application\CatalogItemCreationSource;
 use App\Catalog\Domain\Repository\CatalogItemRepository;
 use App\Inventory\Application\InventoryItemApplicationService;
 use App\Inventory\Domain\Repository\InventoryItemRepository;
@@ -21,8 +18,8 @@ final readonly class ScannerInvAutomationService
         private ScannerDeviceRepository $deviceRepository,
         private InventoryItemRepository $invItemRepo,
         private CatalogItemRepository $catItemRepo,
-        private InventoryItemApplicationService $invItemApp,
-        private CatalogItemApplicationService $catItemApp,
+        private InventoryItemApplicationService $inventoryItems,
+        private CatalogItemApplicationService $catalog,
     ) {
     }
 
@@ -46,7 +43,7 @@ final readonly class ScannerInvAutomationService
         if (null === $catalogItemId) {
             return;
         }
-        $this->invItemApp->createInventoryItem($catalogItemId, null, null);
+        $this->inventoryItems->createInventoryItem($catalogItemId, null, null);
     }
 
     private function findOrCreateEanCatalogItemId(ScannerDevice $device, string $text): ?string
@@ -58,16 +55,17 @@ final readonly class ScannerInvAutomationService
         if (!$device->isAutomationCreateCatalogItemIfMissingForEan()) {
             return null;
         }
-        $created = $this->catItemApp->createCatalogItem(
-            new PostCatalogItemRequest(
-                name: 'EAN '.$text,
-                volume: null,
-                weight: null,
-                barcode: new CatalogBarcodeInput($text, 'EAN'),
-                itemAttributes: null,
-                picnicProductLink: null,
-                creationSource: CatalogItemCreationSource::Manual,
-            ),
+        $created = $this->catalog->createCatalogItemFromValues(
+            'EAN '.$text,
+            null,
+            null,
+            null,
+            null,
+            $text,
+            'EAN',
+            null,
+            null,
+            'manual',
         );
 
         return $created->resourceId;
@@ -82,7 +80,7 @@ final readonly class ScannerInvAutomationService
         if (null === $item) {
             return false;
         }
-        $this->invItemApp->deleteInventoryItem((string) $item->getId());
+        $this->inventoryItems->deleteInventoryItem((string) $item->getId());
 
         return true;
     }

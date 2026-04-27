@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace App\Printer\Domain\Facade;
+namespace App\Printer\Domain\Service;
 
 use App\Printer\Domain\Port\LabelPrinterDriver;
 use Symfony\Component\DependencyInjection\Attribute\AutowireIterator;

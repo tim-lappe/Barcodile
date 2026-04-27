@@ -6,15 +6,15 @@ namespace App\Activity\Application;
 
 use App\Activity\Api\Dto\ActivityListResponse;
 use App\Activity\Api\Dto\PersistedDomainEventItemResponse;
-use App\SharedKernel\Domain\Facade\PersistedDomainEventFacade;
-use App\SharedKernel\Domain\Facade\PersistedDomainEventView;
+use App\SharedKernel\Domain\Entity\PersistedDomainEvent;
+use App\SharedKernel\Domain\Repository\PersistedDomainEventRepository;
 
 final readonly class ActivityApplicationService
 {
     private const int DEFAULT_LIMIT = 200;
 
     public function __construct(
-        private PersistedDomainEventFacade $events,
+        private PersistedDomainEventRepository $events,
     ) {
     }
 
@@ -28,15 +28,17 @@ final readonly class ActivityApplicationService
             $rowLimit = 200;
         }
         $items = array_map(
-            static function (PersistedDomainEventView $row): PersistedDomainEventItemResponse {
+            static function (PersistedDomainEvent $row): PersistedDomainEventItemResponse {
+                $payload = $row->getEventDto();
+
                 return new PersistedDomainEventItemResponse(
-                    eventId: $row->eventId,
-                    eventClass: $row->eventClass,
-                    data: $row->data,
-                    createdAt: $row->createdAt,
+                    eventId: (string) $row->getId()->toUuid(),
+                    eventClass: $payload['eventClass'],
+                    data: $payload['data'],
+                    createdAt: $row->getCreatedAt()->format(\DATE_ATOM),
                 );
             },
-            $this->events->listRecent($rowLimit),
+            $this->events->findLastByCreatedAtDesc($rowLimit),
         );
 
         return new ActivityListResponse($items);

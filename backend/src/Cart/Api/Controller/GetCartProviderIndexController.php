@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace App\Cart\Api\Controller;
 
-use App\Cart\Application\CartProviderIndexApplicationService;
+use App\Cart\Application\ShoppingCartApplicationService;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\Routing\Attribute\Route;
@@ -12,13 +12,13 @@ use Symfony\Component\Routing\Attribute\Route;
 final class GetCartProviderIndexController extends AbstractController
 {
     public function __construct(
-        private readonly CartProviderIndexApplicationService $cartProviderIndex,
+        private readonly ShoppingCartApplicationService $cartApp,
     ) {
     }
 
     #[Route(path: '/api/shopping_carts/providers', methods: ['GET'])]
     public function __invoke(): JsonResponse
     {
-        return $this->json($this->cartProviderIndex->index());
+        return $this->json($this->cartApp->providerIndex());
     }
 }

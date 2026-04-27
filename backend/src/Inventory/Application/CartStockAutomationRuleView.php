@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace App\Inventory\Domain\Facade;
+namespace App\Inventory\Application;
 
 final readonly class CartStockAutomationRuleView
 {

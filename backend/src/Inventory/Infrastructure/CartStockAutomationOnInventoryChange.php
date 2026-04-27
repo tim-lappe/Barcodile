@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace App\Inventory\Infrastructure;
 
-use App\Inventory\Application\Service\CartStockAutomationApplicationService;
+use App\Inventory\Application\CartStockRuleApplicationService;
 use App\Inventory\Domain\Events\InventoryItemCatalogItemChanged;
 use App\Inventory\Domain\Events\InventoryItemCreated;
 use App\Inventory\Domain\Events\InventoryItemDeleted;
@@ -21,7 +21,7 @@ final readonly class CartStockAutomationOnInventoryChange
 
     public function __construct(
         private InventoryItemRepository $itemRepo,
-        private CartStockAutomationApplicationService $stockAutomationSvc,
+        private CartStockRuleApplicationService $stockRules,
     ) {
     }
 
@@ -35,7 +35,7 @@ final readonly class CartStockAutomationOnInventoryChange
         }
         $newTotal = (string) $this->itemRepo->countForCatalogItem($catalogId);
         $previousTotal = BcQuantity::sub($newTotal, self::ONE, self::BC_SCALE);
-        $this->stockAutomationSvc->onAggregateTotalsChanged((string) $catalogId, $previousTotal, $newTotal);
+        $this->stockRules->onAggregateTotalsChanged((string) $catalogId, $previousTotal, $newTotal);
     }
 
     #[AsEventListener]
@@ -43,7 +43,7 @@ final readonly class CartStockAutomationOnInventoryChange
     {
         $newTotal = (string) $this->itemRepo->countForCatalogItem($event->catalogItemId);
         $previousTotal = BcQuantity::add($newTotal, self::ONE, self::BC_SCALE);
-        $this->stockAutomationSvc->onAggregateTotalsChanged((string) $event->catalogItemId, $previousTotal, $newTotal);
+        $this->stockRules->onAggregateTotalsChanged((string) $event->catalogItemId, $previousTotal, $newTotal);
     }
 
     #[AsEventListener]
@@ -54,12 +54,12 @@ final readonly class CartStockAutomationOnInventoryChange
         if ($prevCat instanceof CatalogItemId) {
             $newForPrev = (string) $this->itemRepo->countForCatalogItem($prevCat);
             $previousForPrev = BcQuantity::add($newForPrev, self::ONE, self::BC_SCALE);
-            $this->stockAutomationSvc->onAggregateTotalsChanged((string) $prevCat, $previousForPrev, $newForPrev);
+            $this->stockRules->onAggregateTotalsChanged((string) $prevCat, $previousForPrev, $newForPrev);
         }
         if ($newCat instanceof CatalogItemId) {
             $newForNew = (string) $this->itemRepo->countForCatalogItem($newCat);
             $previousForNew = BcQuantity::sub($newForNew, self::ONE, self::BC_SCALE);
-            $this->stockAutomationSvc->onAggregateTotalsChanged((string) $newCat, $previousForNew, $newForNew);
+            $this->stockRules->onAggregateTotalsChanged((string) $newCat, $previousForNew, $newForNew);
         }
     }
 }

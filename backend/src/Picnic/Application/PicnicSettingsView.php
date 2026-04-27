@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace App\Picnic\Domain\Facade;
+namespace App\Picnic\Application;
 
 final readonly class PicnicSettingsView
 {
