@@ -35,7 +35,7 @@ final readonly class TestLabelPrinterConnection implements LabelPrinterConnectio
     /**
      * @return array{printerIdentifier: string}
      */
-    public function toArray(): array
+    public function connectionData(): array
     {
         return [
             'printerIdentifier' => $this->printerIdentifier,

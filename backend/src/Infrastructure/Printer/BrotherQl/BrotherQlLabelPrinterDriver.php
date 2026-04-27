@@ -86,8 +86,8 @@ final class BrotherQlLabelPrinterDriver implements LabelPrinterDriver
             'red' => $settings->red,
         ]);
         $payload = json_encode([
-            'connection' => $brotherQlConnection->toArray(),
-            'printSettings' => $settings->toArray(),
+            'connection' => $brotherQlConnection->connectionData(),
+            'printSettings' => $settings->printSettingsData(),
         ], \JSON_THROW_ON_ERROR);
         $this->runPythonScript('print_test.py', $payload);
     }
@@ -107,8 +107,8 @@ final class BrotherQlLabelPrinterDriver implements LabelPrinterDriver
             'imageBytes' => \strlen($pngBytes),
         ]);
         $payload = json_encode([
-            'connection' => $brotherQlConnection->toArray(),
-            'printSettings' => $settings->toArray(),
+            'connection' => $brotherQlConnection->connectionData(),
+            'printSettings' => $settings->printSettingsData(),
             'imageBase64' => base64_encode($pngBytes),
         ], \JSON_THROW_ON_ERROR);
         $this->runPythonScript('print_label_image.py', $payload);

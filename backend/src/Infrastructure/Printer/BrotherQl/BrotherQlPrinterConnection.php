@@ -37,7 +37,7 @@ final readonly class BrotherQlPrinterConnection implements LabelPrinterConnectio
     /**
      * @return array{model: string, printerIdentifier: string, backend: string}
      */
-    public function toArray(): array
+    public function connectionData(): array
     {
         return [
             'model' => $this->model,

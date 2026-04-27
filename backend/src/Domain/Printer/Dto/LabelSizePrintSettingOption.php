@@ -11,15 +11,4 @@ final readonly class LabelSizePrintSettingOption
         public string $label,
     ) {
     }
-
-    /**
-     * @return array{value: string, label: string}
-     */
-    public function toArray(): array
-    {
-        return [
-            'value' => $this->value,
-            'label' => $this->label,
-        ];
-    }
 }

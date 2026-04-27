@@ -9,5 +9,5 @@ interface LabelPrinterConnection
     /**
      * @return array<string, mixed>
      */
-    public function toArray(): array;
+    public function connectionData(): array;
 }

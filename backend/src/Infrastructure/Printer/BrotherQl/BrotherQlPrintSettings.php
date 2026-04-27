@@ -56,7 +56,7 @@ final readonly class BrotherQlPrintSettings implements LabelPrintSettings
     /**
      * @return array{labelSize: string, red: bool}
      */
-    public function toArray(): array
+    public function printSettingsData(): array
     {
         return [
             'labelSize' => $this->labelSize,

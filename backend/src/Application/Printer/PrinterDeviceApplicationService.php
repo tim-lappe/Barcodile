@@ -8,6 +8,11 @@ use App\Application\Printer\Dto\DiscoveredPrinterOptionResponse;
 use App\Application\Printer\Dto\PostPrinterDeviceRequest;
 use App\Application\Printer\Dto\PrinterDeviceResponse;
 use App\Application\Printer\Dto\PrinterDriverListItemResponse;
+use App\Domain\Printer\Dto\ColorModePrintSettingOption;
+use App\Domain\Printer\Dto\LabelPrinterConnection;
+use App\Domain\Printer\Dto\LabelPrintSettingOptions;
+use App\Domain\Printer\Dto\LabelPrintSettings;
+use App\Domain\Printer\Dto\LabelSizePrintSettingOption;
 use App\Domain\Printer\Entity\PrinterDevice;
 use App\Domain\Printer\Exception\LabelPrintJobFailedException;
 use App\Domain\Printer\Repository\PrinterDeviceRepository;
@@ -48,8 +53,8 @@ final readonly class PrinterDeviceApplicationService
             $out[] = new PrinterDriverListItemResponse(
                 $driver->driverCode()->value(),
                 $driver->displayLabel()->value(),
-                $driver->defaultPrintSettings()->toArray(),
-                $driver->printSettingOptions()->toArray(),
+                $driver->defaultPrintSettings()->printSettingsData(),
+                $this->mapPrintSettingOptions($driver->printSettingOptions()),
             );
         }
 
@@ -67,8 +72,8 @@ final readonly class PrinterDeviceApplicationService
             $out[] = new DiscoveredPrinterOptionResponse(
                 $option->deviceIdentifier,
                 $option->label,
-                $option->suggestedConnection?->toArray() ?? [],
-                $option->suggestedSettings?->toArray() ?? [],
+                $this->mapSuggestedConnection($option->suggestedConnection),
+                $this->mapSuggestedSettings($option->suggestedSettings),
             );
         }
 
@@ -83,8 +88,8 @@ final readonly class PrinterDeviceApplicationService
 
         $device = new PrinterDevice();
         $device->changeDriverCode(trim($request->driverCode));
-        $device->changeConnection($connection->toArray());
-        $device->changePrintSettings($printSettings->toArray());
+        $device->changeConnection($connection->connectionData());
+        $device->changePrintSettings($printSettings->printSettingsData());
         $device->changeName(trim($request->name));
         $this->deviceRepository->save($device);
         $this->logger->info('Printer device created.', [
@@ -176,6 +181,54 @@ final readonly class PrinterDeviceApplicationService
             $device->getPrintSettings(),
             $device->getName(),
         );
+    }
+
+    /**
+     * @return array{labelSizes: list<array{value: string, label: string}>, colorModes: list<array{value: string, label: string, red: bool}>}
+     */
+    private function mapPrintSettingOptions(LabelPrintSettingOptions $options): array
+    {
+        return [
+            'labelSizes' => array_map(
+                static fn (LabelSizePrintSettingOption $option): array => [
+                    'value' => $option->value,
+                    'label' => $option->label,
+                ],
+                $options->labelSizes,
+            ),
+            'colorModes' => array_map(
+                static fn (ColorModePrintSettingOption $option): array => [
+                    'value' => $option->value,
+                    'label' => $option->label,
+                    'red' => $option->red,
+                ],
+                $options->colorModes,
+            ),
+        ];
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    private function mapSuggestedConnection(?LabelPrinterConnection $connection): array
+    {
+        if (null === $connection) {
+            return [];
+        }
+
+        return $connection->connectionData();
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    private function mapSuggestedSettings(?LabelPrintSettings $settings): array
+    {
+        if (null === $settings) {
+            return [];
+        }
+
+        return $settings->printSettingsData();
     }
 
     private function logTestPrintRequest(PrinterDevice $device): void

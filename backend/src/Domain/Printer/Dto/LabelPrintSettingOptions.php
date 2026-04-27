@@ -15,21 +15,4 @@ final readonly class LabelPrintSettingOptions
         public array $colorModes,
     ) {
     }
-
-    /**
-     * @return array{labelSizes: list<array{value: string, label: string}>, colorModes: list<array{value: string, label: string, red: bool}>}
-     */
-    public function toArray(): array
-    {
-        return [
-            'labelSizes' => array_map(
-                static fn (LabelSizePrintSettingOption $option): array => $option->toArray(),
-                $this->labelSizes,
-            ),
-            'colorModes' => array_map(
-                static fn (ColorModePrintSettingOption $option): array => $option->toArray(),
-                $this->colorModes,
-            ),
-        ];
-    }
 }

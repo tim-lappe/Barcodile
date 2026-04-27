@@ -80,8 +80,8 @@ final readonly class TestLabelPrinterDriver implements LabelPrinterDriver
         $testPrintSettings = $this->testPrintSettings($printSettings);
         $this->logger->info('Test printer received a test label print request.', [
             'driverCode' => self::DRIVER_CODE,
-            'connection' => $testConnection->toArray(),
-            'printSettings' => $testPrintSettings->toArray(),
+            'connection' => $testConnection->connectionData(),
+            'printSettings' => $testPrintSettings->printSettingsData(),
         ]);
     }
 
@@ -94,8 +94,8 @@ final readonly class TestLabelPrinterDriver implements LabelPrinterDriver
         $testPrintSettings = $this->testPrintSettings($printSettings);
         $this->logger->info('Test printer received a label image print request.', [
             'driverCode' => self::DRIVER_CODE,
-            'connection' => $testConnection->toArray(),
-            'printSettings' => $testPrintSettings->toArray(),
+            'connection' => $testConnection->connectionData(),
+            'printSettings' => $testPrintSettings->printSettingsData(),
             'imageBytes' => \strlen($pngBytes),
         ]);
     }

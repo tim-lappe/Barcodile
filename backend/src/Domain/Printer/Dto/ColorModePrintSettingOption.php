@@ -12,16 +12,4 @@ final readonly class ColorModePrintSettingOption
         public bool $red,
     ) {
     }
-
-    /**
-     * @return array{value: string, label: string, red: bool}
-     */
-    public function toArray(): array
-    {
-        return [
-            'value' => $this->value,
-            'label' => $this->label,
-            'red' => $this->red,
-        ];
-    }
 }
