@@ -324,3 +324,18 @@ export type PersistedDomainEventItemDto = {
 export type ActivityListDto = {
 	items: PersistedDomainEventItemDto[];
 };
+
+export type LogEntryDto = {
+	id: string;
+	lineNumber: number;
+	raw: string;
+	loggedAt: string | null;
+	channel: string | null;
+	level: string | null;
+	message: string | null;
+};
+
+export type LogListDto = {
+	source: string;
+	items: LogEntryDto[];
+};

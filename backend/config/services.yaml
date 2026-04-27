@@ -76,6 +76,11 @@ services:
     App\Infrastructure\Picnic\PicnicClient:
         shared: false
 
+    App\Application\Debug\LogApplicationService:
+        arguments:
+            $logsDir: '%kernel.logs_dir%'
+            $environment: '%kernel.environment%'
+
     App\Domain\Picnic\Port\PicnicCartSessionPort:
         alias: App\Infrastructure\Picnic\PicnicCartSessionAdapter
 

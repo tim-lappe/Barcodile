@@ -1,3 +1,4 @@
+import ArticleOutlinedIcon from "@mui/icons-material/ArticleOutlined";
 import PlaceOutlinedIcon from "@mui/icons-material/PlaceOutlined";
 import PrintOutlinedIcon from "@mui/icons-material/PrintOutlined";
 import QrCodeScannerOutlinedIcon from "@mui/icons-material/QrCodeScannerOutlined";
@@ -58,6 +59,16 @@ const SETTINGS_MENU_SECTIONS: { title: string; items: SettingsMenuItem[] }[] = [
 				label: "Picnic",
 				to: "/settings/picnic",
 				icon: <ShoppingBagOutlinedIcon fontSize="small" />,
+			},
+		],
+	},
+	{
+		title: "Debug",
+		items: [
+			{
+				label: "Logs",
+				to: "/settings/debug/logs",
+				icon: <ArticleOutlinedIcon fontSize="small" />,
 			},
 		],
 	},

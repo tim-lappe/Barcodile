@@ -14,6 +14,7 @@ import type {
 	InventoryItemLabelPrintResponse,
 	LocationDto,
 	LocationId,
+	LogListDto,
 	PicnicCatalogProductSummaryDto,
 	PicnicCatalogSearchHitDto,
 	PicnicIntegrationSettingsDto,
@@ -1007,4 +1008,35 @@ export async function fetchActivity(): Promise<ActivityListDto> {
 		throw new Error(await readErrorMessage(res));
 	}
 	return (await res.json()) as ActivityListDto;
+}
+
+export async function fetchDebugLogs(input?: {
+	limit?: number;
+	level?: string;
+	channel?: string;
+	query?: string;
+}): Promise<LogListDto> {
+	const q = new URLSearchParams();
+	if (input?.limit !== undefined) {
+		q.set("limit", String(input.limit));
+	}
+	if (input?.level) {
+		q.set("level", input.level);
+	}
+	const channel = input?.channel?.trim();
+	if (channel) {
+		q.set("channel", channel);
+	}
+	const query = input?.query?.trim();
+	if (query) {
+		q.set("query", query);
+	}
+	const suffix = q.size > 0 ? `?${q.toString()}` : "";
+	const res = await fetch(`/api/debug/logs${suffix}`, {
+		headers: { Accept: "application/json" },
+	});
+	if (!res.ok) {
+		throw new Error(await readErrorMessage(res));
+	}
+	return (await res.json()) as LogListDto;
 }
