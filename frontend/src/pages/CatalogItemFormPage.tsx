@@ -42,6 +42,7 @@ import {
 	createCatalogItem,
 	deleteCartStockAutomationRule,
 	deleteCatalogItemImage,
+	fetchBarcodeCatalogProductHint,
 	fetchCartStockAutomationRules,
 	fetchCatalogItem,
 	fetchPicnicCatalogProductSummary,
@@ -51,12 +52,14 @@ import {
 	uploadCatalogItemImage,
 } from "../api/barcodileClient";
 import {
+	CATALOG_ITEM_BARCODE_QUERY,
 	CATALOG_ITEM_PICNIC_PRODUCT_QUERY,
 	catalogItemCreationSourceDef,
 	parseCatalogItemCreationSource,
 } from "../catalog/catalogItemCreationSources";
 import {
 	CATALOG_ITEM_ATTRIBUTE_OPTIONS,
+	CATALOG_ITEM_BARCODE_SYMBOLOGY,
 	type CartStockAutomationRuleDto,
 	type CatalogItemAttributeKey,
 	type CatalogItemDto,
@@ -93,12 +96,12 @@ type FormState = {
 	name: string;
 	attributeRows: AttributeFormRow[];
 	barcodeCode: string;
-	barcodeType: string;
 	volumeAmount: string;
 	volumeUnit: "" | VolumeUnit;
 	weightAmount: string;
 	weightUnit: "" | WeightUnit;
 	picnicLinkedProductId: string;
+	barcodeSymbology: string;
 };
 
 function newClientId(): string {
@@ -173,12 +176,12 @@ function emptyForm(): FormState {
 		name: "",
 		attributeRows: [],
 		barcodeCode: "",
-		barcodeType: "EAN",
 		volumeAmount: "",
 		volumeUnit: "",
 		weightAmount: "",
 		weightUnit: "",
 		picnicLinkedProductId: "",
+		barcodeSymbology: CATALOG_ITEM_BARCODE_SYMBOLOGY,
 	};
 }
 
@@ -196,12 +199,12 @@ function dtoToForm(row: CatalogItemDto): FormState {
 			valueText: valueTextFromDto(l.value),
 		})),
 		barcodeCode: b?.code ?? "",
-		barcodeType: b?.type ?? "EAN",
 		volumeAmount: v ? v.amount : "",
 		volumeUnit: v ? v.unit : "",
 		weightAmount: w ? w.amount : "",
 		weightUnit: w ? w.unit : "",
 		picnicLinkedProductId: row.linkedPicnicProductId ?? "",
+		barcodeSymbology: b?.type ?? CATALOG_ITEM_BARCODE_SYMBOLOGY,
 	};
 }
 
@@ -220,6 +223,7 @@ export function CatalogItemFormPage() {
 	const imageFileInputRef = useRef<HTMLInputElement | null>(null);
 	const picnicSectionRef = useRef<HTMLDivElement | null>(null);
 	const picnicIntroScrollDoneRef = useRef(false);
+	const [barcodeHintBusy, setBarcodeHintBusy] = useState(false);
 	const [form, setForm] = useState<FormState>(emptyForm);
 	const [loadError, setLoadError] = useState<string | null>(null);
 	const [loading, setLoading] = useState(isEdit);
@@ -348,6 +352,60 @@ export function CatalogItemFormPage() {
 				if (!cancelled) {
 					const next = new URLSearchParams(searchParams);
 					next.delete(CATALOG_ITEM_PICNIC_PRODUCT_QUERY);
+					const suffix = next.toString() ? `?${next.toString()}` : "";
+					navigate(`/catalog-items/new${suffix}`, { replace: true });
+				}
+			}
+		})();
+		return () => {
+			cancelled = true;
+		};
+	}, [isEdit, searchParams, navigate]);
+
+	useEffect(() => {
+		if (isEdit) {
+			return;
+		}
+		const code =
+			searchParams.get(CATALOG_ITEM_BARCODE_QUERY)?.trim() ?? "";
+		if (code === "") {
+			return;
+		}
+		setForm((f) => ({ ...f, barcodeCode: code }));
+		let cancelled = false;
+		void (async () => {
+			try {
+				const h = await fetchBarcodeCatalogProductHint(code);
+				if (cancelled) {
+					return;
+				}
+				setForm((f) => ({
+					...f,
+					barcodeCode:
+						h.barcodeCode != null && h.barcodeCode.trim() !== ""
+							? h.barcodeCode.trim()
+							: code,
+					name:
+						f.name.trim() === "" && h.name.trim() !== ""
+							? h.name.trim()
+							: f.name,
+					barcodeSymbology:
+						h.barcodeType != null && h.barcodeType.trim() !== ""
+							? h.barcodeType.trim()
+							: CATALOG_ITEM_BARCODE_SYMBOLOGY,
+				}));
+			} catch (e) {
+				if (!cancelled) {
+					setFormError(
+						e instanceof Error
+							? e.message
+							: "Could not look up this barcode. Configure providers under Settings → Barcode lookup.",
+					);
+				}
+			} finally {
+				if (!cancelled) {
+					const next = new URLSearchParams(searchParams);
+					next.delete(CATALOG_ITEM_BARCODE_QUERY);
 					const suffix = next.toString() ? `?${next.toString()}` : "";
 					navigate(`/catalog-items/new${suffix}`, { replace: true });
 				}
@@ -572,11 +630,61 @@ export function CatalogItemFormPage() {
 		}
 	}
 
+	async function lookUpBarcodeFromForm() {
+		const code = form.barcodeCode.trim();
+		if (code === "") {
+			setFormError("Enter a barcode to look up.");
+			return;
+		}
+		setFormError(null);
+		setBarcodeHintBusy(true);
+		try {
+			const h = await fetchBarcodeCatalogProductHint(code);
+			setForm((f) => ({
+				...f,
+				barcodeCode:
+					h.barcodeCode != null && h.barcodeCode.trim() !== ""
+						? h.barcodeCode.trim()
+						: code,
+				name:
+					f.name.trim() === "" && h.name.trim() !== ""
+						? h.name.trim()
+						: f.name,
+				barcodeSymbology:
+					h.barcodeType != null && h.barcodeType.trim() !== ""
+						? h.barcodeType.trim()
+						: CATALOG_ITEM_BARCODE_SYMBOLOGY,
+			}));
+		} catch (e) {
+			setFormError(
+				e instanceof Error
+					? e.message
+					: "Lookup failed. Configure providers under Settings → Barcode lookup.",
+			);
+		} finally {
+			setBarcodeHintBusy(false);
+		}
+	}
+
 	async function submitForm() {
 		setFormError(null);
+		const barcodeRaw = form.barcodeCode;
+		const barcodeCode = barcodeRaw.trim();
+		if (barcodeRaw.length > 0 && barcodeCode.length === 0) {
+			setFormError("Barcode cannot be empty or only spaces.");
+			return;
+		}
 		const name = form.name.trim();
-		if (!name) {
+		const barcodeAllowsEmptyName =
+			!isEdit && creationSource === "barcode" && barcodeCode.length > 0;
+		if (!name && !barcodeAllowsEmptyName) {
 			setFormError("Name is required.");
+			return;
+		}
+		if (!name && barcodeCode.length === 0 && creationSource === "barcode") {
+			setFormError(
+				"Enter a barcode (use Look up product first if you want a suggested name) or a name.",
+			);
 			return;
 		}
 		const keys = form.attributeRows.map((r) => r.attribute);
@@ -595,8 +703,6 @@ export function CatalogItemFormPage() {
 		}
 		const volume = volumeFromForm(form);
 		const weight = weightFromForm(form);
-		const barcodeCode = form.barcodeCode.trim();
-		const barcodeType = form.barcodeType.trim() || "EAN";
 		const picnicLinkedProductId = form.picnicLinkedProductId.trim() || null;
 		const catalogItemAttributesPayload = parsedRows.map(
 			({ row: r, value: v }) => ({
@@ -613,7 +719,12 @@ export function CatalogItemFormPage() {
 					volume,
 					weight,
 					barcode: barcodeCode
-						? { code: barcodeCode, type: barcodeType }
+						? {
+								code: barcodeCode,
+								type:
+									form.barcodeSymbology.trim() ||
+									CATALOG_ITEM_BARCODE_SYMBOLOGY,
+							}
 						: null,
 					catalogItemAttributes: catalogItemAttributesPayload,
 					linkedPicnicProductId: picnicLinkedProductId,
@@ -624,7 +735,12 @@ export function CatalogItemFormPage() {
 					volume,
 					weight,
 					...(barcodeCode
-						? { barcode: { code: barcodeCode, type: barcodeType } }
+						? {
+								barcode: {
+									code: barcodeCode,
+									type: form.barcodeSymbology.trim() || CATALOG_ITEM_BARCODE_SYMBOLOGY,
+								},
+							}
 						: {}),
 					catalogItemAttributes: catalogItemAttributesPayload,
 					linkedPicnicProductId: picnicLinkedProductId,
@@ -752,8 +868,13 @@ export function CatalogItemFormPage() {
 						label="Name"
 						value={form.name}
 						onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))}
-						required
+						required={isEdit || creationSource !== "barcode"}
 						fullWidth
+						helperText={
+							!isEdit && creationSource === "barcode"
+								? "Optional when you save with a barcode: the server can resolve the display name from your configured lookup providers."
+								: undefined
+						}
 					/>
 				</Paper>
 
@@ -1063,28 +1184,52 @@ export function CatalogItemFormPage() {
 					<Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
 						{isEdit
 							? "Optionally set or change the code that identifies this catalog item."
-							: "Optionally set a barcode together with this catalog item."}
+							: creationSource === "barcode"
+								? "Enter a barcode, then look up product details from your configured providers (for example BarcodeLookup.com)."
+								: "Optionally set a barcode together with this catalog item."}
 					</Typography>
-					<TextField
-						label="Code"
-						value={form.barcodeCode}
-						onChange={(e) =>
-							setForm((f) => ({ ...f, barcodeCode: e.target.value }))
-						}
-						fullWidth
-						sx={{ mb: 2 }}
-						slotProps={{
-							htmlInput: { sx: { fontFamily: "ui-monospace, monospace" } },
+					{!isEdit && creationSource === "barcode" ? (
+						<Alert severity="info" sx={{ mb: 2 }}>
+							<Typography variant="body2" component="span">
+								Configure API keys and provider order under{" "}
+								<Link component={RouterLink} to="/settings/barcode-lookup">
+									Settings → Barcode lookup
+								</Link>
+								.
+							</Typography>
+						</Alert>
+					) : null}
+					<Box
+						sx={{
+							display: "flex",
+							flexDirection: { xs: "column", sm: "row" },
+							gap: 2,
+							alignItems: { sm: "flex-start" },
 						}}
-					/>
-					<TextField
-						label="Symbology"
-						value={form.barcodeType}
-						onChange={(e) =>
-							setForm((f) => ({ ...f, barcodeType: e.target.value }))
-						}
-						fullWidth
-					/>
+					>
+						<TextField
+							label="Code"
+							value={form.barcodeCode}
+							onChange={(e) =>
+								setForm((f) => ({ ...f, barcodeCode: e.target.value }))
+							}
+							fullWidth
+							sx={{ flex: 1 }}
+							slotProps={{
+								htmlInput: { sx: { fontFamily: "ui-monospace, monospace" } },
+							}}
+						/>
+						{!isEdit && creationSource === "barcode" ? (
+							<Button
+								variant="contained"
+								onClick={() => void lookUpBarcodeFromForm()}
+								disabled={barcodeHintBusy}
+								sx={{ flexShrink: 0, alignSelf: { xs: "stretch", sm: "center" } }}
+							>
+								{barcodeHintBusy ? "Looking up…" : "Look up product"}
+							</Button>
+						) : null}
+					</Box>
 				</Paper>
 
 				{(!isEdit && creationSource === "picnic") ||

@@ -58,6 +58,8 @@ export const CATALOG_ITEM_ATTRIBUTE_OPTIONS = [
 	{ value: "alcohol_percent" as const, label: "Alcohol %" },
 ] as const;
 
+export const CATALOG_ITEM_BARCODE_SYMBOLOGY = "Barcode" as const;
+
 export type CatalogItemAttributeKey =
 	(typeof CATALOG_ITEM_ATTRIBUTE_OPTIONS)[number]["value"];
 
@@ -68,9 +70,11 @@ export type ScannerDeviceDto = {
 	deviceIdentifier: string;
 	name: string;
 	lastScannedCodes: string[];
-	automationAddInventoryOnEanScan: boolean;
-	automationCreateCatalogItemIfMissingForEan: boolean;
+	automationAddInventoryOnBarcodeScan: boolean;
+	automationCreateCatalogItemIfMissingForBarcode: boolean;
 	automationRemoveInventoryOnPublicCodeScan: boolean;
+	automationPrintInventoryLabelOnBarcodeScan: boolean;
+	automationPrinterDeviceId: PrinterDeviceId | null;
 };
 
 export type InputDeviceOptionDto = {
@@ -302,7 +306,28 @@ export type PicnicCatalogProductSummaryDto = {
 	unitQuantity: string;
 	volume: VolumeDto | null;
 	weight: WeightDto | null;
-	eanBarcode: string | null;
+};
+
+export type BarcodeLookupProviderId = string;
+
+export type BarcodeLookupProviderDto = {
+	id: BarcodeLookupProviderId;
+	kind: string;
+	label: string;
+	enabled: boolean;
+	sortOrder: number;
+	apiKeyStored: boolean;
+};
+
+export type BarcodeCatalogProductHintDto = {
+	providerId: string;
+	providerLabel: string;
+	name: string;
+	brand: string | null;
+	imageUrl: string | null;
+	category: string | null;
+	barcodeCode: string | null;
+	barcodeType: string | null;
 };
 
 export type PicnicRequestTwoFactorCodeResponse = {

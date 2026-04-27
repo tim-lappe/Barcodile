@@ -17,6 +17,7 @@ import { StockPage } from "./pages/StockPage";
 import { LogsPage } from "./pages/settings/debug/LogsPage";
 import { LocationFormPage } from "./pages/settings/locations/LocationFormPage";
 import { LocationsPage } from "./pages/settings/locations/LocationsPage";
+import { BarcodeLookupProvidersPage } from "./pages/settings/barcode/BarcodeLookupProvidersPage";
 import { PicnicSettingsPage } from "./pages/settings/PicnicSettingsPage";
 import { PrinterDetailPage } from "./pages/settings/printers/PrinterDetailPage";
 import { PrintersPage } from "./pages/settings/printers/PrintersPage";
@@ -86,6 +87,10 @@ export default function App() {
 						<Route path="locations/new" element={<LocationFormPage />} />
 						<Route path="locations/:id/edit" element={<LocationFormPage />} />
 						<Route path="picnic" element={<PicnicSettingsPage />} />
+						<Route
+							path="barcode-lookup"
+							element={<BarcodeLookupProvidersPage />}
+						/>
 						<Route path="debug/logs" element={<LogsPage />} />
 					</Route>
 					<Route path="/picnic/*" element={<Navigate to="/carts" replace />} />
