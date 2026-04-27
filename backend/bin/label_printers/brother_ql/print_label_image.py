@@ -93,6 +93,8 @@ def main() -> None:
     printer = connection.get("printerIdentifier")
     backend = connection.get("backend")
     label = settings.get("labelSize")
+    raw_red = settings.get("red")
+    red = raw_red is True
     if not model or not printer or not backend or not label:
         fail(
             "Missing required keys: connection.model, connection.printerIdentifier, "
@@ -109,7 +111,7 @@ def main() -> None:
 
     debug(
         "Brother QL label image print settings: "
-        f"model={model} backend={backend} printer={printer} labelSize={label}"
+        f"model={model} backend={backend} printer={printer} labelSize={label} red={red}"
     )
     try:
         spec = resolve_label(label)
@@ -128,7 +130,7 @@ def main() -> None:
         cut=True,
         dither=False,
         compress=False,
-        red=False,
+        red=red,
     )
     debug(f"Generated Brother QL instructions: bytes={len(instructions)}")
     send(

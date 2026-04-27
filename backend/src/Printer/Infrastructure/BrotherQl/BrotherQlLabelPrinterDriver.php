@@ -83,12 +83,14 @@ final class BrotherQlLabelPrinterDriver implements LabelPrinterDriver
     ): void {
         $brotherQlConnection = $this->brotherQlConnection($connection);
         $settings = $this->brotherQlPrintSettings($printSettings);
-        $selectedLabelCode = BrotherQlPrintSettings::labelCodeFor($labelSize);
+        $selectedLabelCode = $settings->labelSize;
         $this->logger->info('Brother QL label image print started.', [
             'model' => $brotherQlConnection->model,
             'backend' => $brotherQlConnection->backend,
             'printerIdentifier' => $brotherQlConnection->printerIdentifier,
             'labelSize' => $selectedLabelCode,
+            'imageLabelWidthMillimeters' => $labelSize->widthMillimeters(),
+            'imageLabelHeightMillimeters' => $labelSize->heightMillimeters(),
             'imageBytes' => \strlen($pngBytes),
         ]);
         $payload = json_encode([
