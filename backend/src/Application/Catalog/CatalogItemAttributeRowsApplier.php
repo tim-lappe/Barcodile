@@ -38,7 +38,7 @@ final readonly class CatalogItemAttributeRowsApplier
         foreach ($rows as $row) {
             $this->applyRow($item, $row, $indexed, $keep);
         }
-        foreach ($item->getCatalogItemAttributes()->toArray() as $attr) {
+        foreach ($item->getCatalogItemAttributes() as $attr) {
             $this->removeIfNotKept($item, $attr, $keep);
         }
     }
@@ -49,7 +49,7 @@ final readonly class CatalogItemAttributeRowsApplier
     private function indexAttributesById(CatalogItem $item): array
     {
         $indexed = [];
-        foreach ($item->getCatalogItemAttributes()->toArray() as $attr) {
+        foreach ($item->getCatalogItemAttributes() as $attr) {
             $indexed[(string) $attr->getId()] = $attr;
         }
 
