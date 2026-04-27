@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Inventory\Infrastructure;
 
 use App\Inventory\Domain\Service\InventoryLabelImageGenerator;
+use App\Inventory\Domain\ValueObject\InventoryItemCode;
 use RuntimeException;
 use Symfony\Component\Process\Process;
 
@@ -15,10 +16,10 @@ final readonly class PythonInventoryLabelImageGenerator implements InventoryLabe
     ) {
     }
 
-    public function generate(string $publicCode): string
+    public function generate(InventoryItemCode $publicCode): string
     {
         $payload = json_encode([
-            'publicCode' => $publicCode,
+            'publicCode' => $publicCode->value(),
             'logoPath' => $this->logoPath(),
         ], \JSON_THROW_ON_ERROR);
         $process = new Process(['python3', $this->scriptPath()]);

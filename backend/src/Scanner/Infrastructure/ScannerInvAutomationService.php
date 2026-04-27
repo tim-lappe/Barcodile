@@ -8,6 +8,7 @@ use App\Catalog\Application\CatalogItemApplicationService;
 use App\Catalog\Domain\Repository\CatalogItemRepository;
 use App\Inventory\Application\InventoryItemApplicationService;
 use App\Inventory\Domain\Repository\InventoryItemRepository;
+use App\Inventory\Domain\ValueObject\InventoryItemCode;
 use App\Scanner\Domain\Entity\ScannerDevice;
 use App\Scanner\Domain\Events\CodeScanned;
 use App\Scanner\Domain\Repository\ScannerDeviceRepository;
@@ -76,7 +77,7 @@ final readonly class ScannerInvAutomationService
         if (!$device->isAutomationRemoveInventoryOnPublicCodeScan() || !$this->isDigitsOnly($text)) {
             return false;
         }
-        $item = $this->invItemRepo->findOneByPublicCode($text);
+        $item = $this->invItemRepo->findOneByPublicCode(new InventoryItemCode($text));
         if (null === $item) {
             return false;
         }

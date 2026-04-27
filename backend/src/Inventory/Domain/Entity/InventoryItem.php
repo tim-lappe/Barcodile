@@ -10,6 +10,7 @@ use App\Inventory\Domain\Events\InventoryItemDeleted;
 use App\Inventory\Domain\Events\InventoryItemExpirationDateChanged;
 use App\Inventory\Domain\Events\InventoryItemLocationChanged;
 use App\Inventory\Domain\Repository\InventoryItemRepository;
+use App\Inventory\Domain\ValueObject\InventoryItemCode;
 use App\SharedKernel\Domain\DomainEventRecorder;
 use App\SharedKernel\Domain\Id\CatalogItemId;
 use App\SharedKernel\Domain\Id\InventoryItemId;
@@ -30,8 +31,8 @@ class InventoryItem implements RecordsDomainEvents
     #[ORM\Column(type: 'inventory_item_id', unique: true)]
     private InventoryItemId $inventoryItemId;
 
-    #[ORM\Column(length: 32, unique: true)]
-    private string $publicCode = '';
+    #[ORM\Column(type: 'inventory_item_code', unique: true)]
+    private ?InventoryItemCode $publicCode = null;
 
     #[ORM\Column(name: 'item_type_id', type: 'catalog_item_id')]
     private ?CatalogItemId $catalogItemId = null;
@@ -53,13 +54,10 @@ class InventoryItem implements RecordsDomainEvents
         $this->recordDomainEvent(new InventoryItemCreated($this));
     }
 
-    public function assignPublicCode(string $publicCode): void
+    public function assignPublicCode(InventoryItemCode $publicCode): void
     {
-        if ('' !== $this->publicCode) {
+        if (null !== $this->publicCode) {
             throw new LogicException('Public code already assigned.');
-        }
-        if (!preg_match('/^\d+$/', $publicCode)) {
-            throw new LogicException('Public code must contain digits only.');
         }
         $this->publicCode = $publicCode;
     }
@@ -69,8 +67,12 @@ class InventoryItem implements RecordsDomainEvents
         return $this->inventoryItemId;
     }
 
-    public function getPublicCode(): string
+    public function getPublicCode(): InventoryItemCode
     {
+        if (null === $this->publicCode) {
+            throw new LogicException('Public code not assigned.');
+        }
+
         return $this->publicCode;
     }
 

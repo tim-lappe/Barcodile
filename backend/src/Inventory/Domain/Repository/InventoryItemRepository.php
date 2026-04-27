@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Inventory\Domain\Repository;
 
 use App\Inventory\Domain\Entity\InventoryItem;
+use App\Inventory\Domain\ValueObject\InventoryItemCode;
 use App\SharedKernel\Domain\Id\CatalogItemId;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\Persistence\ManagerRegistry;
@@ -51,7 +52,7 @@ final class InventoryItemRepository extends ServiceEntityRepository
         $this->getEntityManager()->flush();
     }
 
-    public function findOneByPublicCode(string $publicCode): ?InventoryItem
+    public function findOneByPublicCode(InventoryItemCode $publicCode): ?InventoryItem
     {
         return $this->findOneBy(['publicCode' => $publicCode]);
     }
@@ -67,10 +68,10 @@ final class InventoryItemRepository extends ServiceEntityRepository
         return is_numeric($raw) ? (int) $raw : 0;
     }
 
-    public function allocateNextPublicCode(): string
+    public function allocateNextPublicCode(): InventoryItemCode
     {
         for ($attempt = 0; $attempt < 64; ++$attempt) {
-            $code = (string) random_int(10_000, 99_999);
+            $code = new InventoryItemCode((string) random_int(10_000, 99_999));
             if (!$this->publicCodeIsTaken($code)) {
                 return $code;
             }
@@ -79,12 +80,12 @@ final class InventoryItemRepository extends ServiceEntityRepository
         throw new LogicException('Could not allocate a unique public code.');
     }
 
-    private function publicCodeIsTaken(string $code): bool
+    private function publicCodeIsTaken(InventoryItemCode $code): bool
     {
         $raw = $this->createQueryBuilder('i')
             ->select('COUNT(i.inventoryItemId)')
             ->andWhere('i.publicCode = :code')
-            ->setParameter('code', $code)
+            ->setParameter('code', $code, 'inventory_item_code')
             ->getQuery()
             ->getSingleScalarResult();
 

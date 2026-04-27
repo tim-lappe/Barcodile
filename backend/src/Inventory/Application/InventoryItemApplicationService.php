@@ -133,7 +133,7 @@ final readonly class InventoryItemApplicationService
 
         return new InventoryItemView(
             (string) $item->getId(),
-            $item->getPublicCode(),
+            $item->getPublicCode()->value(),
             (string) $catalogItemId,
             null === $location ? null : $this->mapLocation($location),
             null === $exp ? null : $exp->format(DateTimeInterface::ATOM),

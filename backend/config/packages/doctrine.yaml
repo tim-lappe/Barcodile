@@ -13,6 +13,8 @@ doctrine:
                 class: App\Cart\Infrastructure\Doctrine\ShoppingCartLineIdType
             inventory_item_id:
                 class: App\Inventory\Infrastructure\Doctrine\InventoryItemIdType
+            inventory_item_code:
+                class: App\Inventory\Infrastructure\Doctrine\InventoryItemCodeType
             cart_stock_automation_rule_id:
                 class: App\Inventory\Infrastructure\Doctrine\CartStockAutomationRuleIdType
             location_id:
