@@ -44,7 +44,6 @@ services:
     ports:
       - "8080:8000"
       - "5173:5173"
-      - "5432:5432"
     env_file: .env
     environment:
       APP_ENV: dev
@@ -54,6 +53,7 @@ services:
       - barcodile_pgdata:/var/lib/postgresql/data
       - barcodile_var:/var/www/html/var
       - /dev/input:/dev/input
+      - /dev/bus/usb:/dev/bus/usb
 
 volumes:
   barcodile_pgdata:

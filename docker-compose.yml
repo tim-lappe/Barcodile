@@ -19,6 +19,7 @@ services:
       - barcodile_var:/var/www/html/var
       - ./backend:/var/www/html
       - ./frontend:/app/frontend
+      - /dev/bus/usb:/dev/bus/usb
       - /dev/input:/dev/input
 
 volumes:
