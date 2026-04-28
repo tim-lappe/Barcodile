@@ -12,11 +12,11 @@ import type {
 	InventoryItemDto,
 	InventoryItemId,
 	InventoryItemLabelPrintResponse,
+	LlmProfileDto,
+	LlmProfileTestResultDto,
 	LocationDto,
 	LocationId,
 	LogListDto,
-	LlmProfileDto,
-	LlmProfileTestResultDto,
 	PicnicCatalogProductSummaryDto,
 	PicnicCatalogSearchHitDto,
 	PicnicIntegrationSettingsDto,
@@ -500,7 +500,7 @@ export async function createCatalogItem(input: {
 	barcode?: { code: string; type: string };
 	catalogItemAttributes?: CatalogItemAttributeWriteRow[];
 	linkedPicnicProductId?: string | null;
-	creationSource?: "manual" | "picnic" | "fddb";
+	creationSource?: "manual" | "picnic" | "barcode";
 }): Promise<CatalogItemDto> {
 	const body: Record<string, unknown> = {
 		name: input.name,
@@ -529,6 +529,27 @@ export async function createCatalogItem(input: {
 		body.linkedPicnicProductId = input.linkedPicnicProductId;
 	}
 	const res = await fetch("/api/catalog_items", {
+		method: "POST",
+		headers: JSON_HEADERS,
+		body: JSON.stringify(body),
+	});
+	if (!res.ok) {
+		throw new Error(await readErrorMessage(res));
+	}
+	return (await res.json()) as CatalogItemDto;
+}
+
+export async function postCreateCatalogItemFromBarcode(input: {
+	code: string;
+	type?: string;
+}): Promise<CatalogItemDto> {
+	const body: Record<string, unknown> = {
+		code: input.code,
+	};
+	if (input.type !== undefined && input.type.trim() !== "") {
+		body.type = input.type.trim();
+	}
+	const res = await fetch("/api/catalog_items/from_barcode", {
 		method: "POST",
 		headers: JSON_HEADERS,
 		body: JSON.stringify(body),

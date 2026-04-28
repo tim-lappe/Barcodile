@@ -1,4 +1,4 @@
-export type CatalogItemCreationSourceId = "manual" | "picnic" | "fddb";
+export type CatalogItemCreationSourceId = "manual" | "picnic" | "barcode";
 
 export type CatalogItemCreationSourceDef = {
 	id: CatalogItemCreationSourceId;
@@ -23,7 +23,8 @@ export const CATALOG_ITEM_CREATION_SOURCES: readonly CatalogItemCreationSourceDe
 		{
 			id: "manual",
 			tileTitle: "Create manually",
-			tileDescription: "Enter name, sizing, attributes, and an optional barcode yourself.",
+			tileDescription:
+				"Enter name, sizing, attributes, and an optional barcode yourself.",
 			formTitle: "New catalog item",
 			formSubtitle:
 				"Define how items of this product are described before you add inventory rows.",
@@ -38,13 +39,13 @@ export const CATALOG_ITEM_CREATION_SOURCES: readonly CatalogItemCreationSourceDe
 				"Link a Picnic product id and adjust volume, weight, and attributes so stock and carts stay consistent.",
 		},
 		{
-			id: "fddb",
-			tileTitle: "Create from FDDB",
+			id: "barcode",
+			tileTitle: "Create from Barcode",
 			tileDescription:
-				"Planned: pull nutrition facts from the German Food Database (FDDB).",
-			formTitle: "New catalog item from FDDB",
+				"Enter a barcode: the app looks up the product on the web and creates the catalog item.",
+			formTitle: "New catalog item from Barcode",
 			formSubtitle:
-				"FDDB import is not wired up yet. You can still fill the template below and save; search and autofill will arrive later.",
+				"This path is started from the catalog list dialog; you normally do not open this URL directly.",
 		},
 	] as const;
 
@@ -61,15 +62,13 @@ export function catalogItemCreationSourceDef(
 export function parseCatalogItemCreationSource(
 	raw: string | null | undefined,
 ): CatalogItemCreationSourceId {
-	if (raw === "picnic" || raw === "fddb" || raw === "manual") {
+	if (raw === "picnic" || raw === "manual") {
 		return raw;
 	}
 	return "manual";
 }
 
-export function catalogItemNewPath(
-	source: CatalogItemCreationSourceId,
-): string {
+export function catalogItemNewPath(source: "manual" | "picnic"): string {
 	const q = new URLSearchParams({
 		[CATALOG_ITEM_CREATION_SOURCE_QUERY]: source,
 	});

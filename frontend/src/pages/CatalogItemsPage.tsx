@@ -28,10 +28,12 @@ import {
 } from "../api/barcodileClient";
 import { catalogItemNewPathWithPicnicProduct } from "../catalog/catalogItemCreationSources";
 import { AddCatalogItemStrategyDialog } from "../components/AddCatalogItemStrategyDialog";
+import { CreateCatalogItemFromBarcodeDialog } from "../components/CreateCatalogItemFromBarcodeDialog";
 import { PicnicProductSearchDialog } from "../components/PicnicProductSearchDialog";
 import {
 	type CatalogItemAttributeKey,
 	type CatalogItemDto,
+	type CatalogItemId,
 	formatCatalogItemAttributeSummary,
 	formatVolumeShort,
 	formatWeightShort,
@@ -77,6 +79,7 @@ export function CatalogItemsPage() {
 	const [deleting, setDeleting] = useState(false);
 	const [addStrategyOpen, setAddStrategyOpen] = useState(false);
 	const [picnicSearchOpen, setPicnicSearchOpen] = useState(false);
+	const [barcodeCreateOpen, setBarcodeCreateOpen] = useState(false);
 
 	const load = useCallback(async () => {
 		setListError(null);
@@ -137,8 +140,8 @@ export function CatalogItemsPage() {
 			</Box>
 			<Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
 				Product templates: default volume and weight, structured facts such as
-				alcohol by volume, and an optional barcode that identifies the catalog item. Open a
-				row for the full editor.
+				alcohol by volume, and an optional barcode that identifies the catalog
+				item. Open a row for the full editor.
 			</Typography>
 			{listError && (
 				<Alert
@@ -260,6 +263,15 @@ export function CatalogItemsPage() {
 					if (id === "picnic") {
 						setPicnicSearchOpen(true);
 					}
+				}}
+				onChooseBarcodeCreate={() => setBarcodeCreateOpen(true)}
+			/>
+			<CreateCatalogItemFromBarcodeDialog
+				open={barcodeCreateOpen}
+				onClose={() => setBarcodeCreateOpen(false)}
+				onCreated={(id: CatalogItemId) => {
+					void load();
+					navigate(`/catalog-items/${id}/edit`);
 				}}
 			/>
 			<PicnicProductSearchDialog

@@ -1,6 +1,6 @@
 import type { SvgIconComponent } from "@mui/icons-material";
 import DrawOutlinedIcon from "@mui/icons-material/DrawOutlined";
-import MenuBookOutlinedIcon from "@mui/icons-material/MenuBookOutlined";
+import QrCode2OutlinedIcon from "@mui/icons-material/QrCode2Outlined";
 import ShoppingBagOutlinedIcon from "@mui/icons-material/ShoppingBagOutlined";
 import {
 	Box,
@@ -21,19 +21,21 @@ import {
 const TILE_ICONS: Record<CatalogItemCreationSourceId, SvgIconComponent> = {
 	manual: DrawOutlinedIcon,
 	picnic: ShoppingBagOutlinedIcon,
-	fddb: MenuBookOutlinedIcon,
+	barcode: QrCode2OutlinedIcon,
 };
 
 export type AddCatalogItemStrategyDialogProps = {
 	open: boolean;
 	onClose: () => void;
 	onChooseSource: (id: CatalogItemCreationSourceId) => void;
+	onChooseBarcodeCreate?: () => void;
 };
 
 export function AddCatalogItemStrategyDialog({
 	open,
 	onClose,
 	onChooseSource,
+	onChooseBarcodeCreate,
 }: AddCatalogItemStrategyDialogProps) {
 	const navigate = useNavigate();
 
@@ -87,7 +89,11 @@ export function AddCatalogItemStrategyDialog({
 										onChooseSource("picnic");
 										return;
 									}
-									navigate(catalogItemNewPath(s.id));
+									if (s.id === "barcode") {
+										onChooseBarcodeCreate?.();
+										return;
+									}
+									navigate(catalogItemNewPath("manual"));
 								}}
 								sx={{
 									m: 0,
