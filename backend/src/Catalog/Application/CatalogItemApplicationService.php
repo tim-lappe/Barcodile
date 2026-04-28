@@ -9,6 +9,7 @@ use App\Catalog\Application\Dto\CatalogItemImageGetResult;
 use App\Catalog\Application\Dto\CatalogItemResponse;
 use App\Catalog\Application\Dto\PatchCatalogItemRequest;
 use App\Catalog\Application\Dto\PicnicCatalogProductHintResponse;
+use App\Catalog\Application\Dto\PostBarcodeCatalogLookupRequest;
 use App\Catalog\Application\Dto\PostCatalogItemRequest;
 use App\Catalog\Domain\CatalogImageContentType;
 use App\Catalog\Domain\Entity\CatalogItem;
@@ -41,6 +42,7 @@ final readonly class CatalogItemApplicationService
         private PicnicIntegrationApplicationService $picnic,
         private EntityManagerInterface $entityManager,
         private CatalogItemResponseMapper $responseMapper,
+        private BarcodeCatalogLookupApplicationService $barcodeCatalogLookup,
     ) {
     }
 
@@ -81,6 +83,36 @@ final readonly class CatalogItemApplicationService
     public function ensureCatalogItemExists(string $catalogItemId): void
     {
         $this->mustFind(CatalogItemId::fromString($catalogItemId));
+    }
+
+    public function createCatalogItemFromBarcode(
+        PostBarcodeCatalogLookupRequest $request,
+    ): CatalogItemResponse {
+        $hint = $this->barcodeCatalogLookup->lookup($request);
+
+        $attrs = null;
+        if (null !== $hint->alcoholPercent) {
+            $attrs = [
+                [
+                    'rowId' => null,
+                    'attribute' => CatalogItemAttributeKey::AlcoholPercent->value,
+                    'value' => $hint->alcoholPercent,
+                ],
+            ];
+        }
+
+        return $this->createCatalogItemFromValues(
+            $hint->name,
+            $hint->volume?->amount,
+            $hint->volume?->unit,
+            $hint->weight?->amount,
+            $hint->weight?->unit,
+            $hint->barcodeCode,
+            $hint->barcodeType,
+            $attrs,
+            null,
+            CatalogItemCreationSource::Barcode->value,
+        );
     }
 
     public function createCatalogItem(PostCatalogItemRequest $request): CatalogItemResponse

@@ -1,0 +1,14 @@
+<?php
+
+declare(strict_types=1);
+
+namespace App\Catalog\Application\Dto;
+
+final readonly class PostBarcodeCatalogLookupRequest
+{
+    public function __construct(
+        public string $code,
+        public string $type = 'EAN',
+    ) {
+    }
+}

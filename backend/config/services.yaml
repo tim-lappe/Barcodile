@@ -24,6 +24,17 @@ services:
     App\AI\Domain\Port\LlmCompletionProbePort:
         alias: App\AI\Infrastructure\SymfonyAiLlmCompletionProbeAdapter
 
+    App\AI\Domain\Port\OpenAiResponsesWebSearchPort:
+        alias: App\AI\Infrastructure\OpenAiResponsesWebSearchHttpAdapter
+
+    App\Catalog\Application\BarcodeCatalogLookupApplicationService:
+        arguments:
+            $lookupProviders: !tagged_iterator barcodile.barcode_catalog_lookup_provider
+
+    App\Catalog\Infrastructure\BarcodeLookup\LlmWebSearchBarcodeCatalogLookupProvider:
+        tags:
+            - { name: 'barcodile.barcode_catalog_lookup_provider', priority: 0 }
+
     App\Picnic\Domain\Port\PicnicCredentialCipherPort:
         alias: App\Picnic\Infrastructure\PicnicCredentialCipherAdapter
 
