@@ -19,3 +19,7 @@
 ###< friendsofphp/php-cs-fixer ###
 
 __pycache__/
+###> phpunit/phpunit ###
+/phpunit.xml
+/.phpunit.cache/
+###< phpunit/phpunit ###
