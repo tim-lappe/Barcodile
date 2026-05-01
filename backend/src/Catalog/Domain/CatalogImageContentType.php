@@ -48,7 +48,7 @@ enum CatalogImageContentType: string
 
     public static function tryFromUrlPath(string $url): ?self
     {
-        $path = parse_url($url, PHP_URL_PATH);
+        $path = parse_url($url, \PHP_URL_PATH);
         if (!\is_string($path)) {
             return null;
         }

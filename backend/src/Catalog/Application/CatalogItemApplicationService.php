@@ -119,11 +119,11 @@ final readonly class CatalogItemApplicationService
             $picnicProductId,
             CatalogItemCreationSource::Barcode->value,
         );
-        $id = $response->resourceId;
-        $this->tryAssignProductImageFromLookupUrl($id, $hint->productImageUrl);
+        $catalogItemId = $response->resourceId;
+        $this->tryAssignProductImageFromLookupUrl($catalogItemId, $hint->productImageUrl);
         $this->entityManager->flush();
 
-        return $this->getCatalogItem($id);
+        return $this->getCatalogItem($catalogItemId);
     }
 
     public function createCatalogItemFromBarcodeWithPlaceholderFallback(string $code, string $type = 'EAN'): CatalogItemResponse

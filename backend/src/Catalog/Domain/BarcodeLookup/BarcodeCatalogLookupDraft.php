@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace App\Catalog\Domain\BarcodeLookup;
 
+use App\SharedKernel\Domain\Barcode;
+
 final readonly class BarcodeCatalogLookupDraft
 {
     public function __construct(
@@ -14,10 +16,8 @@ final readonly class BarcodeCatalogLookupDraft
         public ?string $weightAmount,
         public ?string $weightUnit,
         public ?float $alcoholPercent,
-        public string $barcodeCode,
-        public string $barcodeType,
-        public ?string $picnicProductId = null,
-        public ?string $productImageUrl = null,
+        public Barcode $barcode,
+        public ?BarcodeCatalogLookupDraftExtras $extras = null,
     ) {
     }
 }

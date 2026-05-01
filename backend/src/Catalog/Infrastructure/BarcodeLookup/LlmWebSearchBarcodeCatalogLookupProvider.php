@@ -7,6 +7,7 @@ namespace App\Catalog\Infrastructure\BarcodeLookup;
 use App\AI\Domain\Exception\OpenAiResponsesWebSearchException;
 use App\AI\Domain\Port\OpenAiResponsesWebSearchPort;
 use App\Catalog\Domain\BarcodeLookup\BarcodeCatalogLookupDraft;
+use App\Catalog\Domain\BarcodeLookup\BarcodeCatalogLookupDraftExtras;
 use App\Catalog\Domain\Port\BarcodeCatalogLookupProvider;
 use App\SharedKernel\Domain\Barcode;
 use App\SharedKernel\Domain\VolumeUnit;
@@ -187,10 +188,8 @@ USR,
             $wAmount,
             $wUnit,
             $abv,
-            $barcode->getCode(),
-            $barcode->getType(),
-            $picnicId,
-            $imageUrl,
+            $barcode,
+            new BarcodeCatalogLookupDraftExtras($picnicId, $imageUrl),
         );
     }
 
@@ -202,16 +201,16 @@ USR,
         if (!\array_key_exists($key, $data)) {
             return null;
         }
-        $v = $data[$key];
-        if (null === $v) {
+        $rawValue = $data[$key];
+        if (null === $rawValue) {
             return null;
         }
-        if (!\is_string($v)) {
+        if (!\is_string($rawValue)) {
             return null;
         }
-        $t = trim($v);
+        $trimmed = trim($rawValue);
 
-        return '' === $t ? null : $t;
+        return '' === $trimmed ? null : $trimmed;
     }
 
     private function normalizeVolumeUnit(?string $raw): ?string
@@ -243,15 +242,15 @@ USR,
         if (null === $raw) {
             return null;
         }
-        $t = trim($raw);
-        if ('' === $t) {
+        $trimmed = trim($raw);
+        if ('' === $trimmed) {
             return null;
         }
-        if (\strlen($t) > 200) {
+        if (\strlen($trimmed) > 200) {
             return null;
         }
 
-        return $t;
+        return $trimmed;
     }
 
     private function normalizeProductImageUrl(?string $raw): ?string
@@ -259,21 +258,21 @@ USR,
         if (null === $raw) {
             return null;
         }
-        $t = trim($raw);
-        if ('' === $t) {
+        $trimmedUrl = trim($raw);
+        if ('' === $trimmedUrl) {
             return null;
         }
-        if (\strlen($t) > 2048) {
+        if (\strlen($trimmedUrl) > 2048) {
             return null;
         }
-        $lower = strtolower($t);
+        $lower = strtolower($trimmedUrl);
         if (!str_starts_with($lower, 'https://') && !str_starts_with($lower, 'http://')) {
             return null;
         }
-        if (false === filter_var($t, FILTER_VALIDATE_URL)) {
+        if (false === filter_var($trimmedUrl, \FILTER_VALIDATE_URL)) {
             return null;
         }
-        $host = parse_url($t, PHP_URL_HOST);
+        $host = parse_url($trimmedUrl, \PHP_URL_HOST);
         if (!\is_string($host) || '' === $host) {
             return null;
         }
@@ -289,7 +288,7 @@ USR,
         if (\in_array($hostLower, $blocked, true)) {
             return null;
         }
-        $path = parse_url($t, PHP_URL_PATH);
+        $path = parse_url($trimmedUrl, \PHP_URL_PATH);
         if (!\is_string($path) || '' === $path || '/' === $path) {
             return null;
         }
@@ -298,6 +297,6 @@ USR,
             return null;
         }
 
-        return $t;
+        return $trimmedUrl;
     }
 }

@@ -25,10 +25,10 @@ final readonly class SymfonyCatalogRemoteProductImageFetchHttpAdapter implements
         if (!str_starts_with($lower, 'https://') && !str_starts_with($lower, 'http://')) {
             return null;
         }
-        if (false === filter_var($httpsUrl, FILTER_VALIDATE_URL)) {
+        if (false === filter_var($httpsUrl, \FILTER_VALIDATE_URL)) {
             return null;
         }
-        $host = parse_url($httpsUrl, PHP_URL_HOST);
+        $host = parse_url($httpsUrl, \PHP_URL_HOST);
         if (!\is_string($host) || '' === $host) {
             return null;
         }
@@ -85,7 +85,7 @@ final readonly class SymfonyCatalogRemoteProductImageFetchHttpAdapter implements
             return null;
         }
 
-        $path = parse_url($httpsUrl, PHP_URL_PATH);
+        $path = parse_url($httpsUrl, \PHP_URL_PATH);
         $base = \is_string($path) ? basename(str_replace('\\', '/', $path)) : '';
         $trimmedBase = trim($base);
         if ('' === $trimmedBase || '.' === $trimmedBase || '..' === $trimmedBase) {

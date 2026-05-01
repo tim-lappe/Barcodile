@@ -44,44 +44,55 @@ final readonly class BarcodeCatalogLookupApplicationService
         }
 
         foreach ($this->lookupProviders as $provider) {
-            try {
-                return $this->mapResponse($provider->lookup($barcode));
-            } catch (BarcodeLookupSkippedException) {
+            $mapped = $this->tryMapProviderLookup($provider, $barcode);
+            if (null !== $mapped) {
+                return $mapped;
             }
         }
 
         throw new BadRequestHttpException('No barcode lookup provider produced a result.');
     }
 
-    private function mapResponse(BarcodeCatalogLookupDraft $d): BarcodeCatalogLookupResponse
+    private function tryMapProviderLookup(
+        BarcodeCatalogLookupProvider $provider,
+        Barcode $barcode,
+    ): ?BarcodeCatalogLookupResponse {
+        try {
+            return $this->mapResponse($provider->lookup($barcode));
+        } catch (BarcodeLookupSkippedException) {
+            return null;
+        }
+    }
+
+    private function mapResponse(BarcodeCatalogLookupDraft $draft): BarcodeCatalogLookupResponse
     {
         $volume = null;
-        if (null !== $d->volumeAmount && null !== $d->volumeUnit && '' !== trim($d->volumeAmount)) {
-            $volume = new VolumeResponse(trim($d->volumeAmount), $d->volumeUnit);
+        if (null !== $draft->volumeAmount && null !== $draft->volumeUnit && '' !== trim($draft->volumeAmount)) {
+            $volume = new VolumeResponse(trim($draft->volumeAmount), $draft->volumeUnit);
         }
 
         $weight = null;
-        if (null !== $d->weightAmount && null !== $d->weightUnit && '' !== trim($d->weightAmount)) {
-            $weight = new WeightResponse(trim($d->weightAmount), $d->weightUnit);
+        if (null !== $draft->weightAmount && null !== $draft->weightUnit && '' !== trim($draft->weightAmount)) {
+            $weight = new WeightResponse(trim($draft->weightAmount), $draft->weightUnit);
         }
 
-        $picnic = null !== $d->picnicProductId ? trim($d->picnicProductId) : null;
+        $picnic = null !== $draft->extras?->picnicProductId ? trim($draft->extras->picnicProductId) : null;
         if ('' === $picnic) {
             $picnic = null;
         }
-        $imageUrl = null !== $d->productImageUrl ? trim($d->productImageUrl) : null;
+        $imageUrl = null !== $draft->extras?->productImageUrl ? trim($draft->extras->productImageUrl) : null;
         if ('' === $imageUrl) {
             $imageUrl = null;
         }
 
         return new BarcodeCatalogLookupResponse(
-            $d->providerId,
-            trim($d->name),
+            $draft->providerId,
+            trim($draft->name),
             $volume,
             $weight,
-            $d->barcodeCode,
-            $d->barcodeType,
-            $d->alcoholPercent,
+            $draft->barcode->getCode(),
+            $draft->barcode->getType(),
+            $draft->alcoholPercent,
             $picnic,
             $imageUrl,
         );
