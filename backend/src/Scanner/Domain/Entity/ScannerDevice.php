@@ -46,10 +46,10 @@ class ScannerDevice implements RecordsDomainEvents
     private bool $remInvOnPublic = false;
 
     #[ORM\Column(name: 'automation_print_label_after_ean_add_inventory', options: ['default' => false])]
-    private bool $printLabelAfterEanAdd = false;
+    private bool $eanInvPrintLabel = false;
 
     #[ORM\Column(name: 'automation_label_printer_device_id', type: 'printer_device_id', nullable: true)]
-    private ?PrinterDeviceId $automationLabelPrinterDeviceId = null;
+    private ?PrinterDeviceId $autoPrinterId = null;
 
     public function __construct()
     {
@@ -114,8 +114,8 @@ class ScannerDevice implements RecordsDomainEvents
         $this->addInvOnEan = $enabled;
         if (!$enabled) {
             $this->createItemIfEan = false;
-            $this->printLabelAfterEanAdd = false;
-            $this->automationLabelPrinterDeviceId = null;
+            $this->eanInvPrintLabel = false;
+            $this->autoPrinterId = null;
         }
 
         return $this;
@@ -147,14 +147,14 @@ class ScannerDevice implements RecordsDomainEvents
 
     public function isAutomationPrintLabelAfterEanAddInventory(): bool
     {
-        return $this->printLabelAfterEanAdd;
+        return $this->eanInvPrintLabel;
     }
 
     public function changeAutomationPrintLabelAfterEanAddInventory(bool $enabled): static
     {
-        $this->printLabelAfterEanAdd = $enabled;
+        $this->eanInvPrintLabel = $enabled;
         if (!$enabled) {
-            $this->automationLabelPrinterDeviceId = null;
+            $this->autoPrinterId = null;
         }
 
         return $this;
@@ -162,12 +162,12 @@ class ScannerDevice implements RecordsDomainEvents
 
     public function getAutomationLabelPrinterDeviceId(): ?PrinterDeviceId
     {
-        return $this->automationLabelPrinterDeviceId;
+        return $this->autoPrinterId;
     }
 
     public function changeAutomationLabelPrinterDeviceId(?PrinterDeviceId $printerDeviceId): static
     {
-        $this->automationLabelPrinterDeviceId = $printerDeviceId;
+        $this->autoPrinterId = $printerDeviceId;
 
         return $this;
     }

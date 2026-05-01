@@ -74,18 +74,25 @@ final readonly class ScannerDeviceApplicationService
             $device->changeAutomationCreateCatalogItemIfMissingForEan($request->createIfMissingEan);
         }
         $device->changeAutomationRemoveInventoryOnPublicCodeScan($request->remOnPublic);
-        if ($device->isAutomationAddInventoryOnEanScan() && $request->printLabelAfterEan) {
-            $device->changeAutomationPrintLabelAfterEanAddInventory(true);
-            $pid = '' === trim($request->labelPrinterDeviceId ?? '') ? null : $request->labelPrinterDeviceId;
-            $device->changeAutomationLabelPrinterDeviceId(
-                null === $pid ? null : PrinterDeviceId::fromString($pid),
-            );
-        } else {
-            $device->changeAutomationPrintLabelAfterEanAddInventory(false);
-        }
+        $this->applyAutomationPrintLabelSettings($device, $request);
         $this->scannerDevices->save($device);
 
         return $this->map($this->mapDevice($device));
+    }
+
+    private function applyAutomationPrintLabelSettings(
+        ScannerDevice $device,
+        PatchScannerDeviceAutomationsRequest $request,
+    ): void {
+        $shouldPrintLabel = $device->isAutomationAddInventoryOnEanScan() && $request->printLabelAfterEan;
+        $device->changeAutomationPrintLabelAfterEanAddInventory($shouldPrintLabel);
+        if (!$shouldPrintLabel) {
+            return;
+        }
+        $printerRawId = '' === trim($request->labelPrinterDeviceId ?? '') ? null : $request->labelPrinterDeviceId;
+        $device->changeAutomationLabelPrinterDeviceId(
+            null === $printerRawId ? null : PrinterDeviceId::fromString($printerRawId),
+        );
     }
 
     private function map(ScannerDeviceView $device): ScannerDeviceResponse
