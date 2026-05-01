@@ -5,18 +5,17 @@ alwaysApply: true
 
 ## Layers
 
-- **Api** (`Api/`): Inbound HTTP adapters, mostly controllers. They call Application services and may use Symfony HTTP/routing/validation concerns, but must not depend on Infrastructure.
-- **Application** (`Application/`): Use-case orchestration, read models/view helpers, and public request/response/query DTOs under `Application/Dto/`. Symfony dependencies are allowed when they support application-level concerns, but Application must not depend on Infrastructure.
+- **Application** (`Application/`): Use-case orchestration, read models/view helpers, inbound HTTP controllers under `Application/Controller/`, and public request/response/query DTOs under `Application/Dto/`. Controllers call Application services and may use Symfony HTTP/routing/validation concerns. Symfony dependencies are allowed when they support application-level concerns, but Application must not depend on Infrastructure.
 - **Domain** (`Domain/`): Core business logic, entities, repositories, value objects, domain services, events, ports, and cross-domain adapters. Keep it as free of framework code as practical. The typical dependency is ORM/Doctrine mapping support; avoid pulling in additional framework libraries.
 - **Infrastructure** (`Infrastructure/`): Implementations of domain/application ports and technical details such as Doctrine custom types, listeners, serializer denormalizers, console commands, HTTP clients, external APIs, printers, scanners, and ciphers.
 - **SharedKernel** (`SharedKernel/`): Shared types that are deliberately reused across bounded contexts. Keep it small and apply the same layer names inside it where needed (`SharedKernel/Domain`, `SharedKernel/Application`, `SharedKernel/Infrastructure`).
 
 ## Dependency direction
 
-- Within a bounded context, dependencies flow through **Api → Application → Domain ← Infrastructure**.
-- **Application, Domain, and Infrastructure must not depend on Api**.
-- **Application and Api must not depend on Infrastructure**.
-- **Domain must not depend on Api, Application, or Infrastructure**.
+- Within a bounded context, dependencies flow through **Application/Controller → Application (services, DTOs, views) → Domain ← Infrastructure**.
+- **Application services, Domain, and Infrastructure must not depend on `Application/Controller`.**
+- **Application must not depend on Infrastructure** (including controllers under `Application/Controller/`).
+- **Domain must not depend on Application or Infrastructure.**
 
 ## Bounded contexts / domains
 
@@ -35,7 +34,7 @@ alwaysApply: true
 ## API and frontend
 
 - **Never** serialize domain objects or pass them straight to the frontend.
-- Controllers and Application services map to and from **Application DTOs**. API request, response, and query objects live under the owning context's `Application/Dto/`, not `Api/Dto/`.
+- Controllers and Application services map to and from **Application DTOs**. API request, response, and query objects live under the owning context's `Application/Dto/`.
 - **No `mixed`**, **no loose associative arrays** as the public API shape; everything is explicitly typed.
 
 ## Modeling

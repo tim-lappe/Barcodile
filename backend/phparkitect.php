@@ -26,8 +26,8 @@ return static function (Config $config): void {
         static fn (string $contextName): string => 'App\\'.$contextName,
         $contextNames
     );
-    $apiNamespaces = array_map(
-        static fn (string $contextNamespace): string => $contextNamespace.'\Api',
+    $allApplicationControllerNamespaces = array_map(
+        static fn (string $contextNamespace): string => $contextNamespace.'\Application\Controller',
         $contextNamespaces
     );
 
@@ -61,7 +61,6 @@ return static function (Config $config): void {
             $otherContextNamespaces
         );
         $ownNonDomainNamespaces = [
-            $contextNamespace.'\Api',
             $contextNamespace.'\Application',
             $contextNamespace.'\Infrastructure',
         ];
@@ -95,23 +94,23 @@ return static function (Config $config): void {
             ->should(new NotDependsOnTheseNamespaces(
                 array_merge([$contextNamespace.'\Infrastructure'], $otherInfrastructureNamespaces)
             ))
-            ->because('Application services may orchestrate contexts but must not depend on Infrastructure');
+            ->because('Application layer must not depend on Infrastructure');
 
         $rules[] = Rule::allClasses()
-            ->that(new ResideInOneOfTheseNamespaces($contextNamespace.'\Api'))
-            ->should(new NotDependsOnTheseNamespaces(
-                array_merge([$contextNamespace.'\Infrastructure'], $otherInfrastructureNamespaces)
-            ))
-            ->because('API adapters may call Application services but must not depend on Infrastructure');
+            ->that(new ResideInOneOfTheseNamespaces($domainNamespace))
+            ->should(new NotDependsOnTheseNamespaces($allApplicationControllerNamespaces))
+            ->because('Domain code must not depend on HTTP controller adapters');
 
         $rules[] = Rule::allClasses()
-            ->that(new ResideInOneOfTheseNamespaces(
-                $contextNamespace.'\Application',
-                $domainNamespace,
-                $contextNamespace.'\Infrastructure'
-            ))
-            ->should(new NotDependsOnTheseNamespaces($apiNamespaces))
-            ->because('Application, Domain, and Infrastructure layers must not depend on API adapters');
+            ->that(new ResideInOneOfTheseNamespaces($contextNamespace.'\Infrastructure'))
+            ->should(new NotDependsOnTheseNamespaces($allApplicationControllerNamespaces))
+            ->because('Infrastructure must not depend on HTTP controller adapters');
+
+        $rules[] = Rule::allClasses()
+            ->that(new ResideInOneOfTheseNamespaces($contextNamespace.'\Application'))
+            ->andThat(new NotResideInTheseNamespaces($contextNamespace.'\Application\Controller'))
+            ->should(new NotDependsOnTheseNamespaces($allApplicationControllerNamespaces))
+            ->because('Application services must not depend on HTTP controller adapters');
 
         $rules[] = Rule::allClasses()
             ->that(new ResideInOneOfTheseNamespaces($adapterNamespace))

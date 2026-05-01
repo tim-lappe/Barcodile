@@ -1,0 +1,21 @@
+<?php
+
+declare(strict_types=1);
+
+namespace App\Picnic\Application\Controller;
+
+use App\Picnic\Application\Dto\PostPicnicRequestTwoFactorCodeRequest;
+use App\Picnic\Application\PicnicIntegrationApplicationService;
+use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
+use Symfony\Component\HttpFoundation\JsonResponse;
+use Symfony\Component\HttpKernel\Attribute\MapRequestPayload;
+use Symfony\Component\Routing\Attribute\Route;
+
+final class PostPicnicRequestTwoFactorCodeController extends AbstractController
+{
+    #[Route(path: '/api/settings/picnic/login/request_2fa_code', methods: ['POST'])]
+    public function __invoke(#[MapRequestPayload] PostPicnicRequestTwoFactorCodeRequest $request, PicnicIntegrationApplicationService $picnicApp): JsonResponse
+    {
+        return $this->json($picnicApp->requestTwoFactorCode($request));
+    }
+}

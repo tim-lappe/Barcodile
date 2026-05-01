@@ -8,37 +8,37 @@
 #   bin/console debug:router
 
 activity_controllers:
-    resource: ../src/Activity/Api/Controller/
+    resource: ../src/Activity/Application/Controller/
     type: attribute
 
 ai_controllers:
-    resource: ../src/AI/Api/Controller/
+    resource: ../src/AI/Application/Controller/
     type: attribute
 
 cart_controllers:
-    resource: ../src/Cart/Api/Controller/
+    resource: ../src/Cart/Application/Controller/
     type: attribute
 
 catalog_controllers:
-    resource: ../src/Catalog/Api/Controller/
+    resource: ../src/Catalog/Application/Controller/
     type: attribute
 
 debug_controllers:
-    resource: ../src/Debug/Api/Controller/
+    resource: ../src/Debug/Application/Controller/
     type: attribute
 
 inventory_controllers:
-    resource: ../src/Inventory/Api/Controller/
+    resource: ../src/Inventory/Application/Controller/
     type: attribute
 
 picnic_controllers:
-    resource: ../src/Picnic/Api/Controller/
+    resource: ../src/Picnic/Application/Controller/
     type: attribute
 
 printer_controllers:
-    resource: ../src/Printer/Api/Controller/
+    resource: ../src/Printer/Application/Controller/
     type: attribute
 
 scanner_controllers:
-    resource: ../src/Scanner/Api/Controller/
+    resource: ../src/Scanner/Application/Controller/
     type: attribute
