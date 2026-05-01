@@ -9,6 +9,7 @@ use App\Cart\Application\Dto\ShoppingCartLineResponse;
 use App\Cart\Application\Dto\ShoppingCartResponse;
 use App\Cart\Domain\Entity\ShoppingCart;
 use App\Cart\Domain\Entity\ShoppingCartLine;
+use App\Cart\Domain\Exception\InvalidCartException;
 use App\Cart\Domain\Port\CartInterface;
 use App\Cart\Domain\Port\CartLineInterface;
 use App\Cart\Domain\Port\CartProviderAccessException;
@@ -152,7 +153,11 @@ final readonly class ShoppingCartApplicationService
     ): ShoppingCartLineResponse {
         $this->catalog->ensureCatalogItemExists((string) $catalogItemId);
         $cart = $this->mustFindCart($shoppingCartId);
-        $line = $cart->mergeOrAddLineForCatalogItem($catalogItemId, $quantity);
+        try {
+            $line = $cart->mergeOrAddLineForCatalogItem($catalogItemId, $quantity);
+        } catch (InvalidCartException $exception) {
+            throw new BadRequestHttpException($exception->getMessage(), $exception);
+        }
         $this->cartRepo->save($cart);
 
         return $this->mapStoredLine($line);
@@ -230,6 +235,8 @@ final readonly class ShoppingCartApplicationService
         }
         try {
             $portable->changeLineQuantity($lineId, $quantity);
+        } catch (InvalidCartException $exception) {
+            throw new BadRequestHttpException($exception->getMessage(), $exception);
         } catch (CartProviderAccessException $exception) {
             $this->throwCartProviderAccess($exception);
         }
@@ -282,10 +289,14 @@ final readonly class ShoppingCartApplicationService
         if (!$line instanceof ShoppingCartLine) {
             return false;
         }
-        $line->changeQuantity($quantity);
         $cart = $line->getShoppingCart();
         if (null === $cart) {
             throw new NotFoundHttpException('Shopping cart line not found.');
+        }
+        try {
+            $cart->applyLineQuantityByLineId($lineId, $quantity);
+        } catch (InvalidCartException $exception) {
+            throw new BadRequestHttpException($exception->getMessage(), $exception);
         }
         $this->cartRepo->save($cart);
 

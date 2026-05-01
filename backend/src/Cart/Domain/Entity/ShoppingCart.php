@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Cart\Domain\Entity;
 
+use App\Cart\Domain\Exception\InvalidCartException;
 use App\Cart\Domain\Repository\ShoppingCartRepository;
 use App\SharedKernel\Domain\Id\CatalogItemId;
 use App\SharedKernel\Domain\Id\ShoppingCartId;
@@ -90,6 +91,7 @@ class ShoppingCart
 
     public function mergeOrAddLineForCatalogItem(CatalogItemId $catalogItemId, int $quantity): ShoppingCartLine
     {
+        $this->assertQuantity($quantity);
         foreach ($this->lines as $existing) {
             $existingItemId = $existing->getCatalogItemId();
             if (null !== $existingItemId && $existingItemId->equals($catalogItemId)) {
@@ -120,12 +122,20 @@ class ShoppingCart
 
     public function applyLineQuantityByLineId(ShoppingCartLineId $lineId, int $quantity): void
     {
+        $this->assertQuantity($quantity);
         foreach ($this->lines as $line) {
             if ($line->getId()->equals($lineId)) {
                 $line->changeQuantity($quantity);
 
                 return;
             }
+        }
+    }
+
+    private function assertQuantity(int $quantity): void
+    {
+        if ($quantity < 1) {
+            throw new InvalidCartException('Quantity must be at least 1.');
         }
     }
 }

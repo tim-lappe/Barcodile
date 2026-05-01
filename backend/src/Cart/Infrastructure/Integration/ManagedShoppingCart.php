@@ -12,7 +12,6 @@ use App\SharedKernel\Domain\Id\CatalogItemId;
 use App\SharedKernel\Domain\Id\ShoppingCartLineId;
 use DateTimeImmutable;
 use Generator;
-use InvalidArgumentException;
 
 final readonly class ManagedShoppingCart implements CartInterface
 {
@@ -71,9 +70,6 @@ final readonly class ManagedShoppingCart implements CartInterface
 
     public function addItem(CatalogItemId $catalogItemId, int $quantity): void
     {
-        if ($quantity < 1) {
-            throw new InvalidArgumentException('Quantity must be at least 1.');
-        }
         $this->cart->mergeOrAddLineForCatalogItem($catalogItemId, $quantity);
         $this->cartRepo->save($this->cart);
     }
@@ -86,9 +82,6 @@ final readonly class ManagedShoppingCart implements CartInterface
 
     public function changeLineQuantity(ShoppingCartLineId $lineId, int $quantity): void
     {
-        if ($quantity < 1) {
-            throw new InvalidArgumentException('Quantity must be at least 1.');
-        }
         $this->cart->applyLineQuantityByLineId($lineId, $quantity);
         $this->cartRepo->save($this->cart);
     }

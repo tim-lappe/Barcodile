@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Cart\Domain\Entity;
 
+use App\Cart\Domain\Exception\InvalidCartException;
 use App\SharedKernel\Domain\Id\CatalogItemId;
 use App\SharedKernel\Domain\Id\ShoppingCartLineId;
 use DateTimeImmutable;
@@ -72,6 +73,7 @@ class ShoppingCartLine
 
     public function changeQuantity(int $quantity): static
     {
+        $this->assertQuantity($quantity);
         $this->quantity = $quantity;
 
         return $this;
@@ -79,6 +81,7 @@ class ShoppingCartLine
 
     public function increaseQuantity(int $delta): static
     {
+        $this->assertQuantity($delta);
         $this->quantity += $delta;
 
         return $this;
@@ -87,5 +90,12 @@ class ShoppingCartLine
     public function getCreatedAt(): DateTimeImmutable
     {
         return $this->createdAt;
+    }
+
+    private function assertQuantity(int $quantity): void
+    {
+        if ($quantity < 1) {
+            throw new InvalidCartException('Quantity must be at least 1.');
+        }
     }
 }
