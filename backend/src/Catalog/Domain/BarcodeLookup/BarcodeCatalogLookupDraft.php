@@ -16,6 +16,8 @@ final readonly class BarcodeCatalogLookupDraft
         public ?float $alcoholPercent,
         public string $barcodeCode,
         public string $barcodeType,
+        public ?string $picnicProductId = null,
+        public ?string $productImageUrl = null,
     ) {
     }
 }

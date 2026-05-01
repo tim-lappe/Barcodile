@@ -15,6 +15,7 @@ use App\Catalog\Domain\CatalogImageContentType;
 use App\Catalog\Domain\Entity\CatalogItem;
 use App\Catalog\Domain\Entity\CatalogItemAttribute;
 use App\Catalog\Domain\Image;
+use App\Catalog\Domain\Port\CatalogRemoteProductImageFetchPort;
 use App\Catalog\Domain\Repository\CatalogItemRepository;
 use App\Picnic\Application\PicnicIntegrationApplicationService;
 use App\SharedKernel\Domain\Barcode as BarcodeValue;
@@ -43,6 +44,7 @@ final readonly class CatalogItemApplicationService
         private EntityManagerInterface $entityManager,
         private CatalogItemResponseMapper $responseMapper,
         private BarcodeCatalogLookupApplicationService $barcodeCatalogLookup,
+        private CatalogRemoteProductImageFetchPort $remoteProductImageFetch,
     ) {
     }
 
@@ -101,7 +103,11 @@ final readonly class CatalogItemApplicationService
             ];
         }
 
-        return $this->createCatalogItemFromValues(
+        $picnicProductId = null !== $hint->picnicProductId && '' !== trim($hint->picnicProductId)
+            ? trim($hint->picnicProductId)
+            : null;
+
+        $response = $this->createCatalogItemFromValues(
             $hint->name,
             $hint->volume?->amount,
             $hint->volume?->unit,
@@ -110,9 +116,14 @@ final readonly class CatalogItemApplicationService
             $hint->barcodeCode,
             $hint->barcodeType,
             $attrs,
-            null,
+            $picnicProductId,
             CatalogItemCreationSource::Barcode->value,
         );
+        $id = $response->resourceId;
+        $this->tryAssignProductImageFromLookupUrl($id, $hint->productImageUrl);
+        $this->entityManager->flush();
+
+        return $this->getCatalogItem($id);
     }
 
     public function createCatalogItemFromBarcodeWithPlaceholderFallback(string $code, string $type = 'EAN'): CatalogItemResponse
@@ -207,6 +218,40 @@ final readonly class CatalogItemApplicationService
             $this->picnic->syncProductLinkForCatalogItem((string) $item->getId(), $request->relations->picnicProductId);
         }
         $this->catalogItemRepo->save($item);
+    }
+
+    public function recreateCatalogItemFromBarcode(string $catalogItemId): CatalogItemResponse
+    {
+        $item = $this->mustFind(CatalogItemId::fromString($catalogItemId));
+        $barcode = $item->getBarcode();
+        if (null === $barcode || 0 !== strcasecmp($barcode->getType(), 'EAN')) {
+            throw new BadRequestHttpException('Catalog item must have an EAN barcode to recreate from barcode.');
+        }
+        $code = trim($barcode->getCode());
+        if ('' === $code) {
+            throw new BadRequestHttpException('Catalog item must have an EAN barcode to recreate from barcode.');
+        }
+        $hint = $this->barcodeCatalogLookup->lookup(new PostBarcodeCatalogLookupRequest($code, $barcode->getType()));
+        $item->changeName($hint->name);
+        $item->changeVolume($this->volumeInputToDomain($hint->volume?->amount, $hint->volume?->unit));
+        $item->changeWeight($this->weightInputToDomain($hint->weight?->amount, $hint->weight?->unit));
+        $attrRows = [];
+        if (null !== $hint->alcoholPercent) {
+            $attrRows[] = [
+                'rowId' => null,
+                'attribute' => CatalogItemAttributeKey::AlcoholPercent->value,
+                'value' => $hint->alcoholPercent,
+            ];
+        }
+        $this->applyAttributeRows($item, $attrRows);
+        if (null !== $hint->picnicProductId && '' !== trim($hint->picnicProductId)) {
+            $this->picnic->syncProductLinkForCatalogItem($catalogItemId, trim($hint->picnicProductId));
+        }
+        $this->catalogItemRepo->save($item);
+        $this->tryAssignProductImageFromLookupUrl($catalogItemId, $hint->productImageUrl);
+        $this->entityManager->flush();
+
+        return $this->getCatalogItem($catalogItemId);
     }
 
     public function deleteCatalogItem(string $catalogItemId): void
@@ -405,6 +450,25 @@ final readonly class CatalogItemApplicationService
         $base = basename(str_replace('\\', '/', $trimmed));
 
         return '' === $base ? 'image' : $base;
+    }
+
+    private function tryAssignProductImageFromLookupUrl(string $catalogItemId, ?string $url): void
+    {
+        if (null === $url || '' === trim($url)) {
+            return;
+        }
+        $fetched = $this->remoteProductImageFetch->tryFetch(trim($url));
+        if (null === $fetched) {
+            return;
+        }
+        $item = $this->mustFind(CatalogItemId::fromString($catalogItemId));
+        $image = Image::fromCatalogContentType(
+            $this->sanitizeCatalogImageFileName($fetched->suggestedFileName),
+            $fetched->body,
+            $fetched->contentType,
+        );
+        $item->assignImage($image);
+        $this->catalogItemRepo->save($item);
     }
 
     private function map(CatalogItem $item, ?string $picnicProductId): CatalogItemView

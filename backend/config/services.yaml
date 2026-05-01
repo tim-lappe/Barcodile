@@ -27,6 +27,9 @@ services:
     App\AI\Domain\Port\OpenAiResponsesWebSearchPort:
         alias: App\AI\Infrastructure\OpenAiResponsesWebSearchHttpAdapter
 
+    App\Catalog\Domain\Port\CatalogRemoteProductImageFetchPort:
+        alias: App\Catalog\Infrastructure\Http\SymfonyCatalogRemoteProductImageFetchHttpAdapter
+
     App\Catalog\Application\BarcodeCatalogLookupApplicationService:
         arguments:
             $lookupProviders: !tagged_iterator barcodile.barcode_catalog_lookup_provider

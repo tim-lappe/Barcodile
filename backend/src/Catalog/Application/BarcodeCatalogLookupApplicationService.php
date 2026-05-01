@@ -65,6 +65,15 @@ final readonly class BarcodeCatalogLookupApplicationService
             $weight = new WeightResponse(trim($d->weightAmount), $d->weightUnit);
         }
 
+        $picnic = null !== $d->picnicProductId ? trim($d->picnicProductId) : null;
+        if ('' === $picnic) {
+            $picnic = null;
+        }
+        $imageUrl = null !== $d->productImageUrl ? trim($d->productImageUrl) : null;
+        if ('' === $imageUrl) {
+            $imageUrl = null;
+        }
+
         return new BarcodeCatalogLookupResponse(
             $d->providerId,
             trim($d->name),
@@ -73,6 +82,8 @@ final readonly class BarcodeCatalogLookupApplicationService
             $d->barcodeCode,
             $d->barcodeType,
             $d->alcoholPercent,
+            $picnic,
+            $imageUrl,
         );
     }
 }
