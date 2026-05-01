@@ -1,5 +1,6 @@
 import AddIcon from "@mui/icons-material/Add";
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
+import AutorenewIcon from "@mui/icons-material/Autorenew";
 import DeleteOutlinedIcon from "@mui/icons-material/DeleteOutlined";
 import {
 	Alert,
@@ -47,6 +48,7 @@ import {
 	fetchPicnicCatalogProductSummary,
 	fetchShoppingCarts,
 	patchCartStockAutomationRule,
+	postRecreateCatalogItemFromBarcode,
 	updateCatalogItem,
 	uploadCatalogItemImage,
 } from "../api/barcodileClient";
@@ -244,6 +246,7 @@ export function CatalogItemFormPage() {
 	const [newRuleStockBelow, setNewRuleStockBelow] = useState("5");
 	const [newRuleAddQty, setNewRuleAddQty] = useState("1");
 	const [addingRule, setAddingRule] = useState(false);
+	const [recreateFromEanBusy, setRecreateFromEanBusy] = useState(false);
 
 	const loadExisting = useCallback(async () => {
 		if (!idParam) {
@@ -569,6 +572,33 @@ export function CatalogItemFormPage() {
 			await refreshAutomationRulesOnly();
 		} catch (e) {
 			setAutomationError(e instanceof Error ? e.message : "Delete failed");
+		}
+	}
+
+	async function onRecreateFromEan() {
+		if (!idParam) {
+			return;
+		}
+		const code = form.barcodeCode.trim();
+		const sym = (form.barcodeType.trim() || "EAN").toLowerCase();
+		if (!code || sym !== "ean") {
+			return;
+		}
+		setFormError(null);
+		setRecreateFromEanBusy(true);
+		try {
+			const dto = await postRecreateCatalogItemFromBarcode(
+				idParam as CatalogItemId,
+			);
+			setForm(dtoToForm(dto));
+			setImageFileName(dto.imageFileName ?? null);
+			setImageNonce((n) => n + 1);
+		} catch (e) {
+			setFormError(
+				e instanceof Error ? e.message : "Could not recreate from EAN.",
+			);
+		} finally {
+			setRecreateFromEanBusy(false);
 		}
 	}
 
@@ -1085,6 +1115,28 @@ export function CatalogItemFormPage() {
 						}
 						fullWidth
 					/>
+					{isEdit &&
+						form.barcodeCode.trim() !== "" &&
+						(form.barcodeType.trim() || "EAN").toLowerCase() === "ean" && (
+							<Box sx={{ mt: 2 }}>
+								<Button
+									variant="outlined"
+									startIcon={<AutorenewIcon />}
+									onClick={() => void onRecreateFromEan()}
+									disabled={recreateFromEanBusy || saving}
+								>
+									{recreateFromEanBusy ? "Recreating…" : "Recreate with EAN"}
+								</Button>
+								<Typography
+									variant="body2"
+									color="text.secondary"
+									sx={{ mt: 1 }}
+								>
+									Re-runs the barcode lookup and overwrites fields the model
+									returns. The catalog item id and barcode are unchanged.
+								</Typography>
+							</Box>
+						)}
 				</Paper>
 
 				{(!isEdit && creationSource === "picnic") ||

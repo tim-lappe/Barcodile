@@ -560,6 +560,19 @@ export async function postCreateCatalogItemFromBarcode(input: {
 	return (await res.json()) as CatalogItemDto;
 }
 
+export async function postRecreateCatalogItemFromBarcode(
+	id: CatalogItemId,
+): Promise<CatalogItemDto> {
+	const res = await fetch(`${catalogItemIri(id)}/recreate_from_barcode`, {
+		method: "POST",
+		headers: { Accept: "application/json" },
+	});
+	if (!res.ok) {
+		throw new Error(await readErrorMessage(res));
+	}
+	return (await res.json()) as CatalogItemDto;
+}
+
 export async function updateCatalogItem(
 	id: CatalogItemId,
 	input: {
