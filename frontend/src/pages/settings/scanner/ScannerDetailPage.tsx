@@ -79,9 +79,7 @@ export function ScannerDetailPage() {
 				fetchPrinterDevices(),
 			]);
 			setDevice(d);
-			setPrinters(
-				printerRows.sort((a, b) => a.name.localeCompare(b.name)),
-			);
+			setPrinters(printerRows.sort((a, b) => a.name.localeCompare(b.name)));
 		} catch (e) {
 			setError(e instanceof Error ? e.message : "Request failed");
 			setDevice(null);
@@ -173,8 +171,7 @@ export function ScannerDetailPage() {
 		if (!device) {
 			return;
 		}
-		const automationLabelPrinterDeviceId =
-			value === "" ? null : value;
+		const automationLabelPrinterDeviceId = value === "" ? null : value;
 		void persistAutomations({
 			automationAddInventoryOnEanScan: device.automationAddInventoryOnEanScan,
 			automationCreateCatalogItemIfMissingForEan:
@@ -291,6 +288,16 @@ export function ScannerDetailPage() {
 							}
 							label="Create catalog item if none exists for that EAN"
 						/>
+						<Typography
+							variant="caption"
+							color="text.secondary"
+							component="p"
+							sx={{ mt: 0.5, maxWidth: 520 }}
+						>
+							Uses the same barcode product lookup as catalog creation
+							(including web search). If lookup fails, a minimal catalog row
+							named with the EAN is created instead.
+						</Typography>
 					</Box>
 					<Box sx={{ pl: { xs: 0, sm: 4 }, mt: 0, mb: 2 }}>
 						<FormControlLabel

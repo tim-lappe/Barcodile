@@ -62,18 +62,7 @@ final readonly class ScannerInvAutomationService
         if (!$device->isAutomationCreateCatalogItemIfMissingForEan()) {
             return null;
         }
-        $created = $this->catalog->createCatalogItemFromValues(
-            'EAN '.$text,
-            null,
-            null,
-            null,
-            null,
-            $text,
-            'EAN',
-            null,
-            null,
-            'manual',
-        );
+        $created = $this->catalog->createCatalogItemFromBarcodeWithPlaceholderFallback($text, 'EAN');
 
         return $created->resourceId;
     }

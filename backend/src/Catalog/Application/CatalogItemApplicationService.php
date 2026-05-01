@@ -115,6 +115,26 @@ final readonly class CatalogItemApplicationService
         );
     }
 
+    public function createCatalogItemFromBarcodeWithPlaceholderFallback(string $code, string $type = 'EAN'): CatalogItemResponse
+    {
+        try {
+            return $this->createCatalogItemFromBarcode(new PostBarcodeCatalogLookupRequest($code, $type));
+        } catch (BadRequestHttpException) {
+            return $this->createCatalogItemFromValues(
+                'EAN '.$code,
+                null,
+                null,
+                null,
+                null,
+                $code,
+                'EAN',
+                null,
+                null,
+                CatalogItemCreationSource::Manual->value,
+            );
+        }
+    }
+
     public function createCatalogItem(PostCatalogItemRequest $request): CatalogItemResponse
     {
         return $this->createCatalogItemFromValues(
