@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\AI\Domain\Entity;
 
+use App\AI\Domain\Exception\InvalidLlmProfileConfigurationException;
 use App\AI\Domain\LlmProfileKind;
 use App\AI\Domain\Repository\LlmProfileRepository;
 use App\SharedKernel\Domain\Id\LlmProfileId;
@@ -54,9 +55,17 @@ class LlmProfile
         return $this->kind;
     }
 
-    public function changeKind(LlmProfileKind $kind): static
+    public function changeTestableConfiguration(
+        LlmProfileKind $kind,
+        ?string $baseUrl,
+        ?string $apiKeyCipher,
+    ): static
     {
+        $this->assertTestableConfiguration($kind, $baseUrl, $apiKeyCipher);
+
         $this->kind = $kind;
+        $this->baseUrl = LlmProfileKind::OpenAiCompatible === $kind ? $baseUrl : null;
+        $this->apiKeyCipher = $apiKeyCipher;
 
         return $this;
     }
@@ -90,23 +99,9 @@ class LlmProfile
         return $this->baseUrl;
     }
 
-    public function changeBaseUrl(?string $baseUrl): static
-    {
-        $this->baseUrl = $baseUrl;
-
-        return $this;
-    }
-
     public function getApiKeyCipher(): ?string
     {
         return $this->apiKeyCipher;
-    }
-
-    public function changeApiKeyCipher(?string $apiKeyCipher): static
-    {
-        $this->apiKeyCipher = $apiKeyCipher;
-
-        return $this;
     }
 
     public function hasStoredApiKey(): bool
@@ -136,5 +131,20 @@ class LlmProfile
         $this->sortOrder = $sortOrder;
 
         return $this;
+    }
+
+    private function assertTestableConfiguration(
+        LlmProfileKind $kind,
+        ?string $baseUrl,
+        ?string $apiKeyCipher,
+    ): void
+    {
+        if (LlmProfileKind::OpenAi === $kind && (null === $apiKeyCipher || '' === $apiKeyCipher)) {
+            throw new InvalidLlmProfileConfigurationException('No API key is stored for this profile.');
+        }
+
+        if (LlmProfileKind::OpenAiCompatible === $kind && (null === $baseUrl || '' === trim($baseUrl))) {
+            throw new InvalidLlmProfileConfigurationException('baseUrl is missing for this profile.');
+        }
     }
 }

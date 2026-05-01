@@ -9,7 +9,7 @@ use Symfony\Component\Validator\Constraints as Assert;
 use Symfony\Component\Validator\Context\ExecutionContextInterface;
 
 #[Assert\Callback('validate')]
-final readonly class PostLlmProfileRequest
+final readonly class PutLlmProfileRequest
 {
     public function __construct(
         #[Assert\NotBlank(normalizer: 'trim')]
@@ -34,16 +34,8 @@ final readonly class PostLlmProfileRequest
 
     private function validateOpenAiApiKey(ExecutionContextInterface $context): void
     {
-        if (LlmProfileKind::OpenAi->value !== trim($this->kind)) {
-            return;
-        }
-
         $apiKey = trim($this->apiKey);
-        if ('' === $apiKey) {
-            $context->buildViolation('Field apiKey is required for openai profiles.')
-                ->atPath('apiKey')
-                ->addViolation();
-
+        if ('' === $apiKey || LlmProfileKind::OpenAi->value !== trim($this->kind)) {
             return;
         }
 
