@@ -968,8 +968,8 @@ export async function updateShoppingCart(
 	input: { name: string | null },
 ): Promise<void> {
 	const res = await fetch(shoppingCartIri(id), {
-		method: "PATCH",
-		headers: MERGE_PATCH_HEADERS,
+		method: "PUT",
+		headers: JSON_HEADERS,
 		body: JSON.stringify({ name: input.name }),
 	});
 	if (!res.ok) {
@@ -1009,8 +1009,8 @@ export async function updateShoppingCartLine(
 	input: { quantity: number },
 ): Promise<void> {
 	const res = await fetch(shoppingCartLineIri(id), {
-		method: "PATCH",
-		headers: MERGE_PATCH_HEADERS,
+		method: "PUT",
+		headers: JSON_HEADERS,
 		body: JSON.stringify({ quantity: input.quantity }),
 	});
 	if (!res.ok) {
@@ -1101,6 +1101,16 @@ export async function fetchDebugLogs(input?: {
 
 const LLM_PROFILES_API = "/api/settings/llm-profiles";
 
+export type SaveLlmProfileBody = {
+	kind: LlmProfileDto["kind"];
+	label: string;
+	model: string;
+	apiKey: string;
+	baseUrl?: string | null;
+	enabled?: boolean;
+	sortOrder?: number;
+};
+
 export async function fetchLlmProfiles(): Promise<LlmProfileDto[]> {
 	const res = await fetch(LLM_PROFILES_API, {
 		headers: { Accept: "application/json" },
@@ -1112,15 +1122,9 @@ export async function fetchLlmProfiles(): Promise<LlmProfileDto[]> {
 	return readJsonArray<LlmProfileDto>(body);
 }
 
-export async function postLlmProfile(body: {
-	kind: LlmProfileDto["kind"];
-	label: string;
-	model: string;
-	apiKey: string;
-	baseUrl?: string | null;
-	enabled?: boolean;
-	sortOrder?: number;
-}): Promise<LlmProfileDto> {
+export async function postLlmProfile(
+	body: SaveLlmProfileBody,
+): Promise<LlmProfileDto> {
 	const res = await fetch(LLM_PROFILES_API, {
 		method: "POST",
 		headers: JSON_HEADERS,
@@ -1132,14 +1136,14 @@ export async function postLlmProfile(body: {
 	return (await res.json()) as LlmProfileDto;
 }
 
-export async function patchLlmProfile(
+export async function putLlmProfile(
 	id: LlmProfileDto["id"],
-	patch: Record<string, unknown>,
+	body: SaveLlmProfileBody,
 ): Promise<LlmProfileDto> {
 	const res = await fetch(`${LLM_PROFILES_API}/${encodeURIComponent(id)}`, {
-		method: "PATCH",
-		headers: MERGE_PATCH_HEADERS,
-		body: JSON.stringify(patch),
+		method: "PUT",
+		headers: JSON_HEADERS,
+		body: JSON.stringify(body),
 	});
 	if (!res.ok) {
 		throw new Error(await readErrorMessage(res));

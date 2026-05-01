@@ -33,9 +33,9 @@ import { useCallback, useEffect, useState } from "react";
 import {
 	deleteLlmProfile,
 	fetchLlmProfiles,
-	patchLlmProfile,
 	postLlmProfile,
 	postLlmProfileTest,
+	putLlmProfile,
 } from "../../../api/barcodileClient";
 import type { LlmProfileDto, LlmProfileKind } from "../../../domain/barcodile";
 
@@ -150,21 +150,19 @@ export function LlmProfilesPage() {
 		setFormError(null);
 		setSaving(true);
 		try {
-			const patch: Record<string, unknown> = {
+			const body: Parameters<typeof putLlmProfile>[1] = {
 				kind: formKind,
 				label: formLabel.trim(),
 				model: formModel.trim(),
+				apiKey: formApiKey.trim(),
 				enabled: formEnabled,
 			};
 			if (formKind === "openai_compatible") {
-				patch.baseUrl = formBaseUrl.trim();
+				body.baseUrl = formBaseUrl.trim();
 			} else {
-				patch.baseUrl = null;
+				body.baseUrl = null;
 			}
-			if (formApiKey.trim() !== "") {
-				patch.apiKey = formApiKey.trim();
-			}
-			await patchLlmProfile(editTarget.id, patch);
+			await putLlmProfile(editTarget.id, body);
 			setEditTarget(null);
 			resetForm();
 			await load();
@@ -341,13 +339,16 @@ export function LlmProfilesPage() {
 				)}
 			</Paper>
 
-			<Dialog open={addOpen} onClose={() => setAddOpen(false)} fullWidth maxWidth="sm">
+			<Dialog
+				open={addOpen}
+				onClose={() => setAddOpen(false)}
+				fullWidth
+				maxWidth="sm"
+			>
 				<DialogTitle>Add LLM profile</DialogTitle>
 				<DialogContent>
 					<Box sx={{ display: "flex", flexDirection: "column", gap: 2, mt: 1 }}>
-						{formError ? (
-							<Alert severity="error">{formError}</Alert>
-						) : null}
+						{formError ? <Alert severity="error">{formError}</Alert> : null}
 						<FormControl fullWidth>
 							<InputLabel id="add-kind-label">Provider</InputLabel>
 							<Select<LlmProfileKind>
@@ -435,9 +436,7 @@ export function LlmProfilesPage() {
 				<DialogTitle>Edit LLM profile</DialogTitle>
 				<DialogContent>
 					<Box sx={{ display: "flex", flexDirection: "column", gap: 2, mt: 1 }}>
-						{formError ? (
-							<Alert severity="error">{formError}</Alert>
-						) : null}
+						{formError ? <Alert severity="error">{formError}</Alert> : null}
 						<FormControl fullWidth>
 							<InputLabel id="edit-kind-label">Provider</InputLabel>
 							<Select<LlmProfileKind>
@@ -509,12 +508,15 @@ export function LlmProfilesPage() {
 				</DialogActions>
 			</Dialog>
 
-			<Dialog open={deleteTarget !== null} onClose={() => setDeleteTarget(null)}>
+			<Dialog
+				open={deleteTarget !== null}
+				onClose={() => setDeleteTarget(null)}
+			>
 				<DialogTitle>Delete profile?</DialogTitle>
 				<DialogContent>
 					<Typography variant="body2">
-						This removes{" "}
-						<strong>{deleteTarget?.label ?? ""}</strong> and its stored credentials.
+						This removes <strong>{deleteTarget?.label ?? ""}</strong> and its
+						stored credentials.
 					</Typography>
 				</DialogContent>
 				<DialogActions>
