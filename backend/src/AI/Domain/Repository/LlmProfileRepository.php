@@ -32,31 +32,31 @@ final class LlmProfileRepository extends ServiceEntityRepository
             ->getResult();
     }
 
-    public function findById(LlmProfileId $id): ?LlmProfile
+    public function findById(LlmProfileId $profileId): ?LlmProfile
     {
-        return $this->find($id);
+        return $this->find($profileId);
     }
 
     public function nextSortOrder(): int
     {
-        $qb = $this->createQueryBuilder('l');
-        $qb->select('COALESCE(MAX(l.sortOrder), -1)');
-        $max = $qb->getQuery()->getSingleScalarResult();
+        $queryBuilder = $this->createQueryBuilder('l');
+        $queryBuilder->select('COALESCE(MAX(l.sortOrder), -1)');
+        $max = $queryBuilder->getQuery()->getSingleScalarResult();
 
         return ((int) $max) + 1;
     }
 
     public function save(LlmProfile $profile): void
     {
-        $em = $this->getEntityManager();
-        $em->persist($profile);
-        $em->flush();
+        $entityManager = $this->getEntityManager();
+        $entityManager->persist($profile);
+        $entityManager->flush();
     }
 
     public function remove(LlmProfile $profile): void
     {
-        $em = $this->getEntityManager();
-        $em->remove($profile);
-        $em->flush();
+        $entityManager = $this->getEntityManager();
+        $entityManager->remove($profile);
+        $entityManager->flush();
     }
 }

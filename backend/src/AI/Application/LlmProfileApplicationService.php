@@ -99,8 +99,7 @@ final readonly class LlmProfileApplicationService
         LlmProfile $entity,
         PostLlmProfileRequest|PutLlmProfileRequest $request,
         ?int $defaultSortOrder = null,
-    ): void
-    {
+    ): void {
         $kind = LlmProfileKind::from(trim($request->kind));
         $baseUrl = null === $request->baseUrl ? null : trim($request->baseUrl);
         $apiKey = trim($request->apiKey);
@@ -156,5 +155,4 @@ final readonly class LlmProfileApplicationService
             $entity->hasStoredApiKey(),
         );
     }
-
 }

@@ -59,8 +59,7 @@ class LlmProfile
         LlmProfileKind $kind,
         ?string $baseUrl,
         ?string $apiKeyCipher,
-    ): static
-    {
+    ): static {
         $this->assertTestableConfiguration($kind, $baseUrl, $apiKeyCipher);
 
         $this->kind = $kind;
@@ -137,8 +136,7 @@ class LlmProfile
         LlmProfileKind $kind,
         ?string $baseUrl,
         ?string $apiKeyCipher,
-    ): void
-    {
+    ): void {
         if (LlmProfileKind::OpenAi === $kind && (null === $apiKeyCipher || '' === $apiKeyCipher)) {
             throw new InvalidLlmProfileConfigurationException('No API key is stored for this profile.');
         }

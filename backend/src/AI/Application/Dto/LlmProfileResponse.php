@@ -4,10 +4,13 @@ declare(strict_types=1);
 
 namespace App\AI\Application\Dto;
 
+use Symfony\Component\Serializer\Attribute\SerializedName;
+
 final readonly class LlmProfileResponse
 {
     public function __construct(
-        public string $id,
+        #[SerializedName('id')]
+        public string $profileId,
         public string $kind,
         public string $label,
         public string $model,
@@ -24,7 +27,7 @@ final readonly class LlmProfileResponse
     public function toArray(): array
     {
         return [
-            'id' => $this->id,
+            'id' => $this->profileId,
             'kind' => $this->kind,
             'label' => $this->label,
             'model' => $this->model,

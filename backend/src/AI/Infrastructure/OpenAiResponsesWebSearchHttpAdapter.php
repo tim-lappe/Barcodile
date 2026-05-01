@@ -168,8 +168,8 @@ final readonly class OpenAiResponsesWebSearchHttpAdapter implements OpenAiRespon
                 if (!\is_array($block)) {
                     continue;
                 }
-                $t = $block['type'] ?? null;
-                if ('output_text' !== $t && 'text' !== $t) {
+                $blockType = $block['type'] ?? null;
+                if ('output_text' !== $blockType && 'text' !== $blockType) {
                     continue;
                 }
                 $text = $block['text'] ?? null;
@@ -184,11 +184,11 @@ final readonly class OpenAiResponsesWebSearchHttpAdapter implements OpenAiRespon
 
     private function truncateForMessage(string $raw): string
     {
-        $t = trim($raw);
-        if (\strlen($t) > 400) {
-            return substr($t, 0, 400).'…';
+        $trimmedRaw = trim($raw);
+        if (\strlen($trimmedRaw) > 400) {
+            return substr($trimmedRaw, 0, 400).'…';
         }
 
-        return $t;
+        return $trimmedRaw;
     }
 }
