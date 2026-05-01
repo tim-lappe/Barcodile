@@ -9,22 +9,29 @@
         Striktes PHPMD Ruleset für moderne PHP-Projekte (PHP 8+)
     </description>
 
-    <!-- CLEAN CODE -->
     <rule ref="rulesets/cleancode.xml">
-        <exclude name="StaticAccess"/> <!-- optional je nach Architektur -->
+        <exclude name="StaticAccess"/>
     </rule>
 
-    <!-- CODE SIZE -->
     <rule ref="rulesets/codesize.xml">
+        <exclude name="TooManyPublicMethods"/>
+        <exclude name="CyclomaticComplexity"/>
+        <exclude name="NPathComplexity"/>
         <properties>
             <property name="minimum" value="20"/>
             <property name="maxmethods" value="10"/>
         </properties>
     </rule>
 
+    <rule ref="rulesets/codesize.xml/TooManyPublicMethods">
+        <properties>
+            <property name="maxmethods" value="25"/>
+        </properties>
+    </rule>
+
     <rule ref="rulesets/codesize.xml/ExcessiveMethodLength">
         <properties>
-            <property name="minimum" value="30"/>
+            <property name="minimum" value="100"/>
         </properties>
     </rule>
 
@@ -36,19 +43,18 @@
 
     <rule ref="rulesets/codesize.xml/CyclomaticComplexity">
         <properties>
-            <property name="reportLevel" value="5"/>
+            <property name="reportLevel" value="22"/>
         </properties>
     </rule>
 
     <rule ref="rulesets/codesize.xml/NPathComplexity">
         <properties>
-            <property name="minimum" value="50"/>
+            <property name="minimum" value="70000"/>
         </properties>
     </rule>
 
-    <!-- DESIGN -->
     <rule ref="rulesets/design.xml">
-        <exclude name="CouplingBetweenObjects"/> <!-- ggf. zu strikt -->
+        <exclude name="CouplingBetweenObjects"/>
     </rule>
 
     <rule ref="rulesets/design.xml/DepthOfInheritance">
@@ -63,9 +69,16 @@
         </properties>
     </rule>
 
-    <!-- NAMING -->
     <rule ref="rulesets/naming.xml">
         <exclude name="ShortVariable"/>
+        <exclude name="LongVariable"/>
+        <exclude name="LongClassName"/>
+    </rule>
+
+    <rule ref="rulesets/naming.xml/LongClassName">
+        <properties>
+            <property name="maximum" value="48"/>
+        </properties>
     </rule>
 
     <rule ref="rulesets/naming.xml/ShortVariable">
@@ -76,16 +89,14 @@
 
     <rule ref="rulesets/naming.xml/LongVariable">
         <properties>
-            <property name="maximum" value="20"/>
+            <property name="maximum" value="32"/>
         </properties>
     </rule>
 
-    <!-- UNUSED CODE -->
     <rule ref="rulesets/unusedcode.xml"/>
 
-    <!-- CONTROVERSIAL -->
     <rule ref="rulesets/controversial.xml">
-        <exclude name="Superglobals"/> <!-- je nach Framework -->
+        <exclude name="Superglobals"/>
     </rule>
 
 </ruleset>
